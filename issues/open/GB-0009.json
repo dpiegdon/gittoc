@@ -5,7 +5,7 @@
   "id": "GB-0009",
   "labels": [],
   "owner": "",
-  "status": "open",
+  "priority": 3,
   "title": "Improve gitbeads UI and usability",
   "updated_at": "2026-03-25T22:30:54+00:00"
 }

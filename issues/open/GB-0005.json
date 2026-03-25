@@ -5,7 +5,7 @@
   "id": "GB-0005",
   "labels": [],
   "owner": "",
-  "status": "closed",
+  "priority": 3,
   "title": "Move CLI next to the skill",
   "updated_at": "2026-03-25T22:14:33+00:00"
 }
