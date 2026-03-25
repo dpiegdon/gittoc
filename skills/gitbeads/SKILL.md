@@ -58,16 +58,16 @@ Core commands:
 - `summary`: print compact counts by status and ready-ness
 - `ready --format compact`: list open tickets whose dependencies are all closed
 - `next --format verbose`: print the first ready ticket, optionally claiming it
-- `claim GB-0001 --owner alice`: claim a specific ticket
-- `show GB-0001 --history`: print one ticket as JSON, optionally with event history
-- `update GB-0001 --state blocked --priority 4`
-- `dep GB-0002 GB-0001`: make `GB-0002` depend on `GB-0001`
-- `note GB-0001 "local context"`: append a durable note to the issue history
-- `history GB-0001`: show per-issue event history
-- `export GB-0001`: copy a visible scratch copy to `.gitbeads-export/`
-- `import GB-0001`: import a scratch copy back into the tracker
-- `close GB-0001`: mark done
-- `log GB-0001`: show git history for the ticket file
+- `claim GB-1 --owner alice`: claim a specific ticket
+- `show GB-1 --history`: print one ticket as JSON, optionally with event history
+- `update GB-1 --state blocked --priority 4`
+- `dep GB-2 GB-1`: make `GB-2` depend on `GB-1`
+- `note GB-1 "local context"`: append a durable note to the issue history
+- `history GB-1`: show per-issue event history
+- `export GB-1`: copy a visible scratch copy to `.gitbeads-export/`
+- `import GB-1`: import a scratch copy back into the tracker
+- `close GB-1`: mark done
+- `log GB-1`: show git history for the ticket file
 
 ## Recommended workflow
 
@@ -89,13 +89,13 @@ When new follow-up work appears:
 
 ```bash
 skills/gitbeads/gitbeads new "Add feature"
-skills/gitbeads/gitbeads dep GB-0003 GB-0001
+skills/gitbeads/gitbeads dep GB-3 GB-1
 ```
 
 When finishing:
 
 ```bash
-skills/gitbeads/gitbeads close GB-0001
+skills/gitbeads/gitbeads close GB-1
 ```
 
 ## Design intent

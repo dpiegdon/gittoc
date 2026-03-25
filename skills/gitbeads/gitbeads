@@ -375,7 +375,10 @@ class Tracker:
                 and path != self.issues_root()
                 and not any(path.iterdir())
             ):
-                path.rmdir()
+                try:
+                    path.rmdir()
+                except FileNotFoundError:
+                    pass
 
         if changed:
             self.commit_if_needed("Migrate gitbeads issue layout")

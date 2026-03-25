@@ -25,12 +25,12 @@ Current useful commands:
 - `skills/gitbeads/gitbeads ready --format compact`
 - `skills/gitbeads/gitbeads next --claim --owner codex`
 - `skills/gitbeads/gitbeads list --format verbose`
-- `skills/gitbeads/gitbeads claim GB-0011 --owner alice`
-- `skills/gitbeads/gitbeads note GB-0011 "extra local context"`
-- `skills/gitbeads/gitbeads history GB-0011`
-- `skills/gitbeads/gitbeads export GB-0011`
-- `skills/gitbeads/gitbeads import GB-0011`
-- `skills/gitbeads/gitbeads show GB-0001`
+- `skills/gitbeads/gitbeads claim GB-11 --owner alice`
+- `skills/gitbeads/gitbeads note GB-11 "extra local context"`
+- `skills/gitbeads/gitbeads history GB-11`
+- `skills/gitbeads/gitbeads export GB-11`
+- `skills/gitbeads/gitbeads import GB-11`
+- `skills/gitbeads/gitbeads show GB-1`
 
 This means:
 
