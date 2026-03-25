@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
-"""Minimal git-backed issue tracker for agent workflows.
+"""Minimal git-backed issue tracker for humans and agents.
 
 This prototype keeps issue files in the repository so they travel with git,
-but expects agents to use the CLI instead of reading the store directly.
+but expects callers to use the CLI instead of reading the store directly.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import subprocess
 import sys
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
 
-ISSUE_DIR = Path(".codex/issues/open")
+ISSUE_DIR = Path(".gitbeads/issues/open")
 ID_RE = re.compile(r"^GB-(\d{4})$")
 def now_utc() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -274,7 +272,7 @@ def cmd_log(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="gitbeads")
+    parser = argparse.ArgumentParser(prog="skills/gitbeads/gitbeads")
     sub = parser.add_subparsers(dest="command", required=True)
 
     init_parser = sub.add_parser("init", help="initialize issue store")

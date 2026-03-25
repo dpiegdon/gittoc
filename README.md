@@ -2,16 +2,16 @@
 
 `gitbeads` is a minimal conceptual merge of `beads` and `ticgit`:
 
-- `beads` semantics: dependency-aware, multi-session, agent-friendly tasks
+- `beads` semantics: dependency-aware, multi-session, human-and-agent tasks
 - `ticgit` constraints: everything lives in git and can survive with simple tools
 
-The prototype stores one compact JSON document per task in `.codex/issues/open/`
-and exposes a small Python CLI at `scripts/gitbeads.py`. Agents should prefer the
-CLI so the ticket store does not spill into prompt context.
+The prototype stores one compact JSON document per task in `.gitbeads/issues/open/`
+and exposes an executable CLI at `skills/gitbeads/gitbeads`. Humans and agents
+should prefer the CLI so the ticket store does not spill into prompt context.
 
 Current useful commands:
 
-- `python3 scripts/gitbeads.py summary`
-- `python3 scripts/gitbeads.py ready`
-- `python3 scripts/gitbeads.py next --claim --owner codex`
-- `python3 scripts/gitbeads.py show GB-0001`
+- `skills/gitbeads/gitbeads summary`
+- `skills/gitbeads/gitbeads ready`
+- `skills/gitbeads/gitbeads next --claim --owner codex`
+- `skills/gitbeads/gitbeads show GB-0001`
