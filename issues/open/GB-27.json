@@ -1,0 +1,11 @@
+{
+  "body": "Agents benefit from direct machine-oriented commands for selecting, filtering, and retrieving issues without extra client-side parsing. Build on the current JSON output with more targeted query paths for ready work, ownership, dependencies, and minimal field subsets.",
+  "created_at": "2026-03-25T23:14:50+00:00",
+  "deps": [],
+  "id": "GB-27",
+  "labels": [],
+  "owner": "",
+  "priority": 1,
+  "title": "Add stronger machine-oriented query and selection commands",
+  "updated_at": "2026-03-25T23:14:50+00:00"
+}
