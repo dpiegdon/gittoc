@@ -2,7 +2,7 @@
   "body": "Review the CLI and workflow for human and agent ergonomics. Consider output readability, command discoverability, shorter common flows, safer defaults, and any lightweight interaction improvements that do not add external dependencies.",
   "created_at": "2026-03-25T22:30:54+00:00",
   "deps": [],
-  "id": "GB-0009",
+  "id": "GB-9",
   "labels": [],
   "owner": "",
   "priority": 3,

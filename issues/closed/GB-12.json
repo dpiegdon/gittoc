@@ -2,7 +2,7 @@
   "body": "Exercise the full current feature set end to end, including branch/worktree setup, issue creation, updates, dependencies, ready/next behavior, listing, summary, closing, history, and any migration paths. Capture gaps and regressions uncovered by the test pass.",
   "created_at": "2026-03-25T22:32:57+00:00",
   "deps": [],
-  "id": "GB-0012",
+  "id": "GB-12",
   "labels": [],
   "owner": "",
   "priority": 1,

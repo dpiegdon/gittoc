@@ -2,7 +2,7 @@
   "body": "Improve the skill file and verify that it matches the exact implemented feature set. Remove stale guidance, add missing behavior, and keep the skill accurate for both humans and agents using the current tool.",
   "created_at": "2026-03-25T22:33:27+00:00",
   "deps": [],
-  "id": "GB-0013",
+  "id": "GB-13",
   "labels": [],
   "owner": "",
   "priority": 2,
