@@ -2,3 +2,4 @@
 {"actor": "codex", "at": "2026-03-25T23:31:45+00:00", "kind": "note", "text": "Concrete direction: add focused machine-oriented selectors such as ready-one --json, show --fields, history --limit, and ownership/dependency filters so agents can retrieve exactly the next decision payload without parsing broad listings."}
 {"actor": "codex", "at": "2026-03-25T23:44:10+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "codex", "at": "2026-03-25T23:44:11+00:00", "kind": "note", "text": "Scope narrowed: implement only ready-one --json and show --fields. Defer broader query selectors unless a real workflow proves they are needed."}
+{"actor": "codex", "at": "2026-03-25T23:45:38+00:00", "kind": "closed", "text": ""}
