@@ -102,7 +102,3 @@ This tool is intentionally boring:
 - no manual branch switching by the caller
 
 If the script is missing or broken, callers can still inspect the hidden worktree and the `gitbeads` branch directly as a fallback.
-
-## References
-
-- Short design note: [references/design-improvements.md](references/design-improvements.md)
