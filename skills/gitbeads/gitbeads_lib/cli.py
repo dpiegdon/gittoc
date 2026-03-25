@@ -26,6 +26,57 @@ def select_fields(data: dict, fields: list[str] | None) -> dict:
     return selected
 
 
+def format_history_entry(entry: dict) -> str:
+    return f"{entry['at']} {entry['kind']} {entry['actor']}: {entry['text']}"
+
+
+def resume_payload(
+    tracker: Tracker,
+    issue,
+    path: Path,
+    *,
+    notes_limit: int,
+    events_limit: int,
+    reason: str | None = None,
+) -> dict:
+    data = issue.to_display(path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id))
+    data["ready"] = tracker.ready(issue)
+    if reason:
+        data["selection"] = reason
+    data["recent_notes"] = tracker.filtered_events(
+        issue.issue_id, kinds={"note"}, limit=notes_limit
+    )
+    data["recent_events"] = tracker.filtered_events(
+        issue.issue_id,
+        kinds={"created", "updated", "claimed", "closed", "dependency", "imported", "exported"},
+        limit=events_limit,
+    )
+    return data
+
+
+def print_resume_text(data: dict) -> None:
+    marker = ">" if data["ready"] else "*"
+    owner = f" owner={data['owner']}" if data["owner"] else ""
+    deps = f" deps={len(data['deps'])}" if data["deps"] else ""
+    selection = f" selection={data['selection']}" if data.get("selection") else ""
+    print(f"{marker} {data['id']} p{data['priority']} [{data['state']}] {data['title']}{deps}{owner}{selection}")
+    if data["body"]:
+        print()
+        print(data["body"])
+    notes = data["recent_notes"]
+    if notes:
+        print()
+        print("Recent notes:")
+        for entry in notes:
+            print(f"- {format_history_entry(entry)}")
+    events = data["recent_events"]
+    if events:
+        print()
+        print("Recent events:")
+        for entry in events:
+            print(f"- {format_history_entry(entry)}")
+
+
 def cmd_init(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     print(f"initialized tracker branch {TRACKER_BRANCH} at {tracker.checkout}")
@@ -223,13 +274,45 @@ def cmd_note(args: argparse.Namespace) -> int:
 
 def cmd_history(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
-    entries = tracker.event_entries(args.issue_id)
+    kinds = set(args.kind or [])
+    if args.notes_only:
+        kinds.add("note")
+    entries = tracker.filtered_events(args.issue_id, kinds=kinds or None, limit=args.limit)
     if args.format == "json":
         print(json.dumps(entries, indent=2, sort_keys=True))
         return 0
-    limit = args.limit if args.limit is not None else len(entries)
-    for entry in entries[-limit:]:
-        print(f"{entry['at']} {entry['kind']} {entry['actor']}: {entry['text']}")
+    for entry in entries:
+        print(format_history_entry(entry))
+    return 0
+
+
+def cmd_resume(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    reason: str | None = None
+    if args.issue_id:
+        issue, path = tracker.load_issue(args.issue_id)
+    else:
+        owner = args.owner or default_owner()
+        issue, reason = tracker.resume_issue(owner)
+        if issue is None:
+            if args.format == "json":
+                print("null")
+            else:
+                print("no resumable issues")
+            return 0
+        _, path = tracker.load_issue(issue.issue_id)
+    data = resume_payload(
+        tracker,
+        issue,
+        path,
+        notes_limit=args.notes_limit,
+        events_limit=args.events_limit,
+        reason=reason,
+    )
+    if args.format == "json":
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print_resume_text(data)
     return 0
 
 
@@ -346,7 +429,19 @@ def build_parser() -> argparse.ArgumentParser:
     history_parser.add_argument("issue_id")
     history_parser.add_argument("--format", choices=("text", "json"), default="text")
     history_parser.add_argument("--limit", type=int)
+    history_parser.add_argument("--kind", action="append")
+    history_parser.add_argument("--notes-only", action="store_true")
     history_parser.set_defaults(func=cmd_history)
+
+    resume_parser = sub.add_parser(
+        "resume", help="show compact recovery context for a specific or inferred issue"
+    )
+    resume_parser.add_argument("issue_id", nargs="?")
+    resume_parser.add_argument("--owner")
+    resume_parser.add_argument("--notes-limit", type=int, default=3)
+    resume_parser.add_argument("--events-limit", type=int, default=3)
+    resume_parser.add_argument("--format", choices=("text", "json"), default="text")
+    resume_parser.set_defaults(func=cmd_resume)
 
     export_parser = sub.add_parser("export", help="export an issue to a visible scratch path")
     export_parser.add_argument("issue_id")

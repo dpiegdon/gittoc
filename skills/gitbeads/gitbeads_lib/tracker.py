@@ -207,6 +207,20 @@ class Tracker:
                 entries.append(json.loads(line))
         return entries
 
+    def filtered_events(
+        self,
+        issue_id: str,
+        *,
+        kinds: set[str] | None = None,
+        limit: int | None = None,
+    ) -> list[dict]:
+        entries = self.event_entries(issue_id)
+        if kinds:
+            entries = [entry for entry in entries if entry.get("kind") in kinds]
+        if limit is not None:
+            entries = entries[-limit:]
+        return entries
+
     def note_count(self, issue_id: str) -> int:
         return sum(1 for entry in self.event_entries(issue_id) if entry["kind"] == "note")
 
@@ -313,6 +327,22 @@ class Tracker:
     def ready_issues(self) -> list[Issue]:
         return sorted([issue for issue in self.list_issues(("open",)) if self.ready(issue)], key=self.sort_key)
 
+    def resume_issue(self, owner: str) -> tuple[Issue | None, str | None]:
+        mine = [
+            issue
+            for issue in self.list_issues(("claimed",))
+            if issue.owner == owner
+        ]
+        if mine:
+            return mine[0], "claimed-by-owner"
+        ready = self.ready_issues()
+        if ready:
+            return ready[0], "highest-priority-ready"
+        open_issues = self.list_issues(("open",))
+        if open_issues:
+            return open_issues[0], "highest-priority-open"
+        return None, None
+
     def summary(self) -> dict[str, int]:
         counts = {state: 0 for state in STATE_ORDER}
         ready = 0
@@ -410,4 +440,3 @@ class Tracker:
         self.append_event(updated, "imported", str(rel))
         self.commit_if_needed(f"Import issue {updated.issue_id}")
         return updated
-

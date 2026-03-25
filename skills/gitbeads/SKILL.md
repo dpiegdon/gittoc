@@ -62,6 +62,8 @@ Core commands:
 - `ready --format compact`: list open tickets whose dependencies are all closed
 - `ready-one --format json`: return the single highest-priority ready issue
 - `next --format verbose`: print the first ready ticket, optionally claiming it
+- `resume`: recover the most relevant current ticket context
+- `resume GB-1 --format json`: recover a specific ticket as structured data
 - `claim GB-1 --owner alice`: claim a specific ticket
 - `show GB-1 --history`: print one ticket as JSON, optionally with event history
 - `show GB-1 --field id --field title --field priority`: request a minimal JSON field subset
@@ -70,6 +72,7 @@ Core commands:
 - `note GB-1 "local context"`: append a durable note to the issue history
 - `history GB-1`: show per-issue event history
 - `history GB-1 --limit 5`: show only the most recent events
+- `history GB-1 --notes-only --limit 3`: show only recent durable notes
 - `export GB-1`: copy a visible scratch copy to `.gitbeads-export/`
 - `import GB-1`: import a scratch copy back into the tracker
 - `close GB-1`: mark done
@@ -82,8 +85,8 @@ At the start of multi-step work:
 ```bash
 skills/gitbeads/gitbeads summary
 skills/gitbeads/gitbeads refresh
+skills/gitbeads/gitbeads resume
 skills/gitbeads/gitbeads ready --format compact
-skills/gitbeads/gitbeads next --show-body
 ```
 
 When beginning a task:
@@ -120,4 +123,5 @@ If the script is missing or broken, callers can still inspect the hidden worktre
 
 - Mutating commands use optimistic concurrency checks and will refuse to commit if the tracker changed mid-command.
 - When that happens, run `skills/gitbeads/gitbeads refresh` and retry against the new tracker head.
+- `resume` without an id prefers claimed tickets owned by the current user, then the highest-priority ready issue, then the highest-priority open issue.
 - For embedding guidance in a host repository, see [references/embedding.md](references/embedding.md).

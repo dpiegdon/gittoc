@@ -26,13 +26,15 @@ Current useful commands:
 - `skills/gitbeads/gitbeads refresh`
 - `skills/gitbeads/gitbeads ready --format compact`
 - `skills/gitbeads/gitbeads ready-one --format json`
+- `skills/gitbeads/gitbeads resume`
+- `skills/gitbeads/gitbeads resume GB-25 --format json`
 - `skills/gitbeads/gitbeads list --all --format compact`
 - `skills/gitbeads/gitbeads next --claim --owner codex`
 - `skills/gitbeads/gitbeads list --format verbose`
 - `skills/gitbeads/gitbeads show GB-27 --field id --field title --field priority`
 - `skills/gitbeads/gitbeads claim GB-11 --owner alice`
 - `skills/gitbeads/gitbeads note GB-11 "extra local context"`
-- `skills/gitbeads/gitbeads history GB-11`
+- `skills/gitbeads/gitbeads history GB-11 --notes-only --limit 3`
 - `skills/gitbeads/gitbeads export GB-11`
 - `skills/gitbeads/gitbeads import GB-11`
 - `skills/gitbeads/gitbeads show GB-1`
@@ -44,6 +46,7 @@ This means:
 - issue history still lives in git
 - humans can inspect the hidden worktree if they really need to, but normally should not
 - agents can ask for one ready issue or a minimal field subset without parsing broad listings
+- humans and agents can recover recent ticket context without dumping full history
 
 Tests:
 
