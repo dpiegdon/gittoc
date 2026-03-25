@@ -16,6 +16,16 @@ from .render import print_issues
 from .tracker import Tracker, StaleTrackerError
 
 
+def select_fields(data: dict, fields: list[str] | None) -> dict:
+    if not fields:
+        return data
+    selected: dict = {}
+    for field in fields:
+        if field in data:
+            selected[field] = data[field]
+    return selected
+
+
 def cmd_init(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     print(f"initialized tracker branch {TRACKER_BRANCH} at {tracker.checkout}")
@@ -95,6 +105,26 @@ def cmd_next(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ready_one(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    issues = tracker.ready_issues()
+    if not issues:
+        if args.format == "json":
+            print("null")
+        else:
+            print("no ready issues")
+        return 0
+    issue = issues[0]
+    _, path = tracker.load_issue(issue.issue_id)
+    data = issue.to_display(path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id))
+    data = select_fields(data, args.field)
+    if args.format == "json":
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print_issues([issue], tracker, "normal")
+    return 0
+
+
 def cmd_claim(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     owner = args.owner or default_owner()
@@ -134,6 +164,7 @@ def cmd_show(args: argparse.Namespace) -> int:
     data = issue.to_display(path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id))
     if args.history:
         data["history"] = tracker.event_entries(issue.issue_id)
+    data = select_fields(data, args.field)
     print(json.dumps(data, indent=2, sort_keys=True))
     return 0
 
@@ -259,6 +290,13 @@ def build_parser() -> argparse.ArgumentParser:
     add_format_argument(ready_parser)
     ready_parser.set_defaults(func=cmd_ready)
 
+    ready_one_parser = sub.add_parser(
+        "ready-one", help="show the highest-priority ready issue as a single payload"
+    )
+    ready_one_parser.add_argument("--format", choices=("text", "json"), default="json")
+    ready_one_parser.add_argument("--field", action="append")
+    ready_one_parser.set_defaults(func=cmd_ready_one)
+
     next_parser = sub.add_parser("next", help="show or claim the highest-priority ready issue")
     next_parser.add_argument("--claim", action="store_true")
     next_parser.add_argument("--owner")
@@ -275,6 +313,7 @@ def build_parser() -> argparse.ArgumentParser:
     show_parser = sub.add_parser("show", help="show one issue")
     show_parser.add_argument("issue_id")
     show_parser.add_argument("--history", action="store_true")
+    show_parser.add_argument("--field", action="append")
     show_parser.set_defaults(func=cmd_show)
 
     update_parser = sub.add_parser("update", help="update issue fields")

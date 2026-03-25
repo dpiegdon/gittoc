@@ -25,9 +25,11 @@ Current useful commands:
 - `skills/gitbeads/gitbeads summary`
 - `skills/gitbeads/gitbeads refresh`
 - `skills/gitbeads/gitbeads ready --format compact`
+- `skills/gitbeads/gitbeads ready-one --format json`
 - `skills/gitbeads/gitbeads list --all --format compact`
 - `skills/gitbeads/gitbeads next --claim --owner codex`
 - `skills/gitbeads/gitbeads list --format verbose`
+- `skills/gitbeads/gitbeads show GB-27 --field id --field title --field priority`
 - `skills/gitbeads/gitbeads claim GB-11 --owner alice`
 - `skills/gitbeads/gitbeads note GB-11 "extra local context"`
 - `skills/gitbeads/gitbeads history GB-11`
@@ -41,6 +43,7 @@ This means:
 - one backlog can be shared across branches
 - issue history still lives in git
 - humans can inspect the hidden worktree if they really need to, but normally should not
+- agents can ask for one ready issue or a minimal field subset without parsing broad listings
 
 Tests:
 

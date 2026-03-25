@@ -83,6 +83,15 @@ class GitbeadsE2ETest(unittest.TestCase):
         refresh = run(["refresh", "--format", "json"], self.repo)
         self.assertIn('"open": 2', refresh)
 
+        ready_one = json.loads(run(["ready-one", "--format", "json"], self.repo))
+        self.assertEqual(ready_one["id"], issue1)
+        self.assertEqual(ready_one["priority"], 1)
+
+        selected = json.loads(
+            run(["show", issue1, "--field", "id", "--field", "title", "--field", "priority"], self.repo)
+        )
+        self.assertEqual(selected, {"id": issue1, "priority": 1, "title": "High priority task"})
+
         compact = run(["list", "--format", "compact"], self.repo).splitlines()
         self.assertEqual(compact[0], f"{issue1} p1 open High priority task")
 

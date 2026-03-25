@@ -60,9 +60,11 @@ Core commands:
 - `list --ready-only`: show only ready issues
 - `summary`: print compact counts by status and ready-ness
 - `ready --format compact`: list open tickets whose dependencies are all closed
+- `ready-one --format json`: return the single highest-priority ready issue
 - `next --format verbose`: print the first ready ticket, optionally claiming it
 - `claim GB-1 --owner alice`: claim a specific ticket
 - `show GB-1 --history`: print one ticket as JSON, optionally with event history
+- `show GB-1 --field id --field title --field priority`: request a minimal JSON field subset
 - `update GB-1 --state blocked --priority 4`
 - `dep GB-2 GB-1`: make `GB-2` depend on `GB-1`
 - `note GB-1 "local context"`: append a durable note to the issue history
