@@ -38,6 +38,7 @@ Do not use it for one-off work that can be completed in a single short turn.
 - Compact structured fields: `title`, `body`, `deps`, `labels`, `owner`, `priority`
 - Optional per-ticket event history lives in sibling `GB-<n>.events.jsonl` files.
 - Git is the audit trail; `gitbeads log` shows ticket history
+- Internal code is split into focused modules under `skills/gitbeads/gitbeads_lib/`.
 
 This keeps the backlog shared across feature branches while avoiding working-tree clutter.
 
@@ -50,8 +51,10 @@ Run the CLI with:
 Core commands:
 
 - `init`: create the store if missing
+- `refresh`: reload tracker state after conflict errors and print current summary
 - `new "Title" --body "..." --priority 2`: create a ticket
-- `list`: list all tickets, ordered by priority
+- `list`: list open tickets by default, ordered by priority
+- `list --all`: list all tickets
 - `list --format compact|normal|verbose|json`: choose output detail
 - `list --state open --state claimed`: filter by state
 - `list --ready-only`: show only ready issues
@@ -64,6 +67,7 @@ Core commands:
 - `dep GB-2 GB-1`: make `GB-2` depend on `GB-1`
 - `note GB-1 "local context"`: append a durable note to the issue history
 - `history GB-1`: show per-issue event history
+- `history GB-1 --limit 5`: show only the most recent events
 - `export GB-1`: copy a visible scratch copy to `.gitbeads-export/`
 - `import GB-1`: import a scratch copy back into the tracker
 - `close GB-1`: mark done
@@ -75,6 +79,7 @@ At the start of multi-step work:
 
 ```bash
 skills/gitbeads/gitbeads summary
+skills/gitbeads/gitbeads refresh
 skills/gitbeads/gitbeads ready --format compact
 skills/gitbeads/gitbeads next --show-body
 ```
@@ -112,4 +117,5 @@ If the script is missing or broken, callers can still inspect the hidden worktre
 ## Notes
 
 - Mutating commands use optimistic concurrency checks and will refuse to commit if the tracker changed mid-command.
+- When that happens, run `skills/gitbeads/gitbeads refresh` and retry against the new tracker head.
 - For embedding guidance in a host repository, see [references/embedding.md](references/embedding.md).

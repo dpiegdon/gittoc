@@ -78,6 +78,10 @@ class GitbeadsE2ETest(unittest.TestCase):
         listing = run(["list"], self.repo).splitlines()
         self.assertIn(f"> {issue1} p1 [open] High priority task", listing[0])
         self.assertIn(f"* {issue2} p4 [open] Lower priority task deps=1", listing[1])
+        self.assertEqual(len(listing), 2)
+
+        refresh = run(["refresh", "--format", "json"], self.repo)
+        self.assertIn('"open": 2', refresh)
 
         compact = run(["list", "--format", "compact"], self.repo).splitlines()
         self.assertEqual(compact[0], f"{issue1} p1 open High priority task")
@@ -126,6 +130,10 @@ class GitbeadsE2ETest(unittest.TestCase):
         run(["close", issue2], self.repo)
         history = run(["log", issue2], self.repo)
         self.assertIn(f"Close issue {issue2}", history)
+
+        all_list = run(["list", "--all", "--format", "compact"], self.repo)
+        self.assertIn(f"{issue1} p1 closed High priority task", all_list)
+        self.assertIn(f"{issue2} p1 closed Imported title", all_list)
 
         tracker_status = subprocess.run(
             ["git", "-C", str(self.repo / ".git" / "gitbeads"), "status", "--short"],
