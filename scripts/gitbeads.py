@@ -1,0 +1,344 @@
+#!/usr/bin/env python3
+"""Minimal git-backed issue tracker for agent workflows.
+
+This prototype keeps issue files in the repository so they travel with git,
+but expects agents to use the CLI instead of reading the store directly.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Iterable
+
+
+ISSUE_DIR = Path(".codex/issues/open")
+ID_RE = re.compile(r"^GB-(\d{4})$")
+def now_utc() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def run_git(args: list[str], cwd: Path | None = None) -> str:
+    proc = subprocess.run(
+        ["git", *args],
+        cwd=str(cwd) if cwd else None,
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    return proc.stdout.strip()
+
+
+def repo_root() -> Path:
+    return Path(run_git(["rev-parse", "--show-toplevel"])).resolve()
+
+
+def issue_dir(root: Path) -> Path:
+    return root / ISSUE_DIR
+
+
+def issue_path(root: Path, issue_id: str) -> Path:
+    return issue_dir(root) / f"{issue_id}.json"
+
+
+def load_issue(path: Path) -> dict:
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def dump_issue(path: Path, issue: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(issue, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+
+
+def list_issue_paths(root: Path) -> list[Path]:
+    directory = issue_dir(root)
+    if not directory.exists():
+        return []
+    return sorted(directory.glob("GB-*.json"))
+
+
+def next_issue_id(root: Path) -> str:
+    highest = 0
+    for path in list_issue_paths(root):
+        match = ID_RE.match(path.stem)
+        if match:
+            highest = max(highest, int(match.group(1)))
+    return f"GB-{highest + 1:04d}"
+
+
+def validate_id(issue_id: str) -> str:
+    if not ID_RE.match(issue_id):
+        raise SystemExit(f"invalid issue id: {issue_id}")
+    return issue_id
+
+
+def resolve_issue(root: Path, issue_id: str) -> Path:
+    issue_id = validate_id(issue_id)
+    path = issue_path(root, issue_id)
+    if not path.exists():
+        raise SystemExit(f"issue not found: {issue_id}")
+    return path
+
+
+def iter_issues(root: Path) -> Iterable[dict]:
+    for path in list_issue_paths(root):
+        yield load_issue(path)
+
+
+def dependency_state(root: Path, issue_id: str) -> str:
+    dep = load_issue(resolve_issue(root, issue_id))
+    return dep["status"]
+
+
+def ready(issue: dict, root: Path) -> bool:
+    if issue["status"] != "open":
+        return False
+    for dep_id in issue["deps"]:
+        if dependency_state(root, dep_id) != "closed":
+            return False
+    return True
+
+
+def summarize(issue: dict, root: Path) -> str:
+    marker = "*"
+    if issue["status"] == "closed":
+        marker = "x"
+    elif ready(issue, root):
+        marker = ">"
+    deps = f" deps={len(issue['deps'])}" if issue["deps"] else ""
+    owner = f" owner={issue['owner']}" if issue["owner"] else ""
+    return f"{marker} {issue['id']} [{issue['status']}] {issue['title']}{deps}{owner}"
+
+
+def sorted_ready_issues(root: Path) -> list[dict]:
+    return sorted(
+        (issue for issue in iter_issues(root) if ready(issue, root)),
+        key=lambda issue: issue["id"],
+    )
+
+
+def cmd_init(args: argparse.Namespace) -> int:
+    root = repo_root()
+    issue_dir(root).mkdir(parents=True, exist_ok=True)
+    print(f"initialized store at {issue_dir(root).relative_to(root)}")
+    return 0
+
+
+def cmd_new(args: argparse.Namespace) -> int:
+    root = repo_root()
+    issue_id = next_issue_id(root)
+    issue = {
+        "id": issue_id,
+        "title": args.title,
+        "body": args.body or "",
+        "status": "open",
+        "deps": [],
+        "labels": args.label or [],
+        "owner": "",
+        "created_at": now_utc(),
+        "updated_at": now_utc(),
+    }
+    path = issue_path(root, issue_id)
+    dump_issue(path, issue)
+    print(issue_id)
+    return 0
+
+
+def cmd_list(args: argparse.Namespace) -> int:
+    root = repo_root()
+    issues = list(iter_issues(root))
+    if args.status:
+        issues = [issue for issue in issues if issue["status"] == args.status]
+    for issue in issues:
+        print(summarize(issue, root))
+    return 0
+
+
+def cmd_ready(args: argparse.Namespace) -> int:
+    root = repo_root()
+    issues = sorted_ready_issues(root)
+    for issue in issues:
+        print(summarize(issue, root))
+    return 0
+
+
+def cmd_next(args: argparse.Namespace) -> int:
+    root = repo_root()
+    issues = sorted_ready_issues(root)
+    if not issues:
+        print("no ready issues")
+        return 0
+    issue = issues[0]
+    if args.claim:
+        path = resolve_issue(root, issue["id"])
+        issue["status"] = "claimed"
+        issue["owner"] = args.owner
+        issue["updated_at"] = now_utc()
+        dump_issue(path, issue)
+    print(summarize(issue, root))
+    return 0
+
+
+def cmd_summary(args: argparse.Namespace) -> int:
+    root = repo_root()
+    counts = {"open": 0, "claimed": 0, "blocked": 0, "closed": 0}
+    ready_count = 0
+    for issue in iter_issues(root):
+        counts[issue["status"]] += 1
+        if ready(issue, root):
+            ready_count += 1
+    print(
+        " ".join(
+            [
+                f"open={counts['open']}",
+                f"claimed={counts['claimed']}",
+                f"blocked={counts['blocked']}",
+                f"closed={counts['closed']}",
+                f"ready={ready_count}",
+            ]
+        )
+    )
+    return 0
+
+
+def cmd_show(args: argparse.Namespace) -> int:
+    root = repo_root()
+    issue = load_issue(resolve_issue(root, args.issue_id))
+    print(json.dumps(issue, indent=2, sort_keys=True))
+    return 0
+
+
+def cmd_update(args: argparse.Namespace) -> int:
+    root = repo_root()
+    path = resolve_issue(root, args.issue_id)
+    issue = load_issue(path)
+    if args.title is not None:
+        issue["title"] = args.title
+    if args.body is not None:
+        issue["body"] = args.body
+    if args.status is not None:
+        issue["status"] = args.status
+    if args.owner is not None:
+        issue["owner"] = args.owner
+    if args.label is not None:
+        issue["labels"] = args.label
+    issue["updated_at"] = now_utc()
+    dump_issue(path, issue)
+    print(issue["id"])
+    return 0
+
+
+def cmd_dep(args: argparse.Namespace) -> int:
+    root = repo_root()
+    path = resolve_issue(root, args.issue_id)
+    issue = load_issue(path)
+    deps = {validate_id(dep_id) for dep_id in issue["deps"]}
+    for dep_id in args.dep_ids:
+        resolve_issue(root, dep_id)
+        deps.add(dep_id)
+    issue["deps"] = sorted(deps)
+    issue["updated_at"] = now_utc()
+    dump_issue(path, issue)
+    print(issue["id"])
+    return 0
+
+
+def cmd_close(args: argparse.Namespace) -> int:
+    root = repo_root()
+    path = resolve_issue(root, args.issue_id)
+    issue = load_issue(path)
+    issue["status"] = "closed"
+    issue["updated_at"] = now_utc()
+    dump_issue(path, issue)
+    print(issue["id"])
+    return 0
+
+
+def cmd_log(args: argparse.Namespace) -> int:
+    root = repo_root()
+    path = resolve_issue(root, args.issue_id)
+    rel = path.relative_to(root)
+    out = run_git(["log", "--oneline", "--", str(rel)], cwd=root)
+    print(out)
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="gitbeads")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    init_parser = sub.add_parser("init", help="initialize issue store")
+    init_parser.set_defaults(func=cmd_init)
+
+    new_parser = sub.add_parser("new", help="create an issue")
+    new_parser.add_argument("title")
+    new_parser.add_argument("--body")
+    new_parser.add_argument("--label", action="append")
+    new_parser.set_defaults(func=cmd_new)
+
+    list_parser = sub.add_parser("list", help="list issues")
+    list_parser.add_argument(
+        "--status", choices=["open", "claimed", "blocked", "closed"]
+    )
+    list_parser.set_defaults(func=cmd_list)
+
+    ready_parser = sub.add_parser("ready", help="list ready issues")
+    ready_parser.set_defaults(func=cmd_ready)
+
+    next_parser = sub.add_parser("next", help="show or claim the next ready issue")
+    next_parser.add_argument("--claim", action="store_true")
+    next_parser.add_argument("--owner", default="codex")
+    next_parser.set_defaults(func=cmd_next)
+
+    show_parser = sub.add_parser("show", help="show one issue")
+    show_parser.add_argument("issue_id")
+    show_parser.set_defaults(func=cmd_show)
+
+    update_parser = sub.add_parser("update", help="update fields")
+    update_parser.add_argument("issue_id")
+    update_parser.add_argument("--title")
+    update_parser.add_argument("--body")
+    update_parser.add_argument(
+        "--status", choices=["open", "claimed", "blocked", "closed"]
+    )
+    update_parser.add_argument("--owner")
+    update_parser.add_argument("--label", action="append")
+    update_parser.set_defaults(func=cmd_update)
+
+    dep_parser = sub.add_parser("dep", help="add dependencies")
+    dep_parser.add_argument("issue_id")
+    dep_parser.add_argument("dep_ids", nargs="+")
+    dep_parser.set_defaults(func=cmd_dep)
+
+    close_parser = sub.add_parser("close", help="close issue")
+    close_parser.add_argument("issue_id")
+    close_parser.set_defaults(func=cmd_close)
+
+    log_parser = sub.add_parser("log", help="show git history for an issue")
+    log_parser.add_argument("issue_id")
+    log_parser.set_defaults(func=cmd_log)
+
+    summary_parser = sub.add_parser("summary", help="print compact status counts")
+    summary_parser.set_defaults(func=cmd_summary)
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
