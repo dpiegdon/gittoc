@@ -1,0 +1,1 @@
+{"actor": "codex", "at": "2026-03-25T23:05:11+00:00", "kind": "note", "text": "Implemented append-only per-issue event history using sibling .events.jsonl files and note/history commands."}
