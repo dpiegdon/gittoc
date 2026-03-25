@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -17,12 +18,15 @@ from pathlib import Path
 TRACKER_BRANCH = "gitbeads"
 TRACKER_WORKTREE_PATH = Path(".git/gitbeads")
 ISSUES_ROOT = Path("issues")
+EXPORT_ROOT = Path(".gitbeads-export")
 STATE_ORDER = ("open", "claimed", "blocked", "closed")
 STATE_SET = set(STATE_ORDER)
 DEFAULT_PRIORITY = 3
 PRIORITY_MIN = 1
 PRIORITY_MAX = 5
 LEGACY_HEAD_STORE = Path(".gitbeads/issues/open")
+ISSUE_RE = re.compile(r"^GB-(\d+)$")
+EVENT_SUFFIX = ".events.jsonl"
 
 
 def now_utc() -> str:
@@ -57,16 +61,15 @@ def repo_root() -> Path:
     return Path(run_git(["rev-parse", "--show-toplevel"]).stdout.strip()).resolve()
 
 
-def git_dir(root: Path) -> Path:
-    return Path(
-        run_git(["rev-parse", "--absolute-git-dir"], cwd=root).stdout.strip()
-    ).resolve()
-
-
 def validate_issue_id(issue_id: str) -> str:
-    if not issue_id.startswith("GB-") or not issue_id[3:].isdigit():
+    match = ISSUE_RE.match(issue_id)
+    if not match:
         raise SystemExit(f"invalid issue id: {issue_id}")
     return issue_id
+
+
+def issue_number(issue_id: str) -> int:
+    return int(ISSUE_RE.match(validate_issue_id(issue_id)).group(1))
 
 
 def validate_priority(priority: int) -> int:
@@ -75,6 +78,14 @@ def validate_priority(priority: int) -> int:
             f"invalid priority: {priority} (expected {PRIORITY_MIN}-{PRIORITY_MAX})"
         )
     return priority
+
+
+def parse_state(value: str | None) -> str | None:
+    if value is None:
+        return None
+    if value not in STATE_SET:
+        raise SystemExit(f"invalid state: {value}")
+    return value
 
 
 def branch_exists(root: Path, branch: str) -> bool:
@@ -119,14 +130,16 @@ class Issue:
     def from_path(cls, path: Path) -> "Issue":
         with path.open("r", encoding="utf-8") as handle:
             raw = json.load(handle)
-        state = raw.get("status", path.parent.name if path.parent.name in STATE_SET else "open")
+        state = raw.get(
+            "status", path.parent.name if path.parent.name in STATE_SET else "open"
+        )
         priority = int(raw.get("priority", DEFAULT_PRIORITY))
         validate_priority(priority)
         return cls(
             issue_id=validate_issue_id(raw["id"]),
             title=raw["title"],
             body=raw.get("body", ""),
-            deps=tuple(sorted(set(raw.get("deps", [])))),
+            deps=tuple(sorted(set(raw.get("deps", [])), key=issue_number)),
             labels=tuple(raw.get("labels", [])),
             owner=raw.get("owner", ""),
             priority=priority,
@@ -148,8 +161,9 @@ class Issue:
             "updated_at": self.updated_at,
         }
 
-    def to_display(self, path: Path) -> dict:
+    def to_display(self, path: Path, notes_count: int) -> dict:
         data = self.to_record()
+        data["notes_count"] = notes_count
         data["path"] = str(path)
         data["state"] = self.state
         return data
@@ -159,6 +173,7 @@ class Tracker:
     def __init__(self, repo: Path, checkout: Path):
         self.repo = repo
         self.checkout = checkout
+        self.base_head = self.head()
 
     @classmethod
     def open(cls) -> "Tracker":
@@ -166,6 +181,7 @@ class Tracker:
         checkout = cls._ensure_worktree(repo)
         tracker = cls(repo, checkout)
         tracker.migrate_layout()
+        tracker.base_head = tracker.head()
         return tracker
 
     @staticmethod
@@ -217,11 +233,22 @@ class Tracker:
             keep = checkout / ISSUES_ROOT / ".gitkeep"
             keep.write_text("", encoding="utf-8")
         run_git(["add", "issues"], cwd=checkout)
-        message = (
-            "Import legacy gitbeads issues" if imported else "Initialize gitbeads tracker"
+        run_git(
+            ["commit", "-q", "-m", "Import legacy gitbeads issues" if imported else "Initialize gitbeads tracker"],
+            cwd=checkout,
         )
-        run_git(["commit", "-q", "-m", message], cwd=checkout)
         return checkout
+
+    def head(self) -> str:
+        proc = run_git(["rev-parse", "--verify", "HEAD"], cwd=self.checkout, check=False)
+        return proc.stdout.strip() if proc.returncode == 0 else ""
+
+    def ensure_not_stale(self) -> None:
+        current = self.head()
+        if current != self.base_head:
+            raise SystemExit(
+                "tracker changed during this command; rerun your command against the latest tracker state"
+            )
 
     def issues_root(self) -> Path:
         return self.checkout / ISSUES_ROOT
@@ -234,63 +261,10 @@ class Tracker:
     def issue_path(self, issue_id: str, state: str) -> Path:
         return self.state_dir(state) / f"{validate_issue_id(issue_id)}.json"
 
-    def commit_if_needed(self, message: str) -> None:
-        proc = run_git(["status", "--porcelain", "--", "issues"], cwd=self.checkout)
-        if not proc.stdout.strip():
-            return
-        run_git(["add", "issues"], cwd=self.checkout)
-        run_git(["commit", "-q", "-m", message], cwd=self.checkout)
+    def event_path(self, issue_id: str, state: str) -> Path:
+        return self.state_dir(state) / f"{validate_issue_id(issue_id)}{EVENT_SUFFIX}"
 
-    def migrate_layout(self) -> None:
-        for state in STATE_ORDER:
-            self.state_dir(state).mkdir(parents=True, exist_ok=True)
-
-        changed = False
-        for path in sorted(self.issues_root().rglob("GB-*.json")):
-            issue = Issue.from_path(path)
-            canonical = self.issue_path(issue.issue_id, issue.state)
-            canonical.parent.mkdir(parents=True, exist_ok=True)
-            record = issue.to_record()
-            current = ""
-            if canonical.exists():
-                current = canonical.read_text(encoding="utf-8")
-            desired = json.dumps(record, indent=2, sort_keys=True) + "\n"
-            if current != desired:
-                canonical.write_text(desired, encoding="utf-8")
-                changed = True
-            if path != canonical and path.exists():
-                path.unlink()
-                changed = True
-
-        for path in sorted(self.issues_root().rglob("*"), reverse=True):
-            if path.is_dir() and path != self.issues_root() and not any(path.iterdir()):
-                path.rmdir()
-
-        if changed:
-            self.commit_if_needed("Migrate gitbeads issue layout")
-
-    def next_issue_id(self) -> str:
-        highest = 0
-        for path in self.issues_root().rglob("GB-*.json"):
-            issue_id = validate_issue_id(path.stem)
-            highest = max(highest, int(issue_id.split("-", 1)[1]))
-        return f"GB-{highest + 1:04d}"
-
-    def issue_paths(self, states: tuple[str, ...] | None = None) -> list[Path]:
-        states = states or STATE_ORDER
-        paths: list[Path] = []
-        for state in states:
-            paths.extend(sorted(self.state_dir(state).glob("GB-*.json")))
-        return paths
-
-    def list_issues(self, states: tuple[str, ...] | None = None) -> list[Issue]:
-        issues = [Issue.from_path(path) for path in self.issue_paths(states)]
-        return sorted(issues, key=self.sort_key)
-
-    def sort_key(self, issue: Issue) -> tuple[int, int, str]:
-        return (issue.priority, STATE_ORDER.index(issue.state), issue.issue_id)
-
-    def find_path(self, issue_id: str) -> Path:
+    def find_issue_path(self, issue_id: str) -> Path:
         issue_id = validate_issue_id(issue_id)
         for state in STATE_ORDER:
             path = self.issue_path(issue_id, state)
@@ -298,11 +272,24 @@ class Tracker:
                 return path
         raise SystemExit(f"issue not found: {issue_id}")
 
-    def load_issue(self, issue_id: str) -> tuple[Issue, Path]:
-        path = self.find_path(issue_id)
-        return Issue.from_path(path), path
+    def find_event_path(self, issue_id: str) -> Path | None:
+        issue_id = validate_issue_id(issue_id)
+        for state in STATE_ORDER:
+            path = self.event_path(issue_id, state)
+            if path.exists():
+                return path
+        return None
 
-    def save_issue(self, issue: Issue, message: str, previous_path: Path | None = None) -> Path:
+    def commit_if_needed(self, message: str) -> None:
+        proc = run_git(["status", "--porcelain", "--", "issues"], cwd=self.checkout)
+        if not proc.stdout.strip():
+            return
+        self.ensure_not_stale()
+        run_git(["add", "issues"], cwd=self.checkout)
+        run_git(["commit", "-q", "-m", message], cwd=self.checkout)
+        self.base_head = self.head()
+
+    def write_issue(self, issue: Issue, previous_path: Path | None = None) -> Path:
         path = self.issue_path(issue.issue_id, issue.state)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
@@ -311,8 +298,124 @@ class Tracker:
         )
         if previous_path and previous_path != path and previous_path.exists():
             previous_path.unlink()
-        self.commit_if_needed(message)
         return path
+
+    def move_event_file(self, issue_id: str, new_state: str, previous_path: Path | None) -> None:
+        if not previous_path:
+            return
+        previous_event = previous_path.with_name(previous_path.stem + EVENT_SUFFIX)
+        if not previous_event.exists():
+            return
+        target = self.event_path(issue_id, new_state)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if previous_event != target:
+            previous_event.rename(target)
+
+    def append_event(
+        self, issue: Issue, kind: str, text: str = "", actor: str | None = None
+    ) -> None:
+        path = self.event_path(issue.issue_id, issue.state)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        entry = {
+            "actor": actor or default_owner(),
+            "at": now_utc(),
+            "kind": kind,
+            "text": text,
+        }
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, sort_keys=True) + "\n")
+
+    def event_entries(self, issue_id: str) -> list[dict]:
+        path = self.find_event_path(issue_id)
+        if not path or not path.exists():
+            return []
+        entries: list[dict] = []
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                entries.append(json.loads(line))
+        return entries
+
+    def note_count(self, issue_id: str) -> int:
+        return sum(1 for entry in self.event_entries(issue_id) if entry["kind"] == "note")
+
+    def migrate_layout(self) -> None:
+        for state in STATE_ORDER:
+            self.state_dir(state).mkdir(parents=True, exist_ok=True)
+
+        changed = False
+        for path in sorted(self.issues_root().rglob("GB-*.json")):
+            if path.name.endswith(EVENT_SUFFIX):
+                continue
+            issue = Issue.from_path(path)
+            canonical = self.issue_path(issue.issue_id, issue.state)
+            canonical.parent.mkdir(parents=True, exist_ok=True)
+            desired = json.dumps(issue.to_record(), indent=2, sort_keys=True) + "\n"
+            current = canonical.read_text(encoding="utf-8") if canonical.exists() else ""
+            if current != desired:
+                canonical.write_text(desired, encoding="utf-8")
+                changed = True
+            if path != canonical and path.exists():
+                path.unlink()
+                changed = True
+
+            legacy_event = path.with_name(path.stem + EVENT_SUFFIX)
+            canonical_event = canonical.with_name(canonical.stem + EVENT_SUFFIX)
+            if legacy_event.exists() and legacy_event != canonical_event:
+                canonical_event.parent.mkdir(parents=True, exist_ok=True)
+                legacy_event.rename(canonical_event)
+                changed = True
+
+        for path in sorted(self.issues_root().rglob("*"), reverse=True):
+            if (
+                path.exists()
+                and path.is_dir()
+                and path != self.issues_root()
+                and not any(path.iterdir())
+            ):
+                path.rmdir()
+
+        if changed:
+            self.commit_if_needed("Migrate gitbeads issue layout")
+
+    def next_issue_id(self) -> str:
+        highest = 0
+        for path in self.issues_root().rglob("GB-*.json"):
+            if path.name.endswith(EVENT_SUFFIX):
+                continue
+            highest = max(highest, issue_number(path.stem))
+        return f"GB-{highest + 1}"
+
+    def issue_paths(self, states: tuple[str, ...] | None = None) -> list[Path]:
+        states = states or STATE_ORDER
+        paths: list[Path] = []
+        for state in states:
+            paths.extend(
+                sorted(
+                    (
+                        path
+                        for path in self.state_dir(state).glob("GB-*.json")
+                        if not path.name.endswith(EVENT_SUFFIX)
+                    ),
+                    key=lambda path: issue_number(path.stem),
+                )
+            )
+        return paths
+
+    def sort_key(self, issue: Issue) -> tuple[int, int, int]:
+        return (issue.priority, STATE_ORDER.index(issue.state), issue_number(issue.issue_id))
+
+    def list_issues(self, states: tuple[str, ...] | None = None) -> list[Issue]:
+        return sorted(
+            [Issue.from_path(path) for path in self.issue_paths(states)],
+            key=self.sort_key,
+        )
+
+    def load_issue(self, issue_id: str) -> tuple[Issue, Path]:
+        path = self.find_issue_path(issue_id)
+        return Issue.from_path(path), path
 
     def create_issue(
         self,
@@ -322,7 +425,6 @@ class Tracker:
         priority: int,
         state: str = "open",
     ) -> Issue:
-        priority = validate_priority(priority)
         timestamp = now_utc()
         issue = Issue(
             issue_id=self.next_issue_id(),
@@ -331,12 +433,14 @@ class Tracker:
             deps=(),
             labels=tuple(labels),
             owner="",
-            priority=priority,
+            priority=validate_priority(priority),
             created_at=timestamp,
             updated_at=timestamp,
             state=state,
         )
-        self.save_issue(issue, f"Add issue {issue.issue_id}: {issue.title}")
+        self.write_issue(issue)
+        self.append_event(issue, "created", issue.title)
+        self.commit_if_needed(f"Add issue {issue.issue_id}: {issue.title}")
         return issue
 
     def dependency_closed(self, issue_id: str) -> bool:
@@ -344,13 +448,15 @@ class Tracker:
         return dep.state == "closed"
 
     def ready(self, issue: Issue) -> bool:
-        if issue.state != "open":
-            return False
-        return all(self.dependency_closed(dep_id) for dep_id in issue.deps)
+        return issue.state == "open" and all(
+            self.dependency_closed(dep_id) for dep_id in issue.deps
+        )
 
     def ready_issues(self) -> list[Issue]:
-        issues = [issue for issue in self.list_issues(("open",)) if self.ready(issue)]
-        return sorted(issues, key=self.sort_key)
+        return sorted(
+            [issue for issue in self.list_issues(("open",)) if self.ready(issue)],
+            key=self.sort_key,
+        )
 
     def summary(self) -> dict[str, int]:
         counts = {state: 0 for state in STATE_ORDER}
@@ -373,6 +479,9 @@ class Tracker:
         labels: list[str] | None = None,
         priority: int | None = None,
         message: str | None = None,
+        event_kind: str = "updated",
+        event_text: str = "",
+        event_actor: str | None = None,
     ) -> Issue:
         issue, path = self.load_issue(issue_id)
         updated = replace(
@@ -385,11 +494,10 @@ class Tracker:
             priority=issue.priority if priority is None else validate_priority(priority),
             updated_at=now_utc(),
         )
-        self.save_issue(
-            updated,
-            message or f"Update issue {updated.issue_id}",
-            previous_path=path,
-        )
+        self.move_event_file(updated.issue_id, updated.state, path)
+        self.write_issue(updated, previous_path=path)
+        self.append_event(updated, event_kind, event_text, actor=event_actor)
+        self.commit_if_needed(message or f"Update issue {updated.issue_id}")
         return updated
 
     def set_dependencies(self, issue_id: str, dep_ids: list[str]) -> Issue:
@@ -397,10 +505,59 @@ class Tracker:
         deps = set(issue.deps)
         for dep_id in dep_ids:
             dep = validate_issue_id(dep_id)
-            self.find_path(dep)
+            self.find_issue_path(dep)
             deps.add(dep)
-        updated = replace(issue, deps=tuple(sorted(deps)), updated_at=now_utc())
-        self.save_issue(updated, f"Add dependencies to {updated.issue_id}", previous_path=path)
+        updated = replace(
+            issue,
+            deps=tuple(sorted(deps, key=issue_number)),
+            updated_at=now_utc(),
+        )
+        self.write_issue(updated, previous_path=path)
+        self.append_event(updated, "dependency", " ".join(dep_ids))
+        self.commit_if_needed(f"Add dependencies to {updated.issue_id}")
+        return updated
+
+    def add_note(self, issue_id: str, text: str, actor: str | None = None) -> Issue:
+        issue, path = self.load_issue(issue_id)
+        updated = replace(issue, updated_at=now_utc())
+        self.write_issue(updated, previous_path=path)
+        self.append_event(updated, "note", text, actor=actor)
+        self.commit_if_needed(f"Add note to {updated.issue_id}")
+        return updated
+
+    def export_issue(self, issue_id: str, output: Path | None = None) -> Path:
+        issue, path = self.load_issue(issue_id)
+        export_dir = self.repo / EXPORT_ROOT
+        export_dir.mkdir(parents=True, exist_ok=True)
+        output = output or (export_dir / f"{issue.issue_id}.json")
+        payload = issue.to_display(path.relative_to(self.checkout), self.note_count(issue.issue_id))
+        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        self.append_event(issue, "exported", str(output.relative_to(self.repo)))
+        self.commit_if_needed(f"Export issue {issue.issue_id}")
+        return output
+
+    def import_issue(self, issue_id: str, input_path: Path | None = None) -> Issue:
+        issue, path = self.load_issue(issue_id)
+        source = input_path or (self.repo / EXPORT_ROOT / f"{issue.issue_id}.json")
+        data = json.loads(source.read_text(encoding="utf-8"))
+        if validate_issue_id(data["id"]) != issue.issue_id:
+            raise SystemExit("import file issue id does not match target issue")
+        updated = replace(
+            issue,
+            title=data.get("title", issue.title),
+            body=data.get("body", issue.body),
+            deps=tuple(sorted(set(data.get("deps", list(issue.deps))), key=issue_number)),
+            labels=tuple(data.get("labels", list(issue.labels))),
+            owner=data.get("owner", issue.owner),
+            priority=validate_priority(int(data.get("priority", issue.priority))),
+            state=parse_state(data.get("state")) or issue.state,
+            updated_at=now_utc(),
+        )
+        self.move_event_file(updated.issue_id, updated.state, path)
+        self.write_issue(updated, previous_path=path)
+        rel = source.relative_to(self.repo) if source.is_relative_to(self.repo) else source
+        self.append_event(updated, "imported", str(rel))
+        self.commit_if_needed(f"Import issue {updated.issue_id}")
         return updated
 
 
@@ -416,21 +573,60 @@ def marker(issue: Issue, tracker: Tracker) -> str:
     return "*"
 
 
-def summarize(issue: Issue, tracker: Tracker) -> str:
+def render_compact(issue: Issue, tracker: Tracker) -> str:
+    return f"{issue.issue_id} p{issue.priority} {issue.state} {issue.title}"
+
+
+def render_normal(issue: Issue, tracker: Tracker) -> str:
     deps = f" deps={len(issue.deps)}" if issue.deps else ""
     owner = f" owner={issue.owner}" if issue.owner else ""
+    notes = tracker.note_count(issue.issue_id)
+    notes_text = f" notes={notes}" if notes else ""
     return (
         f"{marker(issue, tracker)} {issue.issue_id} p{issue.priority} "
-        f"[{issue.state}] {issue.title}{deps}{owner}"
+        f"[{issue.state}] {issue.title}{deps}{owner}{notes_text}"
     )
 
 
-def parse_state(value: str | None) -> str | None:
-    if value is None:
-        return None
-    if value not in STATE_SET:
-        raise SystemExit(f"invalid state: {value}")
-    return value
+def render_verbose(issue: Issue, tracker: Tracker) -> str:
+    deps = ", ".join(issue.deps) if issue.deps else "-"
+    labels = ", ".join(issue.labels) if issue.labels else "-"
+    owner = issue.owner or "-"
+    body = issue.body or "-"
+    notes = tracker.note_count(issue.issue_id)
+    lines = [
+        render_normal(issue, tracker),
+        f"  deps: {deps}",
+        f"  owner: {owner}",
+        f"  labels: {labels}",
+        f"  notes: {notes}",
+        f"  created: {issue.created_at}",
+        f"  updated: {issue.updated_at}",
+        f"  body: {body}",
+    ]
+    return "\n".join(lines)
+
+
+def print_issues(issues: list[Issue], tracker: Tracker, fmt: str) -> None:
+    if fmt == "json":
+        payload = []
+        for issue in issues:
+            _, path = tracker.load_issue(issue.issue_id)
+            payload.append(
+                issue.to_display(path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id))
+            )
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return
+
+    renderer = {
+        "compact": render_compact,
+        "normal": render_normal,
+        "verbose": render_verbose,
+    }[fmt]
+    for index, issue in enumerate(issues):
+        if index and fmt == "verbose":
+            print()
+        print(renderer(issue, tracker))
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -441,12 +637,7 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 def cmd_new(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
-    issue = tracker.create_issue(
-        args.title,
-        args.body or "",
-        args.label or [],
-        args.priority,
-    )
+    issue = tracker.create_issue(args.title, args.body or "", args.label or [], args.priority)
     print(issue.issue_id)
     return 0
 
@@ -457,15 +648,13 @@ def cmd_list(args: argparse.Namespace) -> int:
     issues = tracker.list_issues(states)
     if args.ready_only:
         issues = [issue for issue in issues if tracker.ready(issue)]
-    for issue in issues:
-        print(summarize(issue, tracker))
+    print_issues(issues, tracker, args.format)
     return 0
 
 
 def cmd_ready(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
-    for issue in tracker.ready_issues():
-        print(summarize(issue, tracker))
+    print_issues(tracker.ready_issues(), tracker, args.format)
     return 0
 
 
@@ -476,15 +665,19 @@ def cmd_next(args: argparse.Namespace) -> int:
         print("no ready issues")
         return 0
     issue = issues[0]
+    owner = args.owner or default_owner()
     if args.claim:
         issue = tracker.update_issue(
             issue.issue_id,
             state="claimed",
-            owner=args.owner or default_owner(),
-            message=f"Claim issue {issue.issue_id} for {args.owner or default_owner()}",
+            owner=owner,
+            message=f"Claim issue {issue.issue_id} for {owner}",
+            event_kind="claimed",
+            event_text=owner,
+            event_actor=owner,
         )
-    print(summarize(issue, tracker))
-    if args.show_body and issue.body:
+    print_issues([issue], tracker, args.format)
+    if args.show_body and issue.body and args.format != "json":
         print()
         print(issue.body)
     return 0
@@ -492,13 +685,17 @@ def cmd_next(args: argparse.Namespace) -> int:
 
 def cmd_claim(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
+    owner = args.owner or default_owner()
     issue = tracker.update_issue(
         args.issue_id,
         state="claimed",
-        owner=args.owner or default_owner(),
-        message=f"Claim issue {args.issue_id} for {args.owner or default_owner()}",
+        owner=owner,
+        message=f"Claim issue {args.issue_id} for {owner}",
+        event_kind="claimed",
+        event_text=owner,
+        event_actor=owner,
     )
-    print(summarize(issue, tracker))
+    print_issues([issue], tracker, args.format)
     return 0
 
 
@@ -522,7 +719,10 @@ def cmd_summary(args: argparse.Namespace) -> int:
 def cmd_show(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     issue, path = tracker.load_issue(args.issue_id)
-    print(json.dumps(issue.to_display(path.relative_to(tracker.checkout)), indent=2, sort_keys=True))
+    data = issue.to_display(path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id))
+    if args.history:
+        data["history"] = tracker.event_entries(issue.issue_id)
+    print(json.dumps(data, indent=2, sort_keys=True))
     return 0
 
 
@@ -537,6 +737,7 @@ def cmd_update(args: argparse.Namespace) -> int:
         owner=args.owner,
         labels=args.label,
         priority=args.priority,
+        event_text="fields updated",
     )
     print(issue.issue_id)
     return 0
@@ -552,7 +753,10 @@ def cmd_dep(args: argparse.Namespace) -> int:
 def cmd_close(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     issue = tracker.update_issue(
-        args.issue_id, state="closed", message=f"Close issue {args.issue_id}"
+        args.issue_id,
+        state="closed",
+        message=f"Close issue {args.issue_id}",
+        event_kind="closed",
     )
     print(issue.issue_id)
     return 0
@@ -560,7 +764,7 @@ def cmd_close(args: argparse.Namespace) -> int:
 
 def cmd_log(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
-    issue, path = tracker.load_issue(args.issue_id)
+    _, path = tracker.load_issue(args.issue_id)
     rel = path.relative_to(tracker.checkout)
     out = run_git(
         ["log", "--follow", "--oneline", "--", str(rel)],
@@ -568,6 +772,52 @@ def cmd_log(args: argparse.Namespace) -> int:
     ).stdout.strip()
     print(out)
     return 0
+
+
+def cmd_note(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    issue = tracker.add_note(args.issue_id, args.text, actor=args.actor)
+    print(issue.issue_id)
+    return 0
+
+
+def cmd_history(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    entries = tracker.event_entries(args.issue_id)
+    if args.format == "json":
+        print(json.dumps(entries, indent=2, sort_keys=True))
+        return 0
+    for entry in entries:
+        print(f"{entry['at']} {entry['kind']} {entry['actor']}: {entry['text']}")
+    return 0
+
+
+def cmd_export(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    output = Path(args.output).resolve() if args.output else None
+    path = tracker.export_issue(args.issue_id, output)
+    try:
+        rel = path.relative_to(tracker.repo)
+        print(rel)
+    except ValueError:
+        print(path)
+    return 0
+
+
+def cmd_import(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    input_path = Path(args.input).resolve() if args.input else None
+    issue = tracker.import_issue(args.issue_id, input_path)
+    print(issue.issue_id)
+    return 0
+
+
+def add_format_argument(parser: argparse.ArgumentParser, default: str = "normal") -> None:
+    parser.add_argument(
+        "--format",
+        choices=("compact", "normal", "verbose", "json"),
+        default=default,
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -587,24 +837,29 @@ def build_parser() -> argparse.ArgumentParser:
     list_parser = sub.add_parser("list", help="list issues ordered by priority")
     list_parser.add_argument("--state", action="append", choices=STATE_ORDER)
     list_parser.add_argument("--ready-only", action="store_true")
+    add_format_argument(list_parser)
     list_parser.set_defaults(func=cmd_list)
 
     ready_parser = sub.add_parser("ready", help="list ready open issues by priority")
+    add_format_argument(ready_parser)
     ready_parser.set_defaults(func=cmd_ready)
 
     next_parser = sub.add_parser("next", help="show or claim the highest-priority ready issue")
     next_parser.add_argument("--claim", action="store_true")
     next_parser.add_argument("--owner")
     next_parser.add_argument("--show-body", action="store_true")
+    add_format_argument(next_parser)
     next_parser.set_defaults(func=cmd_next)
 
     claim_parser = sub.add_parser("claim", help="claim a specific issue")
     claim_parser.add_argument("issue_id")
     claim_parser.add_argument("--owner")
+    add_format_argument(claim_parser)
     claim_parser.set_defaults(func=cmd_claim)
 
     show_parser = sub.add_parser("show", help="show one issue")
     show_parser.add_argument("issue_id")
+    show_parser.add_argument("--history", action="store_true")
     show_parser.set_defaults(func=cmd_show)
 
     update_parser = sub.add_parser("update", help="update issue fields")
@@ -627,7 +882,28 @@ def build_parser() -> argparse.ArgumentParser:
     close_parser.add_argument("issue_id")
     close_parser.set_defaults(func=cmd_close)
 
-    log_parser = sub.add_parser("log", help="show git history for an issue")
+    note_parser = sub.add_parser("note", help="append a note to an issue history")
+    note_parser.add_argument("issue_id")
+    note_parser.add_argument("text")
+    note_parser.add_argument("--actor")
+    note_parser.set_defaults(func=cmd_note)
+
+    history_parser = sub.add_parser("history", help="show per-issue event history")
+    history_parser.add_argument("issue_id")
+    history_parser.add_argument("--format", choices=("text", "json"), default="text")
+    history_parser.set_defaults(func=cmd_history)
+
+    export_parser = sub.add_parser("export", help="export an issue to a visible scratch path")
+    export_parser.add_argument("issue_id")
+    export_parser.add_argument("--output")
+    export_parser.set_defaults(func=cmd_export)
+
+    import_parser = sub.add_parser("import", help="import an issue from a visible scratch path")
+    import_parser.add_argument("issue_id")
+    import_parser.add_argument("--input")
+    import_parser.set_defaults(func=cmd_import)
+
+    log_parser = sub.add_parser("log", help="show git history for an issue file")
     log_parser.add_argument("issue_id")
     log_parser.set_defaults(func=cmd_log)
 

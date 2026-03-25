@@ -70,12 +70,21 @@ class GitbeadsE2ETest(unittest.TestCase):
             ["new", "Lower priority task", "--body", "depends on first", "--priority", "4"],
             self.repo,
         )
+        self.assertEqual(issue1, "GB-1")
+        self.assertEqual(issue2, "GB-2")
 
         run(["dep", issue2, issue1], self.repo)
 
         listing = run(["list"], self.repo).splitlines()
         self.assertIn(f"> {issue1} p1 [open] High priority task", listing[0])
         self.assertIn(f"* {issue2} p4 [open] Lower priority task deps=1", listing[1])
+
+        compact = run(["list", "--format", "compact"], self.repo).splitlines()
+        self.assertEqual(compact[0], f"{issue1} p1 open High priority task")
+
+        verbose = run(["list", "--format", "verbose"], self.repo)
+        self.assertIn("body: finish core work", verbose)
+        self.assertIn("deps: -", verbose)
 
         next_out = run(["next", "--claim", "--owner", "tester"], self.repo)
         self.assertIn(f"! {issue1} p1 [claimed] High priority task owner=tester", next_out)
@@ -84,6 +93,11 @@ class GitbeadsE2ETest(unittest.TestCase):
         self.assertEqual(claimed["state"], "claimed")
         self.assertEqual(claimed["priority"], 1)
         self.assertTrue(claimed["path"].startswith("issues/claimed/"))
+
+        run(["note", issue1, "Need to inspect logs first", "--actor", "tester"], self.repo)
+        history = run(["history", issue1], self.repo)
+        self.assertIn("claimed tester: tester", history)
+        self.assertIn("note tester: Need to inspect logs first", history)
 
         run(["close", issue1], self.repo)
         ready = run(["ready"], self.repo)
@@ -96,6 +110,18 @@ class GitbeadsE2ETest(unittest.TestCase):
         run(["update", issue2, "--state", "open"], self.repo)
         ready = run(["ready"], self.repo)
         self.assertIn(f"> {issue2} p2 [open] Lower priority task deps=1", ready)
+
+        exported = run(["export", issue2], self.repo)
+        export_path = self.repo / exported
+        export_data = json.loads(export_path.read_text(encoding="utf-8"))
+        export_data["title"] = "Imported title"
+        export_data["priority"] = 1
+        export_path.write_text(json.dumps(export_data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        run(["import", issue2], self.repo)
+        imported = json.loads(run(["show", issue2, "--history"], self.repo))
+        self.assertEqual(imported["title"], "Imported title")
+        self.assertEqual(imported["priority"], 1)
+        self.assertTrue(any(entry["kind"] == "imported" for entry in imported["history"]))
 
         run(["close", issue2], self.repo)
         history = run(["log", issue2], self.repo)
@@ -121,4 +147,3 @@ class GitbeadsE2ETest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

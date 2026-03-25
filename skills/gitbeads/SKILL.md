@@ -32,10 +32,11 @@ Do not use it for one-off work that can be completed in a single short turn.
 
 - The canonical tracker lives on the `gitbeads` branch.
 - The CLI keeps a hidden git worktree at `.git/gitbeads/`.
-- Tickets live there as `issues/<state>/GB-XXXX.json`.
+- Tickets live there as `issues/<state>/GB-<n>.json`.
 - The directory is the canonical state: `open`, `claimed`, `blocked`, `closed`.
 - One ticket per file
 - Compact structured fields: `title`, `body`, `deps`, `labels`, `owner`, `priority`
+- Optional per-ticket event history lives in sibling `GB-<n>.events.jsonl` files.
 - Git is the audit trail; `gitbeads log` shows ticket history
 
 This keeps the backlog shared across feature branches while avoiding working-tree clutter.
@@ -51,15 +52,20 @@ Core commands:
 - `init`: create the store if missing
 - `new "Title" --body "..." --priority 2`: create a ticket
 - `list`: list all tickets, ordered by priority
+- `list --format compact|normal|verbose|json`: choose output detail
 - `list --state open --state claimed`: filter by state
 - `list --ready-only`: show only ready issues
 - `summary`: print compact counts by status and ready-ness
-- `ready`: list open tickets whose dependencies are all closed
-- `next`: print the first ready ticket, optionally claiming it
+- `ready --format compact`: list open tickets whose dependencies are all closed
+- `next --format verbose`: print the first ready ticket, optionally claiming it
 - `claim GB-0001 --owner alice`: claim a specific ticket
-- `show GB-0001`: print one ticket as JSON
+- `show GB-0001 --history`: print one ticket as JSON, optionally with event history
 - `update GB-0001 --state blocked --priority 4`
 - `dep GB-0002 GB-0001`: make `GB-0002` depend on `GB-0001`
+- `note GB-0001 "local context"`: append a durable note to the issue history
+- `history GB-0001`: show per-issue event history
+- `export GB-0001`: copy a visible scratch copy to `.gitbeads-export/`
+- `import GB-0001`: import a scratch copy back into the tracker
 - `close GB-0001`: mark done
 - `log GB-0001`: show git history for the ticket file
 
@@ -69,7 +75,7 @@ At the start of multi-step work:
 
 ```bash
 skills/gitbeads/gitbeads summary
-skills/gitbeads/gitbeads ready
+skills/gitbeads/gitbeads ready --format compact
 skills/gitbeads/gitbeads next --show-body
 ```
 
@@ -102,3 +108,8 @@ This tool is intentionally boring:
 - no manual branch switching by the caller
 
 If the script is missing or broken, callers can still inspect the hidden worktree and the `gitbeads` branch directly as a fallback.
+
+## Notes
+
+- Mutating commands use optimistic concurrency checks and will refuse to commit if the tracker changed mid-command.
+- For embedding guidance in a host repository, see [references/embedding.md](references/embedding.md).

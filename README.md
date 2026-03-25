@@ -14,15 +14,22 @@ Current storage model:
 
 - canonical issue state is the directory: `issues/open`, `issues/claimed`, `issues/blocked`, `issues/closed`
 - issue files store durable fields such as `title`, `body`, `deps`, `labels`, `owner`, and `priority`
+- issue ids are increasing `GB-1`, `GB-2`, `GB-3`, while older padded ids remain valid
+- optional per-issue event history lives in sibling `*.events.jsonl` files
 - default ordering is by priority, then state, then issue id
 - the tracker branch is the source of truth; the main working tree stays clean
 
 Current useful commands:
 
 - `skills/gitbeads/gitbeads summary`
-- `skills/gitbeads/gitbeads ready`
+- `skills/gitbeads/gitbeads ready --format compact`
 - `skills/gitbeads/gitbeads next --claim --owner codex`
+- `skills/gitbeads/gitbeads list --format verbose`
 - `skills/gitbeads/gitbeads claim GB-0011 --owner alice`
+- `skills/gitbeads/gitbeads note GB-0011 "extra local context"`
+- `skills/gitbeads/gitbeads history GB-0011`
+- `skills/gitbeads/gitbeads export GB-0011`
+- `skills/gitbeads/gitbeads import GB-0011`
 - `skills/gitbeads/gitbeads show GB-0001`
 
 This means:
