@@ -22,19 +22,21 @@ Do not use it for one-off work that can be completed in a single short turn.
 
 ## Operating rules
 
-- Prefer the CLI over reading `.gitbeads/issues/` directly.
+- Prefer the CLI over reading the hidden tracker checkout directly.
 - Keep tickets concise. Store only durable task state, not long design notes.
 - Use dependencies to model blocking relationships instead of embedding plans in chat.
 - Commit tracker changes with the code they describe when practical.
 
 ## Storage model
 
-- Tickets live at `.gitbeads/issues/open/GB-XXXX.json`
+- The canonical tracker lives on the `gitbeads` branch.
+- The CLI keeps a hidden git worktree at `.git/gitbeads/`.
+- Tickets live there as `issues/open/GB-XXXX.json`.
 - One ticket per file
 - Compact structured fields: `title`, `body`, `status`, `deps`, `labels`, `owner`
 - Git is the audit trail; `gitbeads log` shows ticket history
 
-This keeps the store local to the repo while avoiding large markdown backlogs in prompt context.
+This keeps the backlog shared across feature branches while avoiding working-tree clutter.
 
 ## Commands
 
@@ -91,7 +93,7 @@ This tool is intentionally boring:
 
 - no database
 - no background service
-- no hidden remote state
-- no mandatory branch switching
+- no hidden remote state beyond git itself
+- no manual branch switching by the caller
 
-If the script is missing or broken, callers can still inspect and edit the JSON files directly as a fallback.
+If the script is missing or broken, callers can still inspect the hidden worktree and the `gitbeads` branch directly as a fallback.

@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""Minimal git-backed issue tracker for humans and agents.
-
-This prototype keeps issue files in the repository so they travel with git,
-but expects callers to use the CLI instead of reading the store directly.
-"""
+"""Minimal git-backed issue tracker for humans and agents."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -17,25 +14,153 @@ from pathlib import Path
 from typing import Iterable
 
 
-ISSUE_DIR = Path(".gitbeads/issues/open")
+TRACKER_BRANCH = "gitbeads"
+TRACKER_WORKTREE_PATH = Path(".git/gitbeads")
+ISSUE_DIR = Path("issues/open")
+LEGACY_ISSUE_DIR = Path(".gitbeads/issues/open")
 ID_RE = re.compile(r"^GB-(\d{4})$")
+
+
 def now_utc() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
-def run_git(args: list[str], cwd: Path | None = None) -> str:
+def run_git(
+    args: list[str], cwd: Path | None = None, check: bool = True
+) -> subprocess.CompletedProcess[str]:
     proc = subprocess.run(
         ["git", *args],
         cwd=str(cwd) if cwd else None,
-        check=True,
         text=True,
         capture_output=True,
     )
-    return proc.stdout.strip()
+    if check and proc.returncode != 0:
+        raise subprocess.CalledProcessError(
+            proc.returncode, proc.args, output=proc.stdout, stderr=proc.stderr
+        )
+    return proc
 
 
 def repo_root() -> Path:
-    return Path(run_git(["rev-parse", "--show-toplevel"])).resolve()
+    return Path(
+        run_git(["rev-parse", "--show-toplevel"]).stdout.strip()
+    ).resolve()
+
+
+def git_dir(root: Path) -> Path:
+    return Path(
+        run_git(["rev-parse", "--absolute-git-dir"], cwd=root).stdout.strip()
+    ).resolve()
+
+
+def branch_exists(repo: Path, branch: str) -> bool:
+    proc = run_git(
+        ["show-ref", "--verify", "--quiet", f"refs/heads/{branch}"],
+        cwd=repo,
+        check=False,
+    )
+    return proc.returncode == 0
+
+
+def checkout_branch(clone_dir: Path) -> None:
+    run_git(["switch", "-q", TRACKER_BRANCH], cwd=clone_dir)
+
+
+def current_branch(repo: Path) -> str:
+    return run_git(["branch", "--show-current"], cwd=repo).stdout.strip()
+
+
+def hidden_checkout(root: Path) -> Path:
+    return root / TRACKER_WORKTREE_PATH
+
+
+def is_worktree(checkout: Path) -> bool:
+    return checkout.exists() and (checkout / ".git").is_file()
+
+
+def has_legacy_clone(checkout: Path) -> bool:
+    return checkout.exists() and (checkout / ".git").is_dir()
+
+
+def attach_existing_worktree(root: Path, checkout: Path) -> Path:
+    if current_branch(checkout) != TRACKER_BRANCH:
+        checkout_branch(checkout)
+    return checkout
+
+
+def add_worktree(root: Path, checkout: Path) -> Path:
+    run_git(["worktree", "add", "--force", str(checkout), TRACKER_BRANCH], cwd=root)
+    return checkout
+
+
+def write_empty_tree_commit(clone_dir: Path) -> None:
+    issues = clone_dir / "issues"
+    issues.mkdir(parents=True, exist_ok=True)
+    keep = issues / ".gitkeep"
+    keep.write_text("", encoding="utf-8")
+    run_git(["add", "issues/.gitkeep"], cwd=clone_dir)
+    run_git(["commit", "-q", "-m", "Initialize gitbeads tracker"], cwd=clone_dir)
+
+
+def migrate_legacy_store(root: Path, clone_dir: Path) -> bool:
+    legacy_dir = root / LEGACY_ISSUE_DIR
+    legacy_paths = sorted(legacy_dir.glob("GB-*.json")) if legacy_dir.exists() else []
+    if legacy_paths:
+        for path in legacy_paths:
+            target = clone_dir / ISSUE_DIR / path.name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, target)
+    else:
+        proc = run_git(
+            ["ls-tree", "-r", "--name-only", "HEAD", str(LEGACY_ISSUE_DIR)],
+            cwd=root,
+            check=False,
+        )
+        head_paths = [
+            Path(line.strip())
+            for line in proc.stdout.splitlines()
+            if line.strip().endswith(".json")
+        ]
+        if not head_paths:
+            return False
+        for rel_path in head_paths:
+            target = clone_dir / ISSUE_DIR / rel_path.name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            data = run_git(["show", f"HEAD:{rel_path.as_posix()}"], cwd=root).stdout
+            target.write_text(data, encoding="utf-8")
+    run_git(["add", "issues"], cwd=clone_dir)
+    run_git(["commit", "-q", "-m", "Import legacy gitbeads issues"], cwd=clone_dir)
+    return True
+
+
+def bootstrap_branch(root: Path, checkout: Path) -> None:
+    run_git(["worktree", "add", "--detach", "--force", str(checkout), "HEAD"], cwd=root)
+    run_git(["checkout", "-q", "--orphan", TRACKER_BRANCH], cwd=checkout)
+    run_git(["rm", "-rf", "--cached", "."], cwd=checkout, check=False)
+    for path in checkout.iterdir():
+        if path.name == ".git":
+            continue
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+    if not migrate_legacy_store(root, checkout):
+        write_empty_tree_commit(checkout)
+
+
+def tracker_root(root: Path) -> Path:
+    checkout = hidden_checkout(root)
+    if has_legacy_clone(checkout):
+        raise SystemExit(
+            f"legacy hidden clone detected at {checkout}; remove it before using worktree mode"
+        )
+    if is_worktree(checkout):
+        return attach_existing_worktree(root, checkout)
+    if branch_exists(root, TRACKER_BRANCH):
+        return add_worktree(root, checkout)
+    else:
+        bootstrap_branch(root, checkout)
+        return checkout
 
 
 def issue_dir(root: Path) -> Path:
@@ -127,14 +252,16 @@ def sorted_ready_issues(root: Path) -> list[dict]:
 
 def cmd_init(args: argparse.Namespace) -> int:
     root = repo_root()
-    issue_dir(root).mkdir(parents=True, exist_ok=True)
-    print(f"initialized store at {issue_dir(root).relative_to(root)}")
+    tracker = tracker_root(root)
+    issue_dir(tracker).mkdir(parents=True, exist_ok=True)
+    print(f"initialized tracker branch {TRACKER_BRANCH} at {tracker}")
     return 0
 
 
 def cmd_new(args: argparse.Namespace) -> int:
     root = repo_root()
-    issue_id = next_issue_id(root)
+    tracker = tracker_root(root)
+    issue_id = next_issue_id(tracker)
     issue = {
         "id": issue_id,
         "title": args.title,
@@ -146,54 +273,62 @@ def cmd_new(args: argparse.Namespace) -> int:
         "created_at": now_utc(),
         "updated_at": now_utc(),
     }
-    path = issue_path(root, issue_id)
+    path = issue_path(tracker, issue_id)
     dump_issue(path, issue)
+    run_git(["add", str(path.relative_to(tracker))], cwd=tracker)
+    run_git(["commit", "-q", "-m", f"Add issue {issue_id}: {args.title}"], cwd=tracker)
     print(issue_id)
     return 0
 
 
 def cmd_list(args: argparse.Namespace) -> int:
-    root = repo_root()
-    issues = list(iter_issues(root))
+    tracker = tracker_root(repo_root())
+    issues = list(iter_issues(tracker))
     if args.status:
         issues = [issue for issue in issues if issue["status"] == args.status]
     for issue in issues:
-        print(summarize(issue, root))
+        print(summarize(issue, tracker))
     return 0
 
 
 def cmd_ready(args: argparse.Namespace) -> int:
-    root = repo_root()
-    issues = sorted_ready_issues(root)
+    tracker = tracker_root(repo_root())
+    issues = sorted_ready_issues(tracker)
     for issue in issues:
-        print(summarize(issue, root))
+        print(summarize(issue, tracker))
     return 0
 
 
 def cmd_next(args: argparse.Namespace) -> int:
-    root = repo_root()
-    issues = sorted_ready_issues(root)
+    tracker = tracker_root(repo_root())
+    issues = sorted_ready_issues(tracker)
     if not issues:
         print("no ready issues")
         return 0
     issue = issues[0]
     if args.claim:
-        path = resolve_issue(root, issue["id"])
+        path = resolve_issue(tracker, issue["id"])
         issue["status"] = "claimed"
         issue["owner"] = args.owner
         issue["updated_at"] = now_utc()
         dump_issue(path, issue)
-    print(summarize(issue, root))
+        rel = path.relative_to(tracker)
+        run_git(["add", str(rel)], cwd=tracker)
+        run_git(
+            ["commit", "-q", "-m", f"Claim issue {issue['id']} for {args.owner}"],
+            cwd=tracker,
+        )
+    print(summarize(issue, tracker))
     return 0
 
 
 def cmd_summary(args: argparse.Namespace) -> int:
-    root = repo_root()
+    tracker = tracker_root(repo_root())
     counts = {"open": 0, "claimed": 0, "blocked": 0, "closed": 0}
     ready_count = 0
-    for issue in iter_issues(root):
+    for issue in iter_issues(tracker):
         counts[issue["status"]] += 1
-        if ready(issue, root):
+        if ready(issue, tracker):
             ready_count += 1
     print(
         " ".join(
@@ -210,15 +345,15 @@ def cmd_summary(args: argparse.Namespace) -> int:
 
 
 def cmd_show(args: argparse.Namespace) -> int:
-    root = repo_root()
-    issue = load_issue(resolve_issue(root, args.issue_id))
+    tracker = tracker_root(repo_root())
+    issue = load_issue(resolve_issue(tracker, args.issue_id))
     print(json.dumps(issue, indent=2, sort_keys=True))
     return 0
 
 
 def cmd_update(args: argparse.Namespace) -> int:
-    root = repo_root()
-    path = resolve_issue(root, args.issue_id)
+    tracker = tracker_root(repo_root())
+    path = resolve_issue(tracker, args.issue_id)
     issue = load_issue(path)
     if args.title is not None:
         issue["title"] = args.title
@@ -232,41 +367,47 @@ def cmd_update(args: argparse.Namespace) -> int:
         issue["labels"] = args.label
     issue["updated_at"] = now_utc()
     dump_issue(path, issue)
+    run_git(["add", str(path.relative_to(tracker))], cwd=tracker)
+    run_git(["commit", "-q", "-m", f"Update issue {issue['id']}"], cwd=tracker)
     print(issue["id"])
     return 0
 
 
 def cmd_dep(args: argparse.Namespace) -> int:
-    root = repo_root()
-    path = resolve_issue(root, args.issue_id)
+    tracker = tracker_root(repo_root())
+    path = resolve_issue(tracker, args.issue_id)
     issue = load_issue(path)
     deps = {validate_id(dep_id) for dep_id in issue["deps"]}
     for dep_id in args.dep_ids:
-        resolve_issue(root, dep_id)
+        resolve_issue(tracker, dep_id)
         deps.add(dep_id)
     issue["deps"] = sorted(deps)
     issue["updated_at"] = now_utc()
     dump_issue(path, issue)
+    run_git(["add", str(path.relative_to(tracker))], cwd=tracker)
+    run_git(["commit", "-q", "-m", f"Add dependencies to {issue['id']}"], cwd=tracker)
     print(issue["id"])
     return 0
 
 
 def cmd_close(args: argparse.Namespace) -> int:
-    root = repo_root()
-    path = resolve_issue(root, args.issue_id)
+    tracker = tracker_root(repo_root())
+    path = resolve_issue(tracker, args.issue_id)
     issue = load_issue(path)
     issue["status"] = "closed"
     issue["updated_at"] = now_utc()
     dump_issue(path, issue)
+    run_git(["add", str(path.relative_to(tracker))], cwd=tracker)
+    run_git(["commit", "-q", "-m", f"Close issue {issue['id']}"], cwd=tracker)
     print(issue["id"])
     return 0
 
 
 def cmd_log(args: argparse.Namespace) -> int:
-    root = repo_root()
-    path = resolve_issue(root, args.issue_id)
-    rel = path.relative_to(root)
-    out = run_git(["log", "--oneline", "--", str(rel)], cwd=root)
+    tracker = tracker_root(repo_root())
+    path = resolve_issue(tracker, args.issue_id)
+    rel = path.relative_to(tracker)
+    out = run_git(["log", "--oneline", "--", str(rel)], cwd=tracker).stdout.strip()
     print(out)
     return 0
 
