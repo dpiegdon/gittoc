@@ -119,11 +119,11 @@ mutable issue store is meant to live on the hidden `gittoc` branch.
 
 ## Project layout
 
-- [`skills/gittoc/gittoc`](/home/codex/squealds/skills/gittoc/gittoc): CLI entrypoint
-- [`skills/gittoc/gittoc_lib`](/home/codex/squealds/skills/gittoc/gittoc_lib): internal modules
-- [`skills/gittoc/SKILL.md`](/home/codex/squealds/skills/gittoc/SKILL.md): skill instructions
-- [`skills/gittoc/references/embedding.md`](/home/codex/squealds/skills/gittoc/references/embedding.md): embedding and installation notes
-- [`skills/gittoc/tests/test_gittoc.py`](/home/codex/squealds/skills/gittoc/tests/test_gittoc.py): end-to-end test
+- `skills/gittoc/gittoc`: CLI entrypoint
+- `skills/gittoc/gittoc_lib`: internal modules
+- `skills/gittoc/SKILL.md`: skill instructions
+- `skills/gittoc/references/embedding.md`: embedding and installation notes
+- `skills/gittoc/tests/test_gittoc.py`: end-to-end test
 
 ## Codex Thoughts
 

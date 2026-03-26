@@ -26,7 +26,7 @@ def run(args: list[str], cwd: Path) -> str:
     return proc.stdout.strip()
 
 
-class GitbeadsE2ETest(unittest.TestCase):
+class GittocE2ETest(unittest.TestCase):
     def setUp(self) -> None:
         self.tempdir = tempfile.TemporaryDirectory()
         self.repo = Path(self.tempdir.name) / "repo"
@@ -199,6 +199,56 @@ class GitbeadsE2ETest(unittest.TestCase):
             check=True,
         ).stdout
         self.assertIn(str(self.repo), worktree_entry)
+
+    def test_init_tracks_remote_gittoc_branch(self) -> None:
+        source = Path(self.tempdir.name) / "source"
+        source.mkdir()
+        subprocess.run(["git", "init"], cwd=source, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "config", "user.name", "Test User"],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.email", "test@example.com"],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        (source / "README.md").write_text("source repo\n", encoding="utf-8")
+        subprocess.run(["git", "add", "README.md"], cwd=source, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Initial commit"],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+
+        run(["init"], source)
+        issue = run(["new", "Remote tracker issue"], source)
+        self.assertEqual(issue, "T-1")
+
+        remote_repo = Path(self.tempdir.name) / "remote-clone.git"
+        subprocess.run(["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(["git", "push", "-u", "origin", "main"], cwd=source, check=True, capture_output=True)
+        subprocess.run(["git", "push", "-u", "origin", "gittoc"], cwd=source, check=True, capture_output=True)
+
+        clone = Path(self.tempdir.name) / "clone"
+        subprocess.run(["git", "clone", str(remote_repo), str(clone)], check=True, capture_output=True)
+
+        summary = run(["summary"], clone)
+        self.assertEqual(summary, "open=1 claimed=0 blocked=0 closed=0 ready=1")
+
+        issue_data = json.loads(run(["show", "T-1"], clone))
+        self.assertEqual(issue_data["title"], "Remote tracker issue")
+        self.assertTrue(issue_data["path"].startswith("issues/open/"))
 
 
 if __name__ == "__main__":

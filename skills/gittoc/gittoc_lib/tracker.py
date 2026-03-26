@@ -65,6 +65,11 @@ class Tracker:
         if branch_exists(repo, TRACKER_BRANCH):
             run_git(["worktree", "add", "--force", str(checkout), TRACKER_BRANCH], cwd=repo)
             return checkout
+        remote = infer_remote(repo)
+        if remote and remote_branch_exists(repo, remote, TRACKER_BRANCH):
+            run_git(["branch", "--track", TRACKER_BRANCH, f"{remote}/{TRACKER_BRANCH}"], cwd=repo)
+            run_git(["worktree", "add", "--force", str(checkout), TRACKER_BRANCH], cwd=repo)
+            return checkout
         return Tracker._bootstrap_worktree(repo, checkout)
 
     @staticmethod
