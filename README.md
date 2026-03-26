@@ -74,6 +74,8 @@ skills/gittoc/gittoc history T-27 --notes-only --limit 3
 skills/gittoc/gittoc remote --format json
 skills/gittoc/gittoc pull origin
 skills/gittoc/gittoc push origin
+skills/gittoc/gittoc pl origin
+skills/gittoc/gittoc ps origin
 ```
 
 If you have a local git alias such as `git toc`, the same workflow can also look

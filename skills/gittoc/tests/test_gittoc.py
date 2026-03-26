@@ -292,6 +292,12 @@ class GittocE2ETest(unittest.TestCase):
         pulled = json.loads(run(["show", "T-1"], clone))
         self.assertEqual(pulled["title"], "Pulled tracker issue")
 
+        pull_alias = json.loads(run(["pl", "origin", "--format", "json"], clone))
+        self.assertEqual(pull_alias["action"], "pull")
+
+        push_alias = json.loads(run(["ps", "origin", "--format", "json"], source))
+        self.assertEqual(push_alias["action"], "push")
+
 
 if __name__ == "__main__":
     unittest.main()

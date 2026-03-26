@@ -55,7 +55,9 @@ Core commands:
 - `remote --format json`: inspect inferred and configured tracker remote wiring
 - `remote --set origin`: configure the tracker branch to use a specific remote
 - `pull origin`: fetch and merge the tracker branch from a remote
+- `pl origin`, `pul origin`: short aliases for `pull`
 - `push origin`: push the tracker branch to a remote
+- `ps origin`, `pus origin`: short aliases for `push`
 - `new "Title" --body "..." --priority 2`: create a ticket
 - `list`: list open tickets by default, ordered by priority
 - `l`: short alias for `list`

@@ -22,6 +22,10 @@ COMMAND_ALIASES = {
     "c": "claim",
     "n": "note",
     "sh": "show",
+    "pl": "pull",
+    "pul": "pull",
+    "ps": "push",
+    "pus": "push",
 }
 
 
