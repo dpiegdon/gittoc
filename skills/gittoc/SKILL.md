@@ -3,7 +3,7 @@ name: gittoc
 description: Use when work spans multiple turns or sessions and needs a repo-local issue tracker with dependencies, ready-task discovery, and git history, without external services or nonstandard dependencies.
 ---
 
-# Gitbeads
+# Gittoc
 
 `gittoc` is a repo-local task tracker for humans and agents. It combines
 `beads`-style dependency-aware work management with `ticgit`'s "tickets travel
