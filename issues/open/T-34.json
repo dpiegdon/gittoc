@@ -1,0 +1,11 @@
+{
+  "body": "Support a very small set of short human-friendly aliases for the core daily commands, for example l=list, s=summary, r=resume, and maybe c=claim or n=note. Keep the alias surface intentionally small.",
+  "created_at": "2026-03-26T21:00:40+00:00",
+  "deps": [],
+  "id": "T-34",
+  "labels": [],
+  "owner": "",
+  "priority": 2,
+  "title": "Add short aliases for core commands",
+  "updated_at": "2026-03-26T21:00:40+00:00"
+}
