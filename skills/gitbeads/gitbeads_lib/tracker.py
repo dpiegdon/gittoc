@@ -48,7 +48,7 @@ class Tracker:
         repo = repo_root()
         checkout = cls._ensure_worktree(repo)
         tracker = cls(repo, checkout)
-        tracker.migrate_layout()
+        tracker.run_pending_migrations()
         tracker.base_head = tracker.head()
         return tracker
 
@@ -260,43 +260,13 @@ class Tracker:
     def note_count(self, issue_id: str) -> int:
         return sum(1 for entry in self.event_entries(issue_id) if entry["kind"] == "note")
 
-    def migrate_layout(self) -> None:
-        for state in STATE_ORDER:
-            self.state_dir(state).mkdir(parents=True, exist_ok=True)
-        changed = False
-        for path in sorted(self.issues_root().rglob("GB-*.json")):
-            if path.name.endswith(EVENT_SUFFIX):
-                continue
-            issue = Issue.from_path(path)
-            canonical = self.issue_path(issue.issue_id, issue.state)
-            canonical.parent.mkdir(parents=True, exist_ok=True)
-            desired = json.dumps(issue.to_record(), indent=2, sort_keys=True) + "\n"
-            current = canonical.read_text(encoding="utf-8") if canonical.exists() else ""
-            if current != desired:
-                canonical.write_text(desired, encoding="utf-8")
-                changed = True
-            if path != canonical and path.exists():
-                path.unlink()
-                changed = True
-            legacy_event = path.with_name(path.stem + EVENT_SUFFIX)
-            canonical_event = canonical.with_name(canonical.stem + EVENT_SUFFIX)
-            if legacy_event.exists() and legacy_event != canonical_event:
-                canonical_event.parent.mkdir(parents=True, exist_ok=True)
-                legacy_event.rename(canonical_event)
-                changed = True
-        for path in sorted(self.issues_root().rglob("*"), reverse=True):
-            if (
-                path.exists()
-                and path.is_dir()
-                and path != self.issues_root()
-                and not any(path.iterdir())
-            ):
-                try:
-                    path.rmdir()
-                except FileNotFoundError:
-                    pass
-        if changed:
-            self.commit_if_needed("Migrate gitbeads issue layout")
+    def run_pending_migrations(self) -> None:
+        """Hook for future tracker migrations.
+
+        The current on-disk layout is the baseline, so normal tracker startup
+        should not rewrite issue state. Add explicit migration steps here only
+        when a future storage change requires them.
+        """
 
     def next_issue_id(self) -> str:
         highest = 0

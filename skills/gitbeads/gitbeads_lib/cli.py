@@ -320,7 +320,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="skills/gitbeads/gitbeads")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    init_parser = sub.add_parser("init", help="initialize tracker worktree and migrate layout")
+    init_parser = sub.add_parser("init", help="initialize tracker worktree")
     init_parser.set_defaults(func=cmd_init)
 
     refresh_parser = sub.add_parser("refresh", help="reload tracker state after conflicts")
