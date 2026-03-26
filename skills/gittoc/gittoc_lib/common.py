@@ -7,16 +7,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-TRACKER_BRANCH = "gitbeads"
-TRACKER_WORKTREE_PATH = Path(".git/gitbeads")
+TRACKER_BRANCH = "gittoc"
+TRACKER_WORKTREE_PATH = Path(".git/gittoc")
 ISSUES_ROOT = Path("issues")
 STATE_ORDER = ("open", "claimed", "blocked", "closed")
 STATE_SET = set(STATE_ORDER)
 DEFAULT_PRIORITY = 3
 PRIORITY_MIN = 1
 PRIORITY_MAX = 5
-LEGACY_HEAD_STORE = Path(".gitbeads/issues/open")
-ISSUE_RE = re.compile(r"^GB-(\d+)$")
+ISSUE_RE = re.compile(r"^T-(\d+)$")
 EVENT_SUFFIX = ".events.jsonl"
 
 
@@ -25,7 +24,7 @@ def now_utc() -> str:
 
 
 def default_owner() -> str:
-    for name in ("GITBEADS_OWNER", "USER", "LOGNAME"):
+    for name in ("GITTOC_OWNER", "GITBEADS_OWNER", "USER", "LOGNAME"):
         value = os.environ.get(name, "").strip()
         if value:
             return value

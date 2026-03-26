@@ -329,7 +329,7 @@ def add_format_argument(parser: argparse.ArgumentParser, default: str = "normal"
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="skills/gitbeads/gitbeads")
+    parser = argparse.ArgumentParser(prog="skills/gittoc/gittoc")
     sub = parser.add_subparsers(dest="command", required=True)
 
     init_parser = sub.add_parser("init", help="initialize tracker worktree")
@@ -354,7 +354,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     list_parser = sub.add_parser("list", help="list issues ordered by priority")
     list_parser.add_argument("--state", action="append", choices=STATE_ORDER)
-    list_parser.add_argument("--all", action="store_true")
+    list_parser.add_argument("-a", "--all", action="store_true")
     list_parser.add_argument("--ready-only", action="store_true")
     add_format_argument(list_parser)
     list_parser.set_defaults(func=cmd_list)

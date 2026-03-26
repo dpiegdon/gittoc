@@ -1,2 +1,0 @@
-"""gitbeads internal modules."""
-

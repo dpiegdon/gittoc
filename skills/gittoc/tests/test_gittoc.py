@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""End-to-end tests for gitbeads."""
+"""End-to-end tests for gittoc."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-CLI = ROOT / "skills" / "gitbeads" / "gitbeads"
+CLI = ROOT / "skills" / "gittoc" / "gittoc"
 
 
 def run(args: list[str], cwd: Path) -> str:
@@ -74,7 +74,7 @@ class GitbeadsE2ETest(unittest.TestCase):
         self.assertEqual(remote_status["configured_remote"], "origin")
         self.assertEqual(remote_status["effective_remote"], "origin")
         self.assertEqual(remote_status["branch_config_remote"], "origin")
-        self.assertEqual(remote_status["branch_config_merge"], "refs/heads/gitbeads")
+        self.assertEqual(remote_status["branch_config_merge"], "refs/heads/gittoc")
         self.assertFalse(remote_status["remote_branch_exists"])
 
         issue1 = run(
@@ -85,8 +85,8 @@ class GitbeadsE2ETest(unittest.TestCase):
             ["new", "Lower priority task", "--body", "depends on first", "--priority", "4"],
             self.repo,
         )
-        self.assertEqual(issue1, "GB-1")
-        self.assertEqual(issue2, "GB-2")
+        self.assertEqual(issue1, "T-1")
+        self.assertEqual(issue2, "T-2")
 
         run(["dep", issue2, issue1], self.repo)
 
@@ -137,7 +137,7 @@ class GitbeadsE2ETest(unittest.TestCase):
         self.assertEqual(shown["recent_notes_total"], 4)
         self.assertEqual(shown["recent_notes_shown"], 3)
         self.assertEqual(len(shown["recent_notes"]), 3)
-        self.assertIn("history GB-1 --notes-only", shown["recent_notes_hint"])
+        self.assertIn("history T-1 --notes-only", shown["recent_notes_hint"])
         self.assertEqual(shown["recent_notes"][-1]["text"], "Final note should force truncation")
 
         resume_json = json.loads(run(["resume", issue1, "--format", "json"], self.repo))
@@ -181,7 +181,7 @@ class GitbeadsE2ETest(unittest.TestCase):
         self.assertIn(f"{issue2} p1 closed Updated title", all_list)
 
         tracker_status = subprocess.run(
-            ["git", "-C", str(self.repo / ".git" / "gitbeads"), "status", "--short"],
+            ["git", "-C", str(self.repo / ".git" / "gittoc"), "status", "--short"],
             text=True,
             capture_output=True,
             check=True,

@@ -1,8 +1,8 @@
 # Gitbeads Embedding Draft
 
-This document describes the preferred way to embed `gitbeads` into a normal
+This document describes the preferred way to embed `gittoc` into a normal
 project repository. The current repository is the development repository for the
-tool itself, which is unusual. The normal case is that `gitbeads` is brought into
+tool itself, which is unusual. The normal case is that `gittoc` is brought into
 some other git repository and used there by humans and agents.
 
 ## Design goals
@@ -19,25 +19,25 @@ The best default embedding is:
 
 - a small executable at a stable path inside the target repository
 - a matching skill directory that documents the workflow
-- canonical tracker state on a dedicated `gitbeads` branch
-- a hidden git worktree at `.git/gitbeads/`
+- canonical tracker state on a dedicated `gittoc` branch
+- a hidden git worktree at `.git/gittoc/`
 
 Concretely, the target repository would contain something like:
 
 ```text
 <target-repo>/
   tools/
-    gitbeads
+    gittoc
   skills/
-    gitbeads/
+    gittoc/
       SKILL.md
       references/
 ```
 
-And at runtime `gitbeads` would maintain:
+And at runtime `gittoc` would maintain:
 
 ```text
-<target-repo>/.git/gitbeads/
+<target-repo>/.git/gittoc/
   issues/
     open/
     claimed/
@@ -65,20 +65,20 @@ There are two good invocation patterns:
 1. tool-first embedding
 
 ```bash
-tools/gitbeads list
-tools/gitbeads next --claim
+tools/gittoc list
+tools/gittoc claim T-1 --owner alice
 ```
 
 2. skill-adjacent embedding
 
 ```bash
-skills/gitbeads/gitbeads list
-skills/gitbeads/gitbeads next --claim
+skills/gittoc/gittoc list
+skills/gittoc/gittoc claim T-1 --owner alice
 ```
 
-For a normal repository, `tools/gitbeads` is the better default because it makes
+For a normal repository, `tools/gittoc` is the better default because it makes
 the CLI feel like project infrastructure rather than skill internals. The skill
-can then reference `tools/gitbeads`.
+can then reference `tools/gittoc`.
 
 ## Optional repo-local git alias
 
@@ -87,17 +87,17 @@ repository's `.git/config`, for example:
 
 ```ini
 [alias]
-    gb = !tools/gitbeads
+    toc = !tools/gittoc
 ```
 
 That would allow:
 
 ```bash
-git gb list
-git gb next --claim
+git toc list
+git toc claim T-1 --owner alice
 ```
 
-This is attractive because it makes `gitbeads` feel like a natural git extension
+This is attractive because it makes `gittoc` feel like a natural git extension
 without requiring any global shell setup.
 
 Pros:
@@ -105,7 +105,7 @@ Pros:
 - much shorter and more memorable command surface for humans
 - stored in the repository-local git config, so it can be installed automatically per checkout
 - keeps the explicit visible tool path as the actual implementation target
-- reinforces the mental model that `gitbeads` is git-adjacent project infrastructure
+- reinforces the mental model that `gittoc` is git-adjacent project infrastructure
 
 Cons:
 
@@ -116,9 +116,9 @@ Cons:
 
 Recommended stance:
 
-- support this as an optional convenience installed during `gitbeads init` or an explicit install step
-- keep `tools/gitbeads` or `skills/gitbeads/gitbeads` as the canonical documented path
-- document `git gb` as a local ergonomic layer, not as the only supported interface
+- support this as an optional convenience installed during `gittoc init` or an explicit install step
+- keep `tools/gittoc` or `skills/gittoc/gittoc` as the canonical documented path
+- document `git toc` as a local ergonomic layer, not as the only supported interface
 
 ## Recommended skill relationship
 
@@ -127,9 +127,9 @@ primary home of the executable.
 
 Preferred pattern:
 
-- executable at `tools/gitbeads`
-- skill at `skills/gitbeads/SKILL.md`
-- skill examples invoke `tools/gitbeads`
+- executable at `tools/gittoc`
+- skill at `skills/gittoc/SKILL.md`
+- skill examples invoke `tools/gittoc`
 
 This separates:
 
@@ -141,7 +141,7 @@ That separation is healthier than coupling all three to the skill directory.
 
 ## Installation options
 
-There are three realistic ways to embed `gitbeads` into another repository.
+There are three realistic ways to embed `gittoc` into another repository.
 
 ### Option 1: vendored file copy
 
@@ -161,7 +161,7 @@ This is probably the best initial embedding model.
 
 ### Option 2: subtree or submodule
 
-Track `gitbeads` as an imported dependency.
+Track `gittoc` as an imported dependency.
 
 Pros:
 
@@ -195,9 +195,9 @@ This is viable, but less aligned with the current design philosophy.
 
 The strongest default seems to be:
 
-- vendor `gitbeads` into `tools/gitbeads`
-- ship `skills/gitbeads/` next to it
-- keep all mutable tracker state on the `gitbeads` branch via `.git/gitbeads/`
+- vendor `gittoc` into `tools/gittoc`
+- ship `skills/gittoc/` next to it
+- keep all mutable tracker state on the `gittoc` branch via `.git/gittoc/`
 
 In short:
 

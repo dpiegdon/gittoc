@@ -8,7 +8,6 @@ from pathlib import Path
 from .common import (
     EVENT_SUFFIX,
     ISSUES_ROOT,
-    LEGACY_HEAD_STORE,
     STATE_ORDER,
     STATE_SET,
     TRACKER_BRANCH,
@@ -80,29 +79,13 @@ class Tracker:
                 shutil.rmtree(path)
             else:
                 path.unlink()
-        imported = False
-        proc = run_git(
-            ["ls-tree", "-r", "--name-only", "HEAD", str(LEGACY_HEAD_STORE)],
-            cwd=repo,
-            check=False,
-        )
-        for rel_name in proc.stdout.splitlines():
-            rel_name = rel_name.strip()
-            if not rel_name.endswith(".json"):
-                continue
-            data = run_git(["show", f"HEAD:{rel_name}"], cwd=repo).stdout
-            target = checkout / ISSUES_ROOT / "open" / Path(rel_name).name
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(data, encoding="utf-8")
-            imported = True
-        if not imported:
-            for state in STATE_ORDER:
-                (checkout / ISSUES_ROOT / state).mkdir(parents=True, exist_ok=True)
-            keep = checkout / ISSUES_ROOT / ".gitkeep"
-            keep.write_text("", encoding="utf-8")
+        for state in STATE_ORDER:
+            (checkout / ISSUES_ROOT / state).mkdir(parents=True, exist_ok=True)
+        keep = checkout / ISSUES_ROOT / ".gitkeep"
+        keep.write_text("", encoding="utf-8")
         run_git(["add", "issues"], cwd=checkout)
         run_git(
-            ["commit", "-q", "-m", "Import legacy gitbeads issues" if imported else "Initialize gitbeads tracker"],
+            ["commit", "-q", "-m", "Initialize gittoc tracker"],
             cwd=checkout,
         )
         return checkout
@@ -116,7 +99,7 @@ class Tracker:
         return self.base_head
 
     def configured_remote(self) -> str:
-        return local_config_get(self.repo, "gitbeads.remote")
+        return local_config_get(self.repo, "gittoc.remote")
 
     def effective_remote(self) -> str:
         return self.configured_remote() or infer_remote(self.repo)
@@ -143,7 +126,7 @@ class Tracker:
     def configure_remote(self, remote: str) -> dict[str, object]:
         if remote not in list_remotes(self.repo):
             raise SystemExit(f"unknown remote: {remote}")
-        local_config_set(self.repo, "gitbeads.remote", remote)
+        local_config_set(self.repo, "gittoc.remote", remote)
         local_config_set(self.repo, f"branch.{TRACKER_BRANCH}.remote", remote)
         local_config_set(self.repo, f"branch.{TRACKER_BRANCH}.merge", f"refs/heads/{TRACKER_BRANCH}")
         return self.remote_status()
@@ -152,7 +135,7 @@ class Tracker:
         current = self.head()
         if current != self.base_head:
             raise StaleTrackerError(
-                "tracker changed during this command; run `skills/gitbeads/gitbeads refresh` and retry"
+                "tracker changed during this command; run `skills/gittoc/gittoc refresh` and retry"
             )
 
     def issues_root(self) -> Path:
@@ -270,11 +253,11 @@ class Tracker:
 
     def next_issue_id(self) -> str:
         highest = 0
-        for path in self.issues_root().rglob("GB-*.json"):
+        for path in self.issues_root().rglob("T-*.json"):
             if path.name.endswith(EVENT_SUFFIX):
                 continue
             highest = max(highest, issue_number(path.stem))
-        return f"GB-{highest + 1}"
+        return f"T-{highest + 1}"
 
     def issue_paths(self, states: tuple[str, ...] | None = None) -> list[Path]:
         states = states or ("open",)
@@ -284,7 +267,7 @@ class Tracker:
                 sorted(
                     (
                         path
-                        for path in self.state_dir(state).glob("GB-*.json")
+                        for path in self.state_dir(state).glob("T-*.json")
                         if not path.name.endswith(EVENT_SUFFIX)
                     ),
                     key=lambda path: issue_number(path.stem),

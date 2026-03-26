@@ -1,11 +1,11 @@
 ---
-name: gitbeads
+name: gittoc
 description: Use when work spans multiple turns or sessions and needs a repo-local issue tracker with dependencies, ready-task discovery, and git history, without external services or nonstandard dependencies.
 ---
 
 # Gitbeads
 
-`gitbeads` is a repo-local task tracker for humans and agents. It combines
+`gittoc` is a repo-local task tracker for humans and agents. It combines
 `beads`-style dependency-aware work management with `ticgit`'s "tickets travel
 with git" model.
 
@@ -30,15 +30,15 @@ Do not use it for one-off work that can be completed in a single short turn.
 
 ## Storage model
 
-- The canonical tracker lives on the `gitbeads` branch.
-- The CLI keeps a hidden git worktree at `.git/gitbeads/`.
-- Tickets live there as `issues/<state>/GB-<n>.json`.
+- The canonical tracker lives on the `gittoc` branch.
+- The CLI keeps a hidden git worktree at `.git/gittoc/`.
+- Tickets live there as `issues/<state>/T-<n>.json`.
 - The directory is the canonical state: `open`, `claimed`, `blocked`, `closed`.
 - One ticket per file
 - Compact structured fields: `title`, `body`, `deps`, `labels`, `owner`, `priority`
-- Optional per-ticket event history lives in sibling `GB-<n>.events.jsonl` files.
-- Git is the audit trail; `gitbeads log` shows ticket history
-- Internal code is split into focused modules under `skills/gitbeads/gitbeads_lib/`.
+- Optional per-ticket event history lives in sibling `T-<n>.events.jsonl` files.
+- Git is the audit trail; `gittoc log` shows ticket history
+- Internal code is split into focused modules under `skills/gittoc/gittoc_lib/`.
 
 This keeps the backlog shared across feature branches while avoiding working-tree clutter.
 
@@ -46,7 +46,7 @@ This keeps the backlog shared across feature branches while avoiding working-tre
 
 Run the CLI with:
 
-`skills/gitbeads/gitbeads <command>`
+`skills/gittoc/gittoc <command>`
 
 Core commands:
 
@@ -63,48 +63,48 @@ Core commands:
 - `summary`: print compact counts by status and ready-ness
 - `ready --format compact`: convenience alias for `list --ready-only`
 - `resume`: recover the most relevant current ticket context
-- `resume GB-1 --format json`: recover a specific ticket as structured data
-- `claim GB-1 --owner alice`: claim a specific ticket
-- `show GB-1`: print one ticket as JSON with the latest recent notes
-- `show GB-1 --history`: print one ticket as JSON with full event history
-- `show GB-1 --field id --field title --field priority`: request a minimal JSON field subset
-- `update GB-1 --state blocked --priority 4`
-- `dep GB-2 GB-1`: make `GB-2` depend on `GB-1`
-- `note GB-1 "local context"`: append a durable note to the issue history
-- `history GB-1`: show per-issue event history
-- `history GB-1 --limit 5`: show only the most recent events
-- `history GB-1 --notes-only --limit 3`: show only recent durable notes
-- `close GB-1`: mark done
-- `log GB-1`: show git history for the ticket file
+- `resume T-1 --format json`: recover a specific ticket as structured data
+- `claim T-1 --owner alice`: claim a specific ticket
+- `show T-1`: print one ticket as JSON with the latest recent notes
+- `show T-1 --history`: print one ticket as JSON with full event history
+- `show T-1 --field id --field title --field priority`: request a minimal JSON field subset
+- `update T-1 --state blocked --priority 4`
+- `dep T-2 T-1`: make `T-2` depend on `T-1`
+- `note T-1 "local context"`: append a durable note to the issue history
+- `history T-1`: show per-issue event history
+- `history T-1 --limit 5`: show only the most recent events
+- `history T-1 --notes-only --limit 3`: show only recent durable notes
+- `close T-1`: mark done
+- `log T-1`: show git history for the ticket file
 
 ## Recommended workflow
 
 At the start of multi-step work:
 
 ```bash
-skills/gitbeads/gitbeads summary
-skills/gitbeads/gitbeads refresh
-skills/gitbeads/gitbeads resume
-skills/gitbeads/gitbeads list --ready-only --format compact
+skills/gittoc/gittoc summary
+skills/gittoc/gittoc refresh
+skills/gittoc/gittoc resume
+skills/gittoc/gittoc list --ready-only --format compact
 ```
 
 When beginning a task:
 
 ```bash
-skills/gitbeads/gitbeads claim GB-1 --owner alice
+skills/gittoc/gittoc claim T-1 --owner alice
 ```
 
 When new follow-up work appears:
 
 ```bash
-skills/gitbeads/gitbeads new "Add feature"
-skills/gitbeads/gitbeads dep GB-3 GB-1
+skills/gittoc/gittoc new "Add feature"
+skills/gittoc/gittoc dep T-3 T-1
 ```
 
 When finishing:
 
 ```bash
-skills/gitbeads/gitbeads close GB-1
+skills/gittoc/gittoc close T-1
 ```
 
 ## Design intent
@@ -116,13 +116,13 @@ This tool is intentionally boring:
 - no hidden remote state beyond git itself
 - no manual branch switching by the caller
 
-If the script is missing or broken, callers can still inspect the hidden worktree and the `gitbeads` branch directly as a fallback.
+If the script is missing or broken, callers can still inspect the hidden worktree and the `gittoc` branch directly as a fallback.
 
 ## Notes
 
 - Mutating commands use optimistic concurrency checks and will refuse to commit if the tracker changed mid-command.
-- When that happens, run `skills/gitbeads/gitbeads refresh` and retry against the new tracker head.
-- `init` will auto-configure `gitbeads.remote` from the repo's inferred main remote when one is available.
+- When that happens, run `skills/gittoc/gittoc refresh` and retry against the new tracker head.
+- `init` will auto-configure `gittoc.remote` from the repo's inferred main remote when one is available.
 - `resume` without an id prefers claimed tickets owned by the current user, then the highest-priority ready issue, then the highest-priority open issue.
 - `resume` includes recent notes by default so it can replace most one-ticket “what now?” lookups.
 - For embedding guidance in a host repository, see [references/embedding.md](references/embedding.md).
