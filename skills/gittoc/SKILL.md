@@ -125,4 +125,6 @@ If the script is missing or broken, callers can still inspect the hidden worktre
 - `init` will auto-configure `gittoc.remote` from the repo's inferred main remote when one is available.
 - `resume` without an id prefers claimed tickets owned by the current user, then the highest-priority ready issue, then the highest-priority open issue.
 - `resume` includes recent notes by default so it can replace most one-ticket “what now?” lookups.
+- In some sandboxed agent environments, writes under `.git/gittoc/` may require explicit approval even though this is not normally a problem in a local shell.
+- If tracker mutations fail with a read-only or permission error under `.git/gittoc/`, the environment may be blocking `.git` writes rather than the tool itself.
 - For embedding guidance in a host repository, see [references/embedding.md](references/embedding.md).
