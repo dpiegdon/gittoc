@@ -1,4 +1,4 @@
-# Gitbeads Embedding Draft
+# Gittoc Embedding Draft
 
 This document describes the preferred way to embed `gittoc` into a normal
 project repository. The current repository is the development repository for the
@@ -159,6 +159,11 @@ Cons:
 
 This is probably the best initial embedding model.
 
+Current recommendation:
+
+- do this first
+- do not add a more magical install/bootstrap system for the first public release
+
 ### Option 2: subtree or submodule
 
 Track `gittoc` as an imported dependency.
@@ -190,6 +195,17 @@ Cons:
 - more dependence on the surrounding environment
 
 This is viable, but less aligned with the current design philosophy.
+
+## First release decision
+
+For the first public prototype release:
+
+- recommend a visible vendored tool in the host repository
+- keep mutable tracker state on the hidden `gittoc` branch/worktree
+- document repo-local `git toc` alias setup as optional
+- do not require or ship a dedicated install script yet
+
+This keeps the release boring, inspectable, and easy to explain.
 
 ## Recommended long-term direction
 

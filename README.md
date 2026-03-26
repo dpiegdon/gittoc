@@ -78,6 +78,40 @@ git toc resume
 git toc resume --format json
 ```
 
+## Installation
+
+For the first release, the recommended installation model is:
+
+- keep the executable visible in the host repository
+- keep mutable tracker state on the hidden `gittoc` branch and worktree
+
+That means a host repository should usually vendor:
+
+- `tools/gittoc`
+- optionally `skills/gittoc/`
+
+Then initialize the tracker state with:
+
+```bash
+tools/gittoc init
+```
+
+or, in this development repository layout:
+
+```bash
+skills/gittoc/gittoc init
+```
+
+At the moment, there is no dedicated install script yet. The intended first
+release position is:
+
+- recommended: vendor the tool into the repository using a visible path
+- optional: keep a personal/global copy elsewhere and use that manually
+- optional: add a local git alias such as `git toc`
+
+The tool code should stay visible and reviewable on the normal branch. Only the
+mutable issue store is meant to live on the hidden `gittoc` branch.
+
 ## Project layout
 
 - [`skills/gittoc/gittoc`](/home/codex/squealds/skills/gittoc/gittoc): CLI entrypoint
