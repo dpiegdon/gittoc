@@ -98,9 +98,9 @@ class GitbeadsE2ETest(unittest.TestCase):
         refresh = run(["refresh", "--format", "json"], self.repo)
         self.assertIn('"open": 2', refresh)
 
-        ready_one = json.loads(run(["ready-one", "--format", "json"], self.repo))
-        self.assertEqual(ready_one["id"], issue1)
-        self.assertEqual(ready_one["priority"], 1)
+        resume_initial = json.loads(run(["resume", "--format", "json"], self.repo))
+        self.assertEqual(resume_initial["id"], issue1)
+        self.assertEqual(resume_initial["priority"], 1)
 
         selected = json.loads(
             run(["show", issue1, "--field", "id", "--field", "title", "--field", "priority"], self.repo)
@@ -114,8 +114,8 @@ class GitbeadsE2ETest(unittest.TestCase):
         self.assertIn("body: finish core work", verbose)
         self.assertIn("deps: -", verbose)
 
-        next_out = run(["next", "--claim", "--owner", "tester"], self.repo)
-        self.assertIn(f"! {issue1} p1 [claimed] High priority task owner=tester", next_out)
+        claimed_out = run(["claim", issue1, "--owner", "tester"], self.repo)
+        self.assertIn(f"! {issue1} p1 [claimed] High priority task owner=tester", claimed_out)
 
         claimed = json.loads(run(["show", issue1], self.repo))
         self.assertEqual(claimed["state"], "claimed")
@@ -135,6 +135,7 @@ class GitbeadsE2ETest(unittest.TestCase):
         self.assertEqual(resume_json["id"], issue1)
         self.assertEqual(len(resume_json["recent_notes"]), 2)
         self.assertEqual(resume_json["recent_notes"][-1]["kind"], "note")
+        self.assertEqual(resume_json["recent_notes_total"], 2)
 
         resume_auto = run(["resume", "--owner", "tester"], self.repo)
         self.assertIn(f"{issue1} p1 [claimed] High priority task", resume_auto)

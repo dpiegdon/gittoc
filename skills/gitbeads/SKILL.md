@@ -62,8 +62,6 @@ Core commands:
 - `list --ready-only`: show only ready issues
 - `summary`: print compact counts by status and ready-ness
 - `ready --format compact`: convenience alias for `list --ready-only`
-- `ready-one --format json`: return the single highest-priority ready issue
-- `next --format verbose`: print the first ready ticket, optionally claiming it
 - `resume`: recover the most relevant current ticket context
 - `resume GB-1 --format json`: recover a specific ticket as structured data
 - `claim GB-1 --owner alice`: claim a specific ticket
@@ -92,7 +90,7 @@ skills/gitbeads/gitbeads list --ready-only --format compact
 When beginning a task:
 
 ```bash
-skills/gitbeads/gitbeads next --claim --owner alice
+skills/gitbeads/gitbeads claim GB-1 --owner alice
 ```
 
 When new follow-up work appears:
@@ -125,4 +123,5 @@ If the script is missing or broken, callers can still inspect the hidden worktre
 - When that happens, run `skills/gitbeads/gitbeads refresh` and retry against the new tracker head.
 - `init` will auto-configure `gitbeads.remote` from the repo's inferred main remote when one is available.
 - `resume` without an id prefers claimed tickets owned by the current user, then the highest-priority ready issue, then the highest-priority open issue.
+- `resume` includes recent notes by default so it can replace most one-ticket “what now?” lookups.
 - For embedding guidance in a host repository, see [references/embedding.md](references/embedding.md).

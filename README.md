@@ -59,8 +59,8 @@ Examples:
 skills/gitbeads/gitbeads summary
 skills/gitbeads/gitbeads list
 skills/gitbeads/gitbeads ready
-skills/gitbeads/gitbeads ready-one --format json
 skills/gitbeads/gitbeads resume
+skills/gitbeads/gitbeads resume --format json
 skills/gitbeads/gitbeads show GB-27 --field id --field title --field priority
 skills/gitbeads/gitbeads note GB-27 "found a race during ticket creation"
 skills/gitbeads/gitbeads history GB-27 --notes-only --limit 3
@@ -73,7 +73,7 @@ like:
 ```bash
 git gb list
 git gb resume
-git gb ready-one --format json
+git gb resume --format json
 ```
 
 ## Project layout

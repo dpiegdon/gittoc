@@ -42,9 +42,13 @@ def resume_payload(
     data["ready"] = tracker.ready(issue)
     if reason:
         data["selection"] = reason
-    data["recent_notes"] = tracker.filtered_events(
+    notes = tracker.filtered_events(
         issue.issue_id, kinds={"note"}, limit=notes_limit
     )
+    note_count = tracker.note_count(issue.issue_id)
+    data["recent_notes"] = notes
+    data["recent_notes_shown"] = len(notes)
+    data["recent_notes_total"] = note_count
     data["recent_events"] = tracker.filtered_events(
         issue.issue_id,
         kinds={"created", "updated", "claimed", "closed", "dependency"},
@@ -68,6 +72,11 @@ def print_resume_text(data: dict) -> None:
         print("Recent notes:")
         for entry in notes:
             print(f"- {format_history_entry(entry)}")
+        if data["recent_notes_total"] > data["recent_notes_shown"]:
+            print(
+                f"- showing {data['recent_notes_shown']} of {data['recent_notes_total']} notes; "
+                f"use `history {data['id']} --notes-only` for more"
+            )
     events = data["recent_events"]
     if events:
         print()
@@ -157,51 +166,6 @@ def cmd_list(args: argparse.Namespace) -> int:
 def cmd_ready(args: argparse.Namespace) -> int:
     ready_args = argparse.Namespace(all=False, state=None, ready_only=True, format=args.format)
     return cmd_list(ready_args)
-
-
-def cmd_next(args: argparse.Namespace) -> int:
-    tracker = Tracker.open()
-    issues = tracker.ready_issues()
-    if not issues:
-        print("no ready issues")
-        return 0
-    issue = issues[0]
-    owner = args.owner or default_owner()
-    if args.claim:
-        issue = tracker.update_issue(
-            issue.issue_id,
-            state="claimed",
-            owner=owner,
-            message=f"Claim issue {issue.issue_id} for {owner}",
-            event_kind="claimed",
-            event_text=owner,
-            event_actor=owner,
-        )
-    print_issues([issue], tracker, args.format)
-    if args.show_body and issue.body and args.format != "json":
-        print()
-        print(issue.body)
-    return 0
-
-
-def cmd_ready_one(args: argparse.Namespace) -> int:
-    tracker = Tracker.open()
-    issues = tracker.ready_issues()
-    if not issues:
-        if args.format == "json":
-            print("null")
-        else:
-            print("no ready issues")
-        return 0
-    issue = issues[0]
-    _, path = tracker.load_issue(issue.issue_id)
-    data = issue.to_display(path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id))
-    data = select_fields(data, args.field)
-    if args.format == "json":
-        print(json.dumps(data, indent=2, sort_keys=True))
-    else:
-        print_issues([issue], tracker, "normal")
-    return 0
 
 
 def cmd_claim(args: argparse.Namespace) -> int:
@@ -386,20 +350,6 @@ def build_parser() -> argparse.ArgumentParser:
     ready_parser = sub.add_parser("ready", help="list ready open issues by priority")
     add_format_argument(ready_parser)
     ready_parser.set_defaults(func=cmd_ready)
-
-    ready_one_parser = sub.add_parser(
-        "ready-one", help="show the highest-priority ready issue as a single payload"
-    )
-    ready_one_parser.add_argument("--format", choices=("text", "json"), default="json")
-    ready_one_parser.add_argument("--field", action="append")
-    ready_one_parser.set_defaults(func=cmd_ready_one)
-
-    next_parser = sub.add_parser("next", help="show or claim the highest-priority ready issue")
-    next_parser.add_argument("--claim", action="store_true")
-    next_parser.add_argument("--owner")
-    next_parser.add_argument("--show-body", action="store_true")
-    add_format_argument(next_parser)
-    next_parser.set_defaults(func=cmd_next)
 
     claim_parser = sub.add_parser("claim", help="claim a specific issue")
     claim_parser.add_argument("issue_id")
