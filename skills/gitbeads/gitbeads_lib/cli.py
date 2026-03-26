@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 
 from .common import (
     DEFAULT_PRIORITY,
@@ -48,7 +47,7 @@ def resume_payload(
     )
     data["recent_events"] = tracker.filtered_events(
         issue.issue_id,
-        kinds={"created", "updated", "claimed", "closed", "dependency", "imported", "exported"},
+        kinds={"created", "updated", "claimed", "closed", "dependency"},
         limit=events_limit,
     )
     return data
@@ -156,9 +155,8 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 
 def cmd_ready(args: argparse.Namespace) -> int:
-    tracker = Tracker.open()
-    print_issues(tracker.ready_issues(), tracker, args.format)
-    return 0
+    ready_args = argparse.Namespace(all=False, state=None, ready_only=True, format=args.format)
+    return cmd_list(ready_args)
 
 
 def cmd_next(args: argparse.Namespace) -> int:
@@ -346,26 +344,6 @@ def cmd_resume(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_export(args: argparse.Namespace) -> int:
-    tracker = Tracker.open()
-    output = Path(args.output).resolve() if args.output else None
-    path = tracker.export_issue(args.issue_id, output)
-    try:
-        rel = path.relative_to(tracker.repo)
-        print(rel)
-    except ValueError:
-        print(path)
-    return 0
-
-
-def cmd_import(args: argparse.Namespace) -> int:
-    tracker = Tracker.open()
-    input_path = Path(args.input).resolve() if args.input else None
-    issue = tracker.import_issue(args.issue_id, input_path)
-    print(issue.issue_id)
-    return 0
-
-
 def add_format_argument(parser: argparse.ArgumentParser, default: str = "normal") -> None:
     parser.add_argument(
         "--format",
@@ -478,16 +456,6 @@ def build_parser() -> argparse.ArgumentParser:
     resume_parser.add_argument("--events-limit", type=int, default=3)
     resume_parser.add_argument("--format", choices=("text", "json"), default="text")
     resume_parser.set_defaults(func=cmd_resume)
-
-    export_parser = sub.add_parser("export", help="export an issue to a visible scratch path")
-    export_parser.add_argument("issue_id")
-    export_parser.add_argument("--output")
-    export_parser.set_defaults(func=cmd_export)
-
-    import_parser = sub.add_parser("import", help="import an issue from a visible scratch path")
-    import_parser.add_argument("issue_id")
-    import_parser.add_argument("--input")
-    import_parser.set_defaults(func=cmd_import)
 
     log_parser = sub.add_parser("log", help="show git history for an issue file")
     log_parser.add_argument("issue_id")

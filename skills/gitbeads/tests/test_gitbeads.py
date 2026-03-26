@@ -156,17 +156,11 @@ class GitbeadsE2ETest(unittest.TestCase):
         ready = run(["ready"], self.repo)
         self.assertIn(f"> {issue2} p2 [open] Lower priority task deps=1", ready)
 
-        exported = run(["export", issue2], self.repo)
-        export_path = self.repo / exported
-        export_data = json.loads(export_path.read_text(encoding="utf-8"))
-        export_data["title"] = "Imported title"
-        export_data["priority"] = 1
-        export_path.write_text(json.dumps(export_data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        run(["import", issue2], self.repo)
-        imported = json.loads(run(["show", issue2, "--history"], self.repo))
-        self.assertEqual(imported["title"], "Imported title")
-        self.assertEqual(imported["priority"], 1)
-        self.assertTrue(any(entry["kind"] == "imported" for entry in imported["history"]))
+        run(["update", issue2, "--title", "Updated title", "--priority", "1"], self.repo)
+        updated = json.loads(run(["show", issue2, "--history"], self.repo))
+        self.assertEqual(updated["title"], "Updated title")
+        self.assertEqual(updated["priority"], 1)
+        self.assertTrue(any(entry["kind"] == "updated" for entry in updated["history"]))
 
         run(["close", issue2], self.repo)
         history = run(["log", issue2], self.repo)
@@ -174,7 +168,7 @@ class GitbeadsE2ETest(unittest.TestCase):
 
         all_list = run(["list", "--all", "--format", "compact"], self.repo)
         self.assertIn(f"{issue1} p1 closed High priority task", all_list)
-        self.assertIn(f"{issue2} p1 closed Imported title", all_list)
+        self.assertIn(f"{issue2} p1 closed Updated title", all_list)
 
         tracker_status = subprocess.run(
             ["git", "-C", str(self.repo / ".git" / "gitbeads"), "status", "--short"],

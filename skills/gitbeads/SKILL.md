@@ -61,7 +61,7 @@ Core commands:
 - `list --state open --state claimed`: filter by state
 - `list --ready-only`: show only ready issues
 - `summary`: print compact counts by status and ready-ness
-- `ready --format compact`: list open tickets whose dependencies are all closed
+- `ready --format compact`: convenience alias for `list --ready-only`
 - `ready-one --format json`: return the single highest-priority ready issue
 - `next --format verbose`: print the first ready ticket, optionally claiming it
 - `resume`: recover the most relevant current ticket context
@@ -75,8 +75,6 @@ Core commands:
 - `history GB-1`: show per-issue event history
 - `history GB-1 --limit 5`: show only the most recent events
 - `history GB-1 --notes-only --limit 3`: show only recent durable notes
-- `export GB-1`: copy a visible scratch copy to `.gitbeads-export/`
-- `import GB-1`: import a scratch copy back into the tracker
 - `close GB-1`: mark done
 - `log GB-1`: show git history for the ticket file
 
@@ -88,7 +86,7 @@ At the start of multi-step work:
 skills/gitbeads/gitbeads summary
 skills/gitbeads/gitbeads refresh
 skills/gitbeads/gitbeads resume
-skills/gitbeads/gitbeads ready --format compact
+skills/gitbeads/gitbeads list --ready-only --format compact
 ```
 
 When beginning a task:

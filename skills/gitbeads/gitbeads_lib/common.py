@@ -10,7 +10,6 @@ from pathlib import Path
 TRACKER_BRANCH = "gitbeads"
 TRACKER_WORKTREE_PATH = Path(".git/gitbeads")
 ISSUES_ROOT = Path("issues")
-EXPORT_ROOT = Path(".gitbeads-export")
 STATE_ORDER = ("open", "claimed", "blocked", "closed")
 STATE_SET = set(STATE_ORDER)
 DEFAULT_PRIORITY = 3

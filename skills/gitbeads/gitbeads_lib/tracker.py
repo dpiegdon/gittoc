@@ -7,7 +7,6 @@ from pathlib import Path
 
 from .common import (
     EVENT_SUFFIX,
-    EXPORT_ROOT,
     ISSUES_ROOT,
     LEGACY_HEAD_STORE,
     STATE_ORDER,
@@ -24,7 +23,6 @@ from .common import (
     local_config_get,
     local_config_set,
     now_utc,
-    parse_state,
     repo_root,
     remote_branch_exists,
     run_git,
@@ -442,39 +440,4 @@ class Tracker:
         self.write_issue(updated, previous_path=path)
         self.append_event(updated, "note", text, actor=actor)
         self.commit_if_needed(f"Add note to {updated.issue_id}")
-        return updated
-
-    def export_issue(self, issue_id: str, output: Path | None = None) -> Path:
-        issue, path = self.load_issue(issue_id)
-        export_dir = self.repo / EXPORT_ROOT
-        export_dir.mkdir(parents=True, exist_ok=True)
-        output = output or (export_dir / f"{issue.issue_id}.json")
-        payload = issue.to_display(path.relative_to(self.checkout), self.note_count(issue.issue_id))
-        output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        self.append_event(issue, "exported", str(output.relative_to(self.repo)))
-        self.commit_if_needed(f"Export issue {issue.issue_id}")
-        return output
-
-    def import_issue(self, issue_id: str, input_path: Path | None = None) -> Issue:
-        issue, path = self.load_issue(issue_id)
-        source = input_path or (self.repo / EXPORT_ROOT / f"{issue.issue_id}.json")
-        data = json.loads(source.read_text(encoding="utf-8"))
-        if validate_issue_id(data["id"]) != issue.issue_id:
-            raise SystemExit("import file issue id does not match target issue")
-        updated = replace(
-            issue,
-            title=data.get("title", issue.title),
-            body=data.get("body", issue.body),
-            deps=tuple(sorted(set(data.get("deps", list(issue.deps))), key=issue_number)),
-            labels=tuple(data.get("labels", list(issue.labels))),
-            owner=data.get("owner", issue.owner),
-            priority=validate_priority(int(data.get("priority", issue.priority))),
-            state=parse_state(data.get("state")) or issue.state,
-            updated_at=now_utc(),
-        )
-        self.move_event_file(updated.issue_id, updated.state, path)
-        self.write_issue(updated, previous_path=path)
-        rel = source.relative_to(self.repo) if source.is_relative_to(self.repo) else source
-        self.append_event(updated, "imported", str(rel))
-        self.commit_if_needed(f"Import issue {updated.issue_id}")
         return updated
