@@ -15,6 +15,14 @@ from .render import print_issues
 from .tracker import Tracker, StaleTrackerError
 
 SHOW_NOTES_LIMIT = 3
+COMMAND_ALIASES = {
+    "l": "list",
+    "s": "summary",
+    "r": "resume",
+    "c": "claim",
+    "n": "note",
+    "sh": "show",
+}
 
 
 def select_fields(data: dict, fields: list[str] | None) -> dict:
@@ -430,6 +438,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = __import__("sys").argv[1:]
+    else:
+        argv = list(argv)
+    if argv:
+        argv[0] = COMMAND_ALIASES.get(argv[0], argv[0])
     parser = build_parser()
     args = parser.parse_args(argv)
     try:

@@ -56,21 +56,27 @@ Core commands:
 - `remote --set origin`: configure the tracker branch to use a specific remote
 - `new "Title" --body "..." --priority 2`: create a ticket
 - `list`: list open tickets by default, ordered by priority
+- `l`: short alias for `list`
 - `list --all`: list all tickets
 - `list --format compact|normal|verbose|json`: choose output detail
 - `list --state open --state claimed`: filter by state
 - `list --ready-only`: show only ready issues
 - `summary`: print compact counts by status and ready-ness
+- `s`: short alias for `summary`
 - `ready --format compact`: convenience alias for `list --ready-only`
 - `resume`: recover the most relevant current ticket context
+- `r`: short alias for `resume`
 - `resume T-1 --format json`: recover a specific ticket as structured data
 - `claim T-1 --owner alice`: claim a specific ticket
+- `c T-1 --owner alice`: short alias for `claim`
 - `show T-1`: print one ticket as JSON with the latest recent notes
+- `sh T-1`: short alias for `show`
 - `show T-1 --history`: print one ticket as JSON with full event history
 - `show T-1 --field id --field title --field priority`: request a minimal JSON field subset
 - `update T-1 --state blocked --priority 4`
 - `dep T-2 T-1`: make `T-2` depend on `T-1`
 - `note T-1 "local context"`: append a durable note to the issue history
+- `n T-1 "local context"`: short alias for `note`
 - `history T-1`: show per-issue event history
 - `history T-1 --limit 5`: show only the most recent events
 - `history T-1 --notes-only --limit 3`: show only recent durable notes

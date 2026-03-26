@@ -88,6 +88,10 @@ class GittocE2ETest(unittest.TestCase):
         self.assertEqual(issue1, "T-1")
         self.assertEqual(issue2, "T-2")
 
+        alias_list = run(["l", "--format", "compact"], self.repo).splitlines()
+        self.assertEqual(alias_list[0], f"{issue1} p1 open High priority task")
+        self.assertEqual(run(["s"], self.repo), "open=2 claimed=0 blocked=0 closed=0 ready=2")
+
         run(["dep", issue2, issue1], self.repo)
 
         listing = run(["list"], self.repo).splitlines()
@@ -123,6 +127,7 @@ class GittocE2ETest(unittest.TestCase):
         self.assertTrue(claimed["path"].startswith("issues/claimed/"))
 
         run(["note", issue1, "Need to inspect logs first", "--actor", "tester"], self.repo)
+        run(["n", issue1, "Alias note", "--actor", "tester"], self.repo)
         run(["note", issue1, "Checked the failing endpoint", "--actor", "tester"], self.repo)
         run(["note", issue1, "Need to confirm the retry path", "--actor", "tester"], self.repo)
         run(["note", issue1, "Final note should force truncation", "--actor", "tester"], self.repo)
@@ -134,7 +139,7 @@ class GittocE2ETest(unittest.TestCase):
         self.assertNotIn("claimed tester: tester", notes_only)
 
         shown = json.loads(run(["show", issue1], self.repo))
-        self.assertEqual(shown["recent_notes_total"], 4)
+        self.assertEqual(shown["recent_notes_total"], 5)
         self.assertEqual(shown["recent_notes_shown"], 3)
         self.assertEqual(len(shown["recent_notes"]), 3)
         self.assertIn("history T-1 --notes-only", shown["recent_notes_hint"])
@@ -144,11 +149,21 @@ class GittocE2ETest(unittest.TestCase):
         self.assertEqual(resume_json["id"], issue1)
         self.assertEqual(len(resume_json["recent_notes"]), 3)
         self.assertEqual(resume_json["recent_notes"][-1]["kind"], "note")
-        self.assertEqual(resume_json["recent_notes_total"], 4)
+        self.assertEqual(resume_json["recent_notes_total"], 5)
+
+        resume_alias = json.loads(run(["r", issue1, "--format", "json"], self.repo))
+        self.assertEqual(resume_alias["id"], issue1)
+
+        shown_alias = json.loads(run(["sh", issue1], self.repo))
+        self.assertEqual(shown_alias["id"], issue1)
 
         resume_auto = run(["resume", "--owner", "tester"], self.repo)
         self.assertIn(f"{issue1} p1 [claimed] High priority task", resume_auto)
         self.assertIn("selection=claimed-by-owner", resume_auto)
+
+        claimed_alias = run(["c", issue2, "--owner", "tester"], self.repo)
+        self.assertIn(f"! {issue2} p4 [claimed] Lower priority task deps=1 owner=tester", claimed_alias)
+        run(["update", issue2, "--state", "open"], self.repo)
 
         run(["close", issue1], self.repo)
         ready = run(["ready"], self.repo)

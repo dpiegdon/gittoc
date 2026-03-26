@@ -81,6 +81,9 @@ like:
 git toc list
 git toc resume
 git toc resume --format json
+git toc l
+git toc s
+git toc r --format json
 ```
 
 ## Installation
