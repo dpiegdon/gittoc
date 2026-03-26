@@ -7,6 +7,11 @@ of the task-selection and persistence ideas that matter more in agent workflows:
 dependencies, ready work discovery, compact machine-readable output, and durable
 local context.
 
+## Repository
+
+- authoritative repository: https://codeberg.org/dpiegdon/gittoc
+- GitHub mirror: https://github.com/dpiegdon/gittoc
+
 ## What it is
 
 - tickets live in git, not in an external SaaS
