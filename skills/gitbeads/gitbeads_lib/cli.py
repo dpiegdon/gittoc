@@ -25,36 +25,6 @@ def select_fields(data: dict, fields: list[str] | None) -> dict:
     return selected
 
 
-def apply_issue_update(
-    tracker: Tracker,
-    issue_id: str,
-    *,
-    title: str | None = None,
-    body: str | None = None,
-    state: str | None = None,
-    owner: str | None = None,
-    labels: list[str] | None = None,
-    priority: int | None = None,
-    message: str | None = None,
-    event_kind: str = "updated",
-    event_text: str = "",
-    event_actor: str | None = None,
-):
-    return tracker.update_issue(
-        issue_id,
-        title=title,
-        body=body,
-        state=state,
-        owner=owner,
-        labels=labels,
-        priority=priority,
-        message=message,
-        event_kind=event_kind,
-        event_text=event_text,
-        event_actor=event_actor,
-    )
-
-
 def format_history_entry(entry: dict) -> str:
     return f"{entry['at']} {entry['kind']} {entry['actor']}: {entry['text']}"
 
@@ -201,8 +171,7 @@ def cmd_ready(args: argparse.Namespace) -> int:
 def cmd_claim(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     owner = args.owner or default_owner()
-    issue = apply_issue_update(
-        tracker,
+    issue = tracker.update_issue(
         args.issue_id,
         state="claimed",
         owner=owner,
@@ -246,8 +215,7 @@ def cmd_show(args: argparse.Namespace) -> int:
 def cmd_update(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     state = parse_state(args.state or args.status)
-    issue = apply_issue_update(
-        tracker,
+    issue = tracker.update_issue(
         args.issue_id,
         title=args.title,
         body=args.body,
