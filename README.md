@@ -19,11 +19,13 @@ Current storage model:
 - `list` now defaults to open issues; use `--all` or explicit `--state` filters for broader views
 - default ordering is by priority, then state, then issue id
 - the tracker branch is the source of truth; the main working tree stays clean
+- tracker remote wiring can be configured locally without enabling auto-sync yet
 
 Current useful commands:
 
 - `skills/gitbeads/gitbeads summary`
 - `skills/gitbeads/gitbeads refresh`
+- `skills/gitbeads/gitbeads remote --format json`
 - `skills/gitbeads/gitbeads ready --format compact`
 - `skills/gitbeads/gitbeads ready-one --format json`
 - `skills/gitbeads/gitbeads resume`

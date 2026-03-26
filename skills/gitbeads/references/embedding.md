@@ -80,6 +80,46 @@ For a normal repository, `tools/gitbeads` is the better default because it makes
 the CLI feel like project infrastructure rather than skill internals. The skill
 can then reference `tools/gitbeads`.
 
+## Optional repo-local git alias
+
+Another embedding idea is to install a local git alias into the target
+repository's `.git/config`, for example:
+
+```ini
+[alias]
+    gb = !tools/gitbeads
+```
+
+That would allow:
+
+```bash
+git gb list
+git gb next --claim
+```
+
+This is attractive because it makes `gitbeads` feel like a natural git extension
+without requiring any global shell setup.
+
+Pros:
+
+- much shorter and more memorable command surface for humans
+- stored in the repository-local git config, so it can be installed automatically per checkout
+- keeps the explicit visible tool path as the actual implementation target
+- reinforces the mental model that `gitbeads` is git-adjacent project infrastructure
+
+Cons:
+
+- checkout-specific rather than repository-content-specific, so a fresh clone does not get it unless install/init runs
+- not visible in normal tracked files, so the repo cannot rely on it as the only documented entrypoint
+- agents and automation should still assume the explicit tool path exists, not the alias
+- alias shape depends on where the executable is embedded, so install logic must write the correct path into `.git/config`
+
+Recommended stance:
+
+- support this as an optional convenience installed during `gitbeads init` or an explicit install step
+- keep `tools/gitbeads` or `skills/gitbeads/gitbeads` as the canonical documented path
+- document `git gb` as a local ergonomic layer, not as the only supported interface
+
 ## Recommended skill relationship
 
 The skill should be documentation and workflow guidance around the tool, not the
@@ -166,4 +206,3 @@ In short:
 - hidden state
 
 That gives the cleanest operator experience for both humans and agents.
-

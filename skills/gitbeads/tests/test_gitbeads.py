@@ -59,8 +59,23 @@ class GitbeadsE2ETest(unittest.TestCase):
         self.tempdir.cleanup()
 
     def test_full_feature_set(self) -> None:
+        remote_repo = Path(self.tempdir.name) / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+
         init_out = run(["init"], self.repo)
         self.assertIn("initialized tracker branch", init_out)
+        remote_status = json.loads(run(["remote", "--format", "json"], self.repo))
+        self.assertEqual(remote_status["configured_remote"], "origin")
+        self.assertEqual(remote_status["effective_remote"], "origin")
+        self.assertEqual(remote_status["branch_config_remote"], "origin")
+        self.assertEqual(remote_status["branch_config_merge"], "refs/heads/gitbeads")
+        self.assertFalse(remote_status["remote_branch_exists"])
 
         issue1 = run(
             ["new", "High priority task", "--body", "finish core work", "--priority", "1"],
@@ -168,6 +183,9 @@ class GitbeadsE2ETest(unittest.TestCase):
             check=True,
         ).stdout.strip()
         self.assertEqual(tracker_status, "")
+
+        remote_status = json.loads(run(["remote", "--format", "json"], self.repo))
+        self.assertEqual(remote_status["configured_remote"], "origin")
 
         worktree_entry = subprocess.run(
             ["git", "worktree", "list"],

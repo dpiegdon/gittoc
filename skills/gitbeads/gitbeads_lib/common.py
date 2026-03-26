@@ -89,6 +89,50 @@ def branch_exists(root: Path, branch: str) -> bool:
     return proc.returncode == 0
 
 
+def list_remotes(root: Path) -> list[str]:
+    proc = run_git(["remote"], cwd=root, check=False)
+    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
+def current_branch_upstream(root: Path) -> str:
+    proc = run_git(
+        ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
+        cwd=root,
+        check=False,
+    )
+    return proc.stdout.strip() if proc.returncode == 0 else ""
+
+
+def infer_remote(root: Path) -> str:
+    upstream = current_branch_upstream(root)
+    if "/" in upstream:
+        return upstream.split("/", 1)[0]
+    remotes = list_remotes(root)
+    if "origin" in remotes:
+        return "origin"
+    if len(remotes) == 1:
+        return remotes[0]
+    return ""
+
+
+def local_config_get(root: Path, key: str) -> str:
+    proc = run_git(["config", "--local", "--get", key], cwd=root, check=False)
+    return proc.stdout.strip() if proc.returncode == 0 else ""
+
+
+def local_config_set(root: Path, key: str, value: str) -> None:
+    run_git(["config", "--local", key, value], cwd=root)
+
+
+def remote_branch_exists(root: Path, remote: str, branch: str) -> bool:
+    proc = run_git(
+        ["show-ref", "--verify", "--quiet", f"refs/remotes/{remote}/{branch}"],
+        cwd=root,
+        check=False,
+    )
+    return proc.returncode == 0
+
+
 def current_branch(root: Path) -> str:
     return run_git(["branch", "--show-current"], cwd=root).stdout.strip()
 
@@ -103,4 +147,3 @@ def is_worktree(path: Path) -> bool:
 
 def has_legacy_hidden_clone(path: Path) -> bool:
     return path.exists() and (path / ".git").is_dir()
-

@@ -79,6 +79,10 @@ def print_resume_text(data: dict) -> None:
 
 def cmd_init(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
+    if not tracker.configured_remote():
+        inferred = tracker.effective_remote()
+        if inferred:
+            tracker.configure_remote(inferred)
     print(f"initialized tracker branch {TRACKER_BRANCH} at {tracker.checkout}")
     return 0
 
@@ -99,6 +103,32 @@ def cmd_refresh(args: argparse.Namespace) -> int:
         print(
             f"head={head} open={counts['open']} claimed={counts['claimed']} "
             f"blocked={counts['blocked']} closed={counts['closed']} ready={counts['ready']}"
+        )
+    return 0
+
+
+def cmd_remote(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    if args.set:
+        status = tracker.configure_remote(args.set)
+    elif args.auto:
+        remote = tracker.effective_remote()
+        if not remote:
+            raise SystemExit("no remote could be inferred")
+        status = tracker.configure_remote(remote)
+    else:
+        status = tracker.remote_status()
+    if args.format == "json":
+        print(json.dumps(status, indent=2, sort_keys=True))
+    else:
+        remotes = ", ".join(status["remotes"]) if status["remotes"] else "-"
+        print(
+            f"remotes={remotes} inferred={status['inferred_remote'] or '-'} "
+            f"configured={status['configured_remote'] or '-'} "
+            f"effective={status['effective_remote'] or '-'} "
+            f"branch_remote={status['branch_config_remote'] or '-'} "
+            f"branch_merge={status['branch_config_merge'] or '-'} "
+            f"remote_branch_exists={'yes' if status['remote_branch_exists'] else 'no'}"
         )
     return 0
 
@@ -354,6 +384,12 @@ def build_parser() -> argparse.ArgumentParser:
     refresh_parser = sub.add_parser("refresh", help="reload tracker state after conflicts")
     refresh_parser.add_argument("--format", choices=("text", "json"), default="text")
     refresh_parser.set_defaults(func=cmd_refresh)
+
+    remote_parser = sub.add_parser("remote", help="show or configure tracker remote wiring")
+    remote_parser.add_argument("--set")
+    remote_parser.add_argument("--auto", action="store_true")
+    remote_parser.add_argument("--format", choices=("text", "json"), default="text")
+    remote_parser.set_defaults(func=cmd_remote)
 
     new_parser = sub.add_parser("new", help="create an issue")
     new_parser.add_argument("title")

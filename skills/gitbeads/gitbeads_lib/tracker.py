@@ -15,13 +15,18 @@ from .common import (
     TRACKER_BRANCH,
     branch_exists,
     current_branch,
+    infer_remote,
     default_owner,
     has_legacy_hidden_clone,
     is_worktree,
     issue_number,
+    list_remotes,
+    local_config_get,
+    local_config_set,
     now_utc,
     parse_state,
     repo_root,
+    remote_branch_exists,
     run_git,
     validate_issue_id,
     validate_priority,
@@ -111,6 +116,39 @@ class Tracker:
     def refresh(self) -> str:
         self.base_head = self.head()
         return self.base_head
+
+    def configured_remote(self) -> str:
+        return local_config_get(self.repo, "gitbeads.remote")
+
+    def effective_remote(self) -> str:
+        return self.configured_remote() or infer_remote(self.repo)
+
+    def remote_status(self) -> dict[str, object]:
+        configured = self.configured_remote()
+        inferred = infer_remote(self.repo)
+        effective = configured or inferred
+        branch_remote = local_config_get(self.repo, f"branch.{TRACKER_BRANCH}.remote")
+        branch_merge = local_config_get(self.repo, f"branch.{TRACKER_BRANCH}.merge")
+        return {
+            "remotes": list_remotes(self.repo),
+            "inferred_remote": inferred,
+            "configured_remote": configured,
+            "effective_remote": effective,
+            "tracker_branch": TRACKER_BRANCH,
+            "branch_config_remote": branch_remote,
+            "branch_config_merge": branch_merge,
+            "remote_branch_exists": bool(
+                effective and remote_branch_exists(self.repo, effective, TRACKER_BRANCH)
+            ),
+        }
+
+    def configure_remote(self, remote: str) -> dict[str, object]:
+        if remote not in list_remotes(self.repo):
+            raise SystemExit(f"unknown remote: {remote}")
+        local_config_set(self.repo, "gitbeads.remote", remote)
+        local_config_set(self.repo, f"branch.{TRACKER_BRANCH}.remote", remote)
+        local_config_set(self.repo, f"branch.{TRACKER_BRANCH}.merge", f"refs/heads/{TRACKER_BRANCH}")
+        return self.remote_status()
 
     def ensure_not_stale(self) -> None:
         current = self.head()
