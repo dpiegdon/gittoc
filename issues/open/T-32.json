@@ -1,0 +1,11 @@
+{
+  "body": "Document the recommended installation/embedding path for host repositories and decide whether to provide a small install script for placing the tool and optional git alias into another repo.",
+  "created_at": "2026-03-26T20:53:53+00:00",
+  "deps": [],
+  "id": "T-32",
+  "labels": [],
+  "owner": "",
+  "priority": 2,
+  "title": "Add installation path or install script",
+  "updated_at": "2026-03-26T20:53:53+00:00"
+}
