@@ -1,2 +1,3 @@
 {"actor": "codex", "at": "2026-03-26T20:54:01+00:00", "kind": "created", "text": "Set version and create first public release"}
 {"actor": "codex", "at": "2026-03-26T21:30:07+00:00", "kind": "note", "text": "Publishing will be done from the maintainer's own machine, not from this sandboxed environment, because broad SSH key access is undesirable here."}
+{"actor": "codex", "at": "2026-03-26T22:13:45+00:00", "kind": "closed", "text": ""}
