@@ -1,1 +1,2 @@
 {"actor": "codex", "at": "2026-03-26T21:56:25+00:00", "kind": "created", "text": "Add explicit push/pull workflow for the gittoc branch"}
+{"actor": "codex", "at": "2026-03-26T21:59:27+00:00", "kind": "note", "text": "Refine scope: prefer a simple config such as gittoc.sync.mode = off | pull | pull-push. The tracking branch itself should stay implicit and not be a normal user concern; remote/branch plumbing should be handled by the tool or the embedding supervisor."}
