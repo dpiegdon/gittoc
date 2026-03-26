@@ -151,6 +151,26 @@ def cmd_remote(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_pull(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    status = tracker.pull_remote(args.remote)
+    if args.format == "json":
+        print(json.dumps(status, indent=2, sort_keys=True))
+    else:
+        print(f"pulled {TRACKER_BRANCH} from {status['remote']} to {status['head']}")
+    return 0
+
+
+def cmd_push(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    status = tracker.push_remote(args.remote)
+    if args.format == "json":
+        print(json.dumps(status, indent=2, sort_keys=True))
+    else:
+        print(f"pushed {TRACKER_BRANCH} to {status['remote']} at {status['head']}")
+    return 0
+
+
 def cmd_new(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     issue = tracker.create_issue(args.title, args.body or "", args.label or [], args.priority)
@@ -352,6 +372,16 @@ def build_parser() -> argparse.ArgumentParser:
     remote_parser.add_argument("--auto", action="store_true")
     remote_parser.add_argument("--format", choices=("text", "json"), default="text")
     remote_parser.set_defaults(func=cmd_remote)
+
+    pull_parser = sub.add_parser("pull", help="fetch and merge the tracker branch from a remote")
+    pull_parser.add_argument("remote")
+    pull_parser.add_argument("--format", choices=("text", "json"), default="text")
+    pull_parser.set_defaults(func=cmd_pull)
+
+    push_parser = sub.add_parser("push", help="push the tracker branch to a remote")
+    push_parser.add_argument("remote")
+    push_parser.add_argument("--format", choices=("text", "json"), default="text")
+    push_parser.set_defaults(func=cmd_push)
 
     new_parser = sub.add_parser("new", help="create an issue")
     new_parser.add_argument("title")

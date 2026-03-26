@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import shutil
 from dataclasses import replace
 from pathlib import Path
@@ -135,6 +136,38 @@ class Tracker:
         local_config_set(self.repo, f"branch.{TRACKER_BRANCH}.remote", remote)
         local_config_set(self.repo, f"branch.{TRACKER_BRANCH}.merge", f"refs/heads/{TRACKER_BRANCH}")
         return self.remote_status()
+
+    def _validate_remote(self, remote: str) -> None:
+        if remote not in list_remotes(self.repo):
+            raise SystemExit(f"unknown remote: {remote}")
+
+    def pull_remote(self, remote: str) -> dict[str, str]:
+        self._validate_remote(remote)
+        run_git(["fetch", remote, TRACKER_BRANCH], cwd=self.repo)
+        if not remote_branch_exists(self.repo, remote, TRACKER_BRANCH):
+            raise SystemExit(f"remote branch not found: {remote}/{TRACKER_BRANCH}")
+        proc = run_git(
+            ["merge", "--no-edit", f"{remote}/{TRACKER_BRANCH}"],
+            cwd=self.checkout,
+            check=False,
+        )
+        if proc.returncode != 0:
+            raise SystemExit(
+                f"pull failed while merging {remote}/{TRACKER_BRANCH}; resolve in {self.checkout} and rerun refresh"
+            )
+        self.base_head = self.head()
+        return {"action": "pull", "remote": remote, "head": self.base_head}
+
+    def push_remote(self, remote: str) -> dict[str, str]:
+        self._validate_remote(remote)
+        try:
+            run_git(["push", remote, f"{TRACKER_BRANCH}:{TRACKER_BRANCH}"], cwd=self.repo)
+        except subprocess.CalledProcessError as exc:
+            raise SystemExit(
+                f"push failed for {remote}/{TRACKER_BRANCH}: {exc.stderr.strip() or exc.stdout.strip()}"
+            ) from exc
+        self.base_head = self.head()
+        return {"action": "push", "remote": remote, "head": self.base_head}
 
     def ensure_not_stale(self) -> None:
         current = self.head()

@@ -54,6 +54,8 @@ Core commands:
 - `refresh`: reload tracker state after conflict errors and print current summary
 - `remote --format json`: inspect inferred and configured tracker remote wiring
 - `remote --set origin`: configure the tracker branch to use a specific remote
+- `pull origin`: fetch and merge the tracker branch from a remote
+- `push origin`: push the tracker branch to a remote
 - `new "Title" --body "..." --priority 2`: create a ticket
 - `list`: list open tickets by default, ordered by priority
 - `l`: short alias for `list`
@@ -129,6 +131,7 @@ If the script is missing or broken, callers can still inspect the hidden worktre
 - Mutating commands use optimistic concurrency checks and will refuse to commit if the tracker changed mid-command.
 - When that happens, run `skills/gittoc/gittoc refresh` and retry against the new tracker head.
 - `init` will auto-configure `gittoc.remote` from the repo's inferred main remote when one is available.
+- `pull <remote>` fetches and attempts a normal merge of `remote/gittoc`; merge conflicts are left for explicit resolution in `.git/gittoc`.
 - `resume` without an id prefers claimed tickets owned by the current user, then the highest-priority ready issue, then the highest-priority open issue.
 - `resume` includes recent notes by default so it can replace most one-ticket “what now?” lookups.
 - In some sandboxed agent environments, writes under `.git/gittoc/` may require explicit approval even though this is not normally a problem in a local shell.

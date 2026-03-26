@@ -72,6 +72,8 @@ skills/gittoc/gittoc show T-27 --field id --field title --field priority
 skills/gittoc/gittoc note T-27 "found a race during ticket creation"
 skills/gittoc/gittoc history T-27 --notes-only --limit 3
 skills/gittoc/gittoc remote --format json
+skills/gittoc/gittoc pull origin
+skills/gittoc/gittoc push origin
 ```
 
 If you have a local git alias such as `git toc`, the same workflow can also look

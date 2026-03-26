@@ -265,6 +265,33 @@ class GittocE2ETest(unittest.TestCase):
         self.assertEqual(issue_data["title"], "Remote tracker issue")
         self.assertTrue(issue_data["path"].startswith("issues/open/"))
 
+    def test_pull_and_push_tracker_branch(self) -> None:
+        remote_repo = Path(self.tempdir.name) / "sync.git"
+        subprocess.run(["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True)
+
+        source = Path(self.tempdir.name) / "source-sync"
+        shutil.copytree(self.repo, source)
+        subprocess.run(["git", "remote", "add", "origin", str(remote_repo)], cwd=source, check=True, capture_output=True)
+        run(["init"], source)
+        subprocess.run(["git", "push", "-u", "origin", "main"], cwd=source, check=True, capture_output=True)
+        push_out = json.loads(run(["push", "origin", "--format", "json"], source))
+        self.assertEqual(push_out["action"], "push")
+        self.assertEqual(push_out["remote"], "origin")
+
+        clone = Path(self.tempdir.name) / "clone-sync"
+        subprocess.run(["git", "clone", str(remote_repo), str(clone)], check=True, capture_output=True)
+        run(["summary"], clone)
+
+        new_issue = run(["new", "Pulled tracker issue"], source)
+        self.assertEqual(new_issue, "T-1")
+        run(["push", "origin"], source)
+
+        pull_out = json.loads(run(["pull", "origin", "--format", "json"], clone))
+        self.assertEqual(pull_out["action"], "pull")
+        self.assertEqual(pull_out["remote"], "origin")
+        pulled = json.loads(run(["show", "T-1"], clone))
+        self.assertEqual(pulled["title"], "Pulled tracker issue")
+
 
 if __name__ == "__main__":
     unittest.main()
