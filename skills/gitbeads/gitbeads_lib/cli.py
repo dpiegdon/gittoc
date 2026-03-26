@@ -14,6 +14,8 @@ from .common import (
 from .render import print_issues
 from .tracker import Tracker, StaleTrackerError
 
+SHOW_NOTES_LIMIT = 3
+
 
 def select_fields(data: dict, fields: list[str] | None) -> dict:
     if not fields:
@@ -205,6 +207,16 @@ def cmd_show(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     issue, path = tracker.load_issue(args.issue_id)
     data = issue.to_display(path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id))
+    recent_notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=SHOW_NOTES_LIMIT)
+    recent_notes_total = tracker.note_count(issue.issue_id)
+    data["recent_notes"] = recent_notes
+    data["recent_notes_shown"] = len(recent_notes)
+    data["recent_notes_total"] = recent_notes_total
+    if recent_notes_total > len(recent_notes):
+        data["recent_notes_hint"] = (
+            f"showing {len(recent_notes)} of {recent_notes_total} notes; "
+            f"use `history {args.issue_id} --notes-only` for more"
+        )
     if args.history:
         data["history"] = tracker.event_entries(issue.issue_id)
     data = select_fields(data, args.field)

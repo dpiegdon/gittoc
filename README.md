@@ -61,6 +61,7 @@ skills/gitbeads/gitbeads list
 skills/gitbeads/gitbeads ready
 skills/gitbeads/gitbeads resume
 skills/gitbeads/gitbeads resume --format json
+skills/gitbeads/gitbeads show GB-27
 skills/gitbeads/gitbeads show GB-27 --field id --field title --field priority
 skills/gitbeads/gitbeads note GB-27 "found a race during ticket creation"
 skills/gitbeads/gitbeads history GB-27 --notes-only --limit 3

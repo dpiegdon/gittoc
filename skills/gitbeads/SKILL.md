@@ -65,7 +65,8 @@ Core commands:
 - `resume`: recover the most relevant current ticket context
 - `resume GB-1 --format json`: recover a specific ticket as structured data
 - `claim GB-1 --owner alice`: claim a specific ticket
-- `show GB-1 --history`: print one ticket as JSON, optionally with event history
+- `show GB-1`: print one ticket as JSON with the latest recent notes
+- `show GB-1 --history`: print one ticket as JSON with full event history
 - `show GB-1 --field id --field title --field priority`: request a minimal JSON field subset
 - `update GB-1 --state blocked --priority 4`
 - `dep GB-2 GB-1`: make `GB-2` depend on `GB-1`
