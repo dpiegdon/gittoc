@@ -1,0 +1,11 @@
+{
+  "body": "Use an executable entrypoint under skills/gittoc so the command is shorter and shipped with the skill.",
+  "created_at": "2026-03-25T22:14:26+00:00",
+  "deps": [],
+  "id": "T-5",
+  "labels": [],
+  "owner": "",
+  "priority": 5,
+  "title": "Move CLI next to the skill",
+  "updated_at": "2026-03-25T22:39:50+00:00"
+}

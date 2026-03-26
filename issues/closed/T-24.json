@@ -1,0 +1,11 @@
+{
+  "body": "The current optimistic locking check prevents silent overwrites, but an agent still needs a clean recovery path. Add an explicit refresh or retry workflow that helps an agent detect tracker drift, reload state, and continue safely after conflicts.",
+  "created_at": "2026-03-25T23:14:43+00:00",
+  "deps": [],
+  "id": "T-24",
+  "labels": [],
+  "owner": "",
+  "priority": 1,
+  "title": "Add explicit conflict recovery workflow for optimistic locking",
+  "updated_at": "2026-03-25T23:32:18+00:00"
+}

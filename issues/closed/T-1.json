@@ -1,0 +1,11 @@
+{
+  "body": "Expose one command that prints or claims the first ready issue so Codex can start work without scanning the full list.",
+  "created_at": "2026-03-25T22:07:28+00:00",
+  "deps": [],
+  "id": "T-1",
+  "labels": [],
+  "owner": "codex",
+  "priority": 5,
+  "title": "Add next command for ready-task selection",
+  "updated_at": "2026-03-25T22:39:41+00:00"
+}

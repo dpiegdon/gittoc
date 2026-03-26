@@ -1,0 +1,11 @@
+{
+  "body": "Replace the hidden shared clone with a hidden git worktree so the dedicated tracker branch can be read and updated without fetch/pull sync logic.",
+  "created_at": "2026-03-25T22:28:38+00:00",
+  "deps": [],
+  "id": "T-7",
+  "labels": [],
+  "owner": "",
+  "priority": 5,
+  "title": "Use hidden git worktree for tracker checkout",
+  "updated_at": "2026-03-25T22:39:59+00:00"
+}
