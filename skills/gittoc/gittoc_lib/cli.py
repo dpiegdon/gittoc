@@ -203,10 +203,10 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 
 def cmd_ready(args: argparse.Namespace) -> int:
-    ready_args = argparse.Namespace(
-        all=False, state=None, ready_only=True, format=args.format
-    )
-    return cmd_list(ready_args)
+    tracker = Tracker.open()
+    issues = tracker.ready_issues()
+    print_issues(issues, tracker, args.format)
+    return 0
 
 
 def cmd_claim(args: argparse.Namespace) -> int:
@@ -269,7 +269,7 @@ def cmd_show(args: argparse.Namespace) -> int:
 
 def cmd_update(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
-    state = parse_state(args.state or args.status)
+    state = parse_state(args.state)
     issue = tracker.update_issue(
         args.issue_id,
         title=args.title,
@@ -447,7 +447,6 @@ def build_parser() -> argparse.ArgumentParser:
     update_parser.add_argument("-t", "--title")
     update_parser.add_argument("-b", "--body")
     update_parser.add_argument("--state", choices=STATE_ORDER)
-    update_parser.add_argument("--status", choices=STATE_ORDER)
     update_parser.add_argument("--owner")
     update_parser.add_argument("-l", "--label", action="append")
     update_parser.add_argument("-p", "--priority", type=int)

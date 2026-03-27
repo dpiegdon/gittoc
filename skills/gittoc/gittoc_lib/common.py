@@ -23,7 +23,7 @@ def now_utc() -> str:
 
 
 def default_owner() -> str:
-    for name in ("GITTOC_OWNER", "GITBEADS_OWNER", "USER", "LOGNAME"):
+    for name in ("GITTOC_OWNER", "USER", "LOGNAME"):
         value = os.environ.get(name, "").strip()
         if value:
             return value

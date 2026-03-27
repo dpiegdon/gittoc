@@ -33,7 +33,7 @@ from .common import (
 from .models import Issue
 
 
-class StaleTrackerError(SystemExit):
+class StaleTrackerError(Exception):
     pass
 
 
