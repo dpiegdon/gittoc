@@ -198,6 +198,9 @@ def cmd_list(args: argparse.Namespace) -> int:
     issues = tracker.list_issues(states)
     if args.ready_only:
         issues = [issue for issue in issues if tracker.ready(issue)]
+    if args.label:
+        required = set(args.label)
+        issues = [issue for issue in issues if required.issubset(issue.labels)]
     print_issues(issues, tracker, args.format)
     return 0
 
@@ -421,6 +424,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     list_parser = sub.add_parser("list", help="list issues ordered by priority")
     list_parser.add_argument("-s", "--state", action="append", choices=STATE_ORDER)
+    list_parser.add_argument("-l", "--label", action="append")
     list_parser.add_argument("-a", "--all", action="store_true")
     list_parser.add_argument("--ready-only", action="store_true")
     add_format_argument(list_parser)
