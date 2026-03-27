@@ -6,13 +6,13 @@ import json
 from .common import (
     DEFAULT_PRIORITY,
     STATE_ORDER,
+    TRACKER_BRANCH,
     default_owner,
     parse_state,
-    TRACKER_BRANCH,
     run_git,
 )
 from .render import print_issues
-from .tracker import Tracker, StaleTrackerError
+from .tracker import StaleTrackerError, Tracker
 
 SHOW_NOTES_LIMIT = 3
 COMMAND_ALIASES = {
@@ -52,13 +52,13 @@ def resume_payload(
     events_limit: int,
     reason: str | None = None,
 ) -> dict:
-    data = issue.to_display(path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id))
+    data = issue.to_display(
+        path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id)
+    )
     data["ready"] = tracker.ready(issue)
     if reason:
         data["selection"] = reason
-    notes = tracker.filtered_events(
-        issue.issue_id, kinds={"note"}, limit=notes_limit
-    )
+    notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=notes_limit)
     note_count = tracker.note_count(issue.issue_id)
     data["recent_notes"] = notes
     data["recent_notes_shown"] = len(notes)
@@ -76,7 +76,9 @@ def print_resume_text(data: dict) -> None:
     owner = f" owner={data['owner']}" if data["owner"] else ""
     deps = f" deps={len(data['deps'])}" if data["deps"] else ""
     selection = f" selection={data['selection']}" if data.get("selection") else ""
-    print(f"{marker} {data['id']} p{data['priority']} [{data['state']}] {data['title']}{deps}{owner}{selection}")
+    print(
+        f"{marker} {data['id']} p{data['priority']} [{data['state']}] {data['title']}{deps}{owner}{selection}"
+    )
     if data["body"]:
         print()
         print(data["body"])
@@ -177,7 +179,9 @@ def cmd_push(args: argparse.Namespace) -> int:
 
 def cmd_new(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
-    issue = tracker.create_issue(args.title, args.body or "", args.label or [], args.priority)
+    issue = tracker.create_issue(
+        args.title, args.body or "", args.label or [], args.priority
+    )
     print(issue.issue_id)
     return 0
 
@@ -198,7 +202,9 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 
 def cmd_ready(args: argparse.Namespace) -> int:
-    ready_args = argparse.Namespace(all=False, state=None, ready_only=True, format=args.format)
+    ready_args = argparse.Namespace(
+        all=False, state=None, ready_only=True, format=args.format
+    )
     return cmd_list(ready_args)
 
 
@@ -238,8 +244,12 @@ def cmd_summary(args: argparse.Namespace) -> int:
 def cmd_show(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     issue, path = tracker.load_issue(args.issue_id)
-    data = issue.to_display(path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id))
-    recent_notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=SHOW_NOTES_LIMIT)
+    data = issue.to_display(
+        path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id)
+    )
+    recent_notes = tracker.filtered_events(
+        issue.issue_id, kinds={"note"}, limit=SHOW_NOTES_LIMIT
+    )
     recent_notes_total = tracker.note_count(issue.issue_id)
     data["recent_notes"] = recent_notes
     data["recent_notes_shown"] = len(recent_notes)
@@ -296,7 +306,9 @@ def cmd_log(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     _, path = tracker.load_issue(args.issue_id)
     rel = path.relative_to(tracker.checkout)
-    out = run_git(["log", "--follow", "--oneline", "--", str(rel)], cwd=tracker.checkout)
+    out = run_git(
+        ["log", "--follow", "--oneline", "--", str(rel)], cwd=tracker.checkout
+    )
     print(out.stdout.strip())
     return 0
 
@@ -313,7 +325,9 @@ def cmd_history(args: argparse.Namespace) -> int:
     kinds = set(args.kind or [])
     if args.notes_only:
         kinds.add("note")
-    entries = tracker.filtered_events(args.issue_id, kinds=kinds or None, limit=args.limit)
+    entries = tracker.filtered_events(
+        args.issue_id, kinds=kinds or None, limit=args.limit
+    )
     if args.format == "json":
         print(json.dumps(entries, indent=2, sort_keys=True))
         return 0
@@ -352,7 +366,9 @@ def cmd_resume(args: argparse.Namespace) -> int:
     return 0
 
 
-def add_format_argument(parser: argparse.ArgumentParser, default: str = "normal") -> None:
+def add_format_argument(
+    parser: argparse.ArgumentParser, default: str = "normal"
+) -> None:
     parser.add_argument(
         "--format",
         choices=("compact", "normal", "verbose", "json"),
@@ -367,17 +383,23 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser = sub.add_parser("init", help="initialize tracker worktree")
     init_parser.set_defaults(func=cmd_init)
 
-    refresh_parser = sub.add_parser("refresh", help="reload tracker state after conflicts")
+    refresh_parser = sub.add_parser(
+        "refresh", help="reload tracker state after conflicts"
+    )
     refresh_parser.add_argument("--format", choices=("text", "json"), default="text")
     refresh_parser.set_defaults(func=cmd_refresh)
 
-    remote_parser = sub.add_parser("remote", help="show or configure tracker remote wiring")
+    remote_parser = sub.add_parser(
+        "remote", help="show or configure tracker remote wiring"
+    )
     remote_parser.add_argument("--set")
     remote_parser.add_argument("--auto", action="store_true")
     remote_parser.add_argument("--format", choices=("text", "json"), default="text")
     remote_parser.set_defaults(func=cmd_remote)
 
-    pull_parser = sub.add_parser("pull", help="fetch and merge the tracker branch from a remote")
+    pull_parser = sub.add_parser(
+        "pull", help="fetch and merge the tracker branch from a remote"
+    )
     pull_parser.add_argument("remote")
     pull_parser.add_argument("--format", choices=("text", "json"), default="text")
     pull_parser.set_defaults(func=cmd_pull)

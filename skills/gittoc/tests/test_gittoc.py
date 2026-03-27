@@ -10,7 +10,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[3]
 CLI = ROOT / "skills" / "gittoc" / "gittoc"
 
@@ -71,7 +70,9 @@ class GittocE2ETest(unittest.TestCase):
 
     def test_full_feature_set(self) -> None:
         remote_repo = Path(self.tempdir.name) / "remote.git"
-        subprocess.run(["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
         subprocess.run(
             ["git", "remote", "add", "origin", str(remote_repo)],
             cwd=self.repo,
@@ -89,11 +90,25 @@ class GittocE2ETest(unittest.TestCase):
         self.assertFalse(remote_status["remote_branch_exists"])
 
         issue1 = run(
-            ["new", "High priority task", "--body", "finish core work", "--priority", "1"],
+            [
+                "new",
+                "High priority task",
+                "--body",
+                "finish core work",
+                "--priority",
+                "1",
+            ],
             self.repo,
         )
         issue2 = run(
-            ["new", "Lower priority task", "--body", "depends on first", "--priority", "4"],
+            [
+                "new",
+                "Lower priority task",
+                "--body",
+                "depends on first",
+                "--priority",
+                "4",
+            ],
             self.repo,
         )
         self.assertEqual(issue1, "T-1")
@@ -101,7 +116,9 @@ class GittocE2ETest(unittest.TestCase):
 
         alias_list = run(["l", "--format", "compact"], self.repo).splitlines()
         self.assertEqual(alias_list[0], f"{issue1} p1 open High priority task")
-        self.assertEqual(run(["s"], self.repo), "open=2 claimed=0 blocked=0 closed=0 ready=2")
+        self.assertEqual(
+            run(["s"], self.repo), "open=2 claimed=0 blocked=0 closed=0 ready=2"
+        )
 
         run(["dep", issue2, issue1], self.repo)
 
@@ -118,9 +135,23 @@ class GittocE2ETest(unittest.TestCase):
         self.assertEqual(resume_initial["priority"], 1)
 
         selected = json.loads(
-            run(["show", issue1, "--field", "id", "--field", "title", "--field", "priority"], self.repo)
+            run(
+                [
+                    "show",
+                    issue1,
+                    "--field",
+                    "id",
+                    "--field",
+                    "title",
+                    "--field",
+                    "priority",
+                ],
+                self.repo,
+            )
         )
-        self.assertEqual(selected, {"id": issue1, "priority": 1, "title": "High priority task"})
+        self.assertEqual(
+            selected, {"id": issue1, "priority": 1, "title": "High priority task"}
+        )
 
         compact = run(["list", "--format", "compact"], self.repo).splitlines()
         self.assertEqual(compact[0], f"{issue1} p1 open High priority task")
@@ -130,18 +161,32 @@ class GittocE2ETest(unittest.TestCase):
         self.assertIn("deps: -", verbose)
 
         claimed_out = run(["claim", issue1, "--owner", "tester"], self.repo)
-        self.assertIn(f"! {issue1} p1 [claimed] High priority task owner=tester", claimed_out)
+        self.assertIn(
+            f"! {issue1} p1 [claimed] High priority task owner=tester", claimed_out
+        )
 
         claimed = json.loads(run(["show", issue1], self.repo))
         self.assertEqual(claimed["state"], "claimed")
         self.assertEqual(claimed["priority"], 1)
         self.assertTrue(claimed["path"].startswith("issues/claimed/"))
 
-        run(["note", issue1, "Need to inspect logs first", "--actor", "tester"], self.repo)
+        run(
+            ["note", issue1, "Need to inspect logs first", "--actor", "tester"],
+            self.repo,
+        )
         run(["n", issue1, "Alias note", "--actor", "tester"], self.repo)
-        run(["note", issue1, "Checked the failing endpoint", "--actor", "tester"], self.repo)
-        run(["note", issue1, "Need to confirm the retry path", "--actor", "tester"], self.repo)
-        run(["note", issue1, "Final note should force truncation", "--actor", "tester"], self.repo)
+        run(
+            ["note", issue1, "Checked the failing endpoint", "--actor", "tester"],
+            self.repo,
+        )
+        run(
+            ["note", issue1, "Need to confirm the retry path", "--actor", "tester"],
+            self.repo,
+        )
+        run(
+            ["note", issue1, "Final note should force truncation", "--actor", "tester"],
+            self.repo,
+        )
         history = run(["history", issue1], self.repo)
         self.assertIn("claimed tester: tester", history)
         self.assertIn("note tester: Need to inspect logs first", history)
@@ -154,7 +199,9 @@ class GittocE2ETest(unittest.TestCase):
         self.assertEqual(shown["recent_notes_shown"], 3)
         self.assertEqual(len(shown["recent_notes"]), 3)
         self.assertIn("history T-1 --notes-only", shown["recent_notes_hint"])
-        self.assertEqual(shown["recent_notes"][-1]["text"], "Final note should force truncation")
+        self.assertEqual(
+            shown["recent_notes"][-1]["text"], "Final note should force truncation"
+        )
 
         resume_json = json.loads(run(["resume", issue1, "--format", "json"], self.repo))
         self.assertEqual(resume_json["id"], issue1)
@@ -174,12 +221,17 @@ class GittocE2ETest(unittest.TestCase):
 
         run(["close", issue1], self.repo)
         claimed_alias = run(["c", issue2, "--owner", "tester"], self.repo)
-        self.assertIn(f"! {issue2} p4 [claimed] Lower priority task deps=1 owner=tester", claimed_alias)
+        self.assertIn(
+            f"! {issue2} p4 [claimed] Lower priority task deps=1 owner=tester",
+            claimed_alias,
+        )
         run(["update", issue2, "--state", "open"], self.repo)
         with self.assertRaises(subprocess.CalledProcessError):
             run(["claim", issue1, "--owner", "tester"], self.repo)
         with self.assertRaises(subprocess.CalledProcessError):
-            run(["update", issue1, "--state", "claimed", "--owner", "tester"], self.repo)
+            run(
+                ["update", issue1, "--state", "claimed", "--owner", "tester"], self.repo
+            )
         ready = run(["ready"], self.repo)
         self.assertIn(issue2, ready)
 
@@ -188,7 +240,9 @@ class GittocE2ETest(unittest.TestCase):
         with self.assertRaises(subprocess.CalledProcessError):
             run(["claim", issue3, "--owner", "tester"], self.repo)
         with self.assertRaises(subprocess.CalledProcessError):
-            run(["update", issue3, "--state", "claimed", "--owner", "tester"], self.repo)
+            run(
+                ["update", issue3, "--state", "claimed", "--owner", "tester"], self.repo
+            )
 
         resume_ready = json.loads(run(["resume", "--format", "json"], self.repo))
         self.assertEqual(resume_ready["id"], issue2)
@@ -202,7 +256,9 @@ class GittocE2ETest(unittest.TestCase):
         ready = run(["ready"], self.repo)
         self.assertIn(f"> {issue2} p2 [open] Lower priority task deps=1", ready)
 
-        run(["update", issue2, "--title", "Updated title", "--priority", "1"], self.repo)
+        run(
+            ["update", issue2, "--title", "Updated title", "--priority", "1"], self.repo
+        )
         updated = json.loads(run(["show", issue2, "--history"], self.repo))
         self.assertEqual(updated["title"], "Updated title")
         self.assertEqual(updated["priority"], 1)
@@ -262,7 +318,9 @@ class GittocE2ETest(unittest.TestCase):
             capture_output=True,
         )
         (source / "README.md").write_text("source repo\n", encoding="utf-8")
-        subprocess.run(["git", "add", "README.md"], cwd=source, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "add", "README.md"], cwd=source, check=True, capture_output=True
+        )
         subprocess.run(
             ["git", "commit", "-m", "Initial commit"],
             cwd=source,
@@ -275,7 +333,9 @@ class GittocE2ETest(unittest.TestCase):
         self.assertEqual(issue, "T-1")
 
         remote_repo = Path(self.tempdir.name) / "remote-clone.git"
-        subprocess.run(["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
         subprocess.run(
             ["git", "remote", "add", "origin", str(remote_repo)],
             cwd=source,
@@ -288,10 +348,19 @@ class GittocE2ETest(unittest.TestCase):
             check=True,
             capture_output=True,
         )
-        subprocess.run(["git", "push", "-u", "origin", "gittoc"], cwd=source, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "push", "-u", "origin", "gittoc"],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
 
         clone = Path(self.tempdir.name) / "clone"
-        subprocess.run(["git", "clone", str(remote_repo), str(clone)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
 
         summary = run(["summary"], clone)
         self.assertEqual(summary, "open=1 claimed=0 blocked=0 closed=0 ready=1")
@@ -302,11 +371,18 @@ class GittocE2ETest(unittest.TestCase):
 
     def test_pull_and_push_tracker_branch(self) -> None:
         remote_repo = Path(self.tempdir.name) / "sync.git"
-        subprocess.run(["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
 
         source = Path(self.tempdir.name) / "source-sync"
         shutil.copytree(self.repo, source)
-        subprocess.run(["git", "remote", "add", "origin", str(remote_repo)], cwd=source, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
         run(["init"], source)
         subprocess.run(
             ["git", "push", "-u", "origin", current_branch(source)],
@@ -319,7 +395,11 @@ class GittocE2ETest(unittest.TestCase):
         self.assertEqual(push_out["remote"], "origin")
 
         clone = Path(self.tempdir.name) / "clone-sync"
-        subprocess.run(["git", "clone", str(remote_repo), str(clone)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
         run(["summary"], clone)
 
         new_issue = run(["new", "Pulled tracker issue"], source)

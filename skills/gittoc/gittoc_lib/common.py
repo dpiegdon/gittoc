@@ -6,7 +6,6 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 TRACKER_BRANCH = "gittoc"
 TRACKER_WORKTREE_PATH = Path(".git/gittoc")
 ISSUES_ROOT = Path("issues")

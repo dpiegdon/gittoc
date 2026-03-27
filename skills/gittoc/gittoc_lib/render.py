@@ -58,7 +58,8 @@ def print_issues(issues: list[Issue], tracker, fmt: str) -> None:
             _, path = tracker.load_issue(issue.issue_id)
             payload.append(
                 issue.to_display(
-                    path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id)
+                    path.relative_to(tracker.checkout),
+                    tracker.note_count(issue.issue_id),
                 )
             )
         print(json.dumps(payload, indent=2, sort_keys=True))
@@ -73,4 +74,3 @@ def print_issues(issues: list[Issue], tracker, fmt: str) -> None:
         if index and fmt == "verbose":
             print()
         print(renderer(issue, tracker))
-

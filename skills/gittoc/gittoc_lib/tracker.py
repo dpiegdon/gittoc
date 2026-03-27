@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-import subprocess
 import shutil
+import subprocess
 from dataclasses import replace
 from pathlib import Path
 
@@ -14,17 +14,17 @@ from .common import (
     TRACKER_BRANCH,
     branch_exists,
     current_branch,
-    infer_remote,
     default_owner,
     has_legacy_hidden_clone,
+    infer_remote,
     is_worktree,
     issue_number,
     list_remotes,
     local_config_get,
     local_config_set,
     now_utc,
-    repo_root,
     remote_branch_exists,
+    repo_root,
     run_git,
     validate_issue_id,
     validate_priority,
@@ -64,18 +64,27 @@ class Tracker:
                 run_git(["switch", "-q", TRACKER_BRANCH], cwd=checkout)
             return checkout
         if branch_exists(repo, TRACKER_BRANCH):
-            run_git(["worktree", "add", "--force", str(checkout), TRACKER_BRANCH], cwd=repo)
+            run_git(
+                ["worktree", "add", "--force", str(checkout), TRACKER_BRANCH], cwd=repo
+            )
             return checkout
         remote = infer_remote(repo)
         if remote and remote_branch_exists(repo, remote, TRACKER_BRANCH):
-            run_git(["branch", "--track", TRACKER_BRANCH, f"{remote}/{TRACKER_BRANCH}"], cwd=repo)
-            run_git(["worktree", "add", "--force", str(checkout), TRACKER_BRANCH], cwd=repo)
+            run_git(
+                ["branch", "--track", TRACKER_BRANCH, f"{remote}/{TRACKER_BRANCH}"],
+                cwd=repo,
+            )
+            run_git(
+                ["worktree", "add", "--force", str(checkout), TRACKER_BRANCH], cwd=repo
+            )
             return checkout
         return Tracker._bootstrap_worktree(repo, checkout)
 
     @staticmethod
     def _bootstrap_worktree(repo: Path, checkout: Path) -> Path:
-        run_git(["worktree", "add", "--detach", "--force", str(checkout), "HEAD"], cwd=repo)
+        run_git(
+            ["worktree", "add", "--detach", "--force", str(checkout), "HEAD"], cwd=repo
+        )
         run_git(["checkout", "-q", "--orphan", TRACKER_BRANCH], cwd=checkout)
         run_git(["rm", "-rf", "--cached", "."], cwd=checkout, check=False)
         for path in checkout.iterdir():
@@ -97,7 +106,9 @@ class Tracker:
         return checkout
 
     def head(self) -> str:
-        proc = run_git(["rev-parse", "--verify", "HEAD"], cwd=self.checkout, check=False)
+        proc = run_git(
+            ["rev-parse", "--verify", "HEAD"], cwd=self.checkout, check=False
+        )
         return proc.stdout.strip() if proc.returncode == 0 else ""
 
     def refresh(self) -> str:
@@ -134,7 +145,9 @@ class Tracker:
             raise SystemExit(f"unknown remote: {remote}")
         local_config_set(self.repo, "gittoc.remote", remote)
         local_config_set(self.repo, f"branch.{TRACKER_BRANCH}.remote", remote)
-        local_config_set(self.repo, f"branch.{TRACKER_BRANCH}.merge", f"refs/heads/{TRACKER_BRANCH}")
+        local_config_set(
+            self.repo, f"branch.{TRACKER_BRANCH}.merge", f"refs/heads/{TRACKER_BRANCH}"
+        )
         return self.remote_status()
 
     def _validate_remote(self, remote: str) -> None:
@@ -161,7 +174,9 @@ class Tracker:
     def push_remote(self, remote: str) -> dict[str, str]:
         self._validate_remote(remote)
         try:
-            run_git(["push", remote, f"{TRACKER_BRANCH}:{TRACKER_BRANCH}"], cwd=self.repo)
+            run_git(
+                ["push", remote, f"{TRACKER_BRANCH}:{TRACKER_BRANCH}"], cwd=self.repo
+            )
         except subprocess.CalledProcessError as exc:
             raise SystemExit(
                 f"push failed for {remote}/{TRACKER_BRANCH}: {exc.stderr.strip() or exc.stdout.strip()}"
@@ -226,7 +241,9 @@ class Tracker:
             previous_path.unlink()
         return path
 
-    def move_event_file(self, issue_id: str, new_state: str, previous_path: Path | None) -> None:
+    def move_event_file(
+        self, issue_id: str, new_state: str, previous_path: Path | None
+    ) -> None:
         if not previous_path:
             return
         previous_event = previous_path.with_name(previous_path.stem + EVENT_SUFFIX)
@@ -279,7 +296,9 @@ class Tracker:
         return entries
 
     def note_count(self, issue_id: str) -> int:
-        return sum(1 for entry in self.event_entries(issue_id) if entry["kind"] == "note")
+        return sum(
+            1 for entry in self.event_entries(issue_id) if entry["kind"] == "note"
+        )
 
     def run_pending_migrations(self) -> None:
         """Hook for future tracker migrations.
@@ -314,17 +333,29 @@ class Tracker:
         return paths
 
     def sort_key(self, issue: Issue) -> tuple[int, int, int]:
-        return (issue.priority, STATE_ORDER.index(issue.state), issue_number(issue.issue_id))
+        return (
+            issue.priority,
+            STATE_ORDER.index(issue.state),
+            issue_number(issue.issue_id),
+        )
 
     def list_issues(self, states: tuple[str, ...] | None = None) -> list[Issue]:
-        return sorted([Issue.from_path(path) for path in self.issue_paths(states)], key=self.sort_key)
+        return sorted(
+            [Issue.from_path(path) for path in self.issue_paths(states)],
+            key=self.sort_key,
+        )
 
     def load_issue(self, issue_id: str) -> tuple[Issue, Path]:
         path = self.find_issue_path(issue_id)
         return Issue.from_path(path), path
 
     def create_issue(
-        self, title: str, body: str, labels: list[str], priority: int, state: str = "open"
+        self,
+        title: str,
+        body: str,
+        labels: list[str],
+        priority: int,
+        state: str = "open",
     ) -> Issue:
         timestamp = now_utc()
         issue = Issue(
@@ -349,7 +380,9 @@ class Tracker:
         return dep.state == "closed"
 
     def ready(self, issue: Issue) -> bool:
-        return issue.state == "open" and all(self.dependency_closed(dep_id) for dep_id in issue.deps)
+        return issue.state == "open" and all(
+            self.dependency_closed(dep_id) for dep_id in issue.deps
+        )
 
     def _would_introduce_cycle(self, issue_id: str, dep_id: str) -> bool:
         if dep_id == issue_id:
@@ -368,13 +401,14 @@ class Tracker:
         return False
 
     def ready_issues(self) -> list[Issue]:
-        return sorted([issue for issue in self.list_issues(("open",)) if self.ready(issue)], key=self.sort_key)
+        return sorted(
+            [issue for issue in self.list_issues(("open",)) if self.ready(issue)],
+            key=self.sort_key,
+        )
 
     def resume_issue(self, owner: str) -> tuple[Issue | None, str | None]:
         mine = [
-            issue
-            for issue in self.list_issues(("claimed",))
-            if issue.owner == owner
+            issue for issue in self.list_issues(("claimed",)) if issue.owner == owner
         ]
         if mine:
             return mine[0], "claimed-by-owner"
@@ -415,7 +449,9 @@ class Tracker:
         target_state = issue.state if state is None else state
         if target_state == "claimed" and issue.state != "claimed":
             if issue.state != "open":
-                raise SystemExit(f"cannot claim issue from state {issue.state}: {issue.issue_id}")
+                raise SystemExit(
+                    f"cannot claim issue from state {issue.state}: {issue.issue_id}"
+                )
             if not self.ready(issue):
                 raise SystemExit(f"cannot claim non-ready issue: {issue.issue_id}")
         updated = replace(
@@ -425,7 +461,9 @@ class Tracker:
             state=target_state,
             owner=issue.owner if owner is None else owner,
             labels=issue.labels if labels is None else tuple(labels),
-            priority=issue.priority if priority is None else validate_priority(priority),
+            priority=(
+                issue.priority if priority is None else validate_priority(priority)
+            ),
             updated_at=now_utc(),
         )
         self.move_event_file(updated.issue_id, updated.state, path)
@@ -445,7 +483,9 @@ class Tracker:
                     f"dependency would introduce a cycle: {issue.issue_id} -> {dep}"
                 )
             deps.add(dep)
-        updated = replace(issue, deps=tuple(sorted(deps, key=issue_number)), updated_at=now_utc())
+        updated = replace(
+            issue, deps=tuple(sorted(deps, key=issue_number)), updated_at=now_utc()
+        )
         self.write_issue(updated, previous_path=path)
         self.append_event(updated, "dependency", " ".join(dep_ids))
         self.commit_if_needed(f"Add dependencies to {updated.issue_id}")

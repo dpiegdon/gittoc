@@ -7,9 +7,9 @@ from pathlib import Path
 from .common import (
     DEFAULT_PRIORITY,
     STATE_SET,
+    issue_number,
     validate_issue_id,
     validate_priority,
-    issue_number,
 )
 
 
@@ -67,4 +67,3 @@ class Issue:
         data["path"] = str(path)
         data["state"] = self.state
         return data
-
