@@ -5,7 +5,7 @@
   "id": "T-54",
   "labels": [],
   "owner": "",
-  "priority": 3,
+  "priority": 4,
   "title": "Replace next_issue_id() full rglob with a last-id file",
-  "updated_at": "2026-03-27T23:17:31+00:00"
+  "updated_at": "2026-03-27T23:17:35+00:00"
 }
