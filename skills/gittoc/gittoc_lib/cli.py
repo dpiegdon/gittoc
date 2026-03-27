@@ -304,11 +304,13 @@ def cmd_close(args: argparse.Namespace) -> int:
 
 def cmd_log(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
-    _, path = tracker.load_issue(args.issue_id)
-    rel = path.relative_to(tracker.checkout)
-    out = run_git(
-        ["log", "--follow", "--oneline", "--", str(rel)], cwd=tracker.checkout
-    )
+    if args.issue_id:
+        _, path = tracker.load_issue(args.issue_id)
+        rel = path.relative_to(tracker.checkout)
+        git_args = ["log", "--follow", "--oneline", "--", str(rel)]
+    else:
+        git_args = ["log", "--oneline"]
+    out = run_git(git_args, cwd=tracker.checkout)
     print(out.stdout.strip())
     return 0
 
@@ -411,13 +413,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     new_parser = sub.add_parser("new", help="create an issue")
     new_parser.add_argument("title")
-    new_parser.add_argument("--body")
-    new_parser.add_argument("--label", action="append")
-    new_parser.add_argument("--priority", type=int, default=DEFAULT_PRIORITY)
+    new_parser.add_argument("-b", "--body")
+    new_parser.add_argument("-l", "--label", action="append")
+    new_parser.add_argument("-p", "--priority", type=int, default=DEFAULT_PRIORITY)
     new_parser.set_defaults(func=cmd_new)
 
     list_parser = sub.add_parser("list", help="list issues ordered by priority")
-    list_parser.add_argument("--state", action="append", choices=STATE_ORDER)
+    list_parser.add_argument("-s", "--state", action="append", choices=STATE_ORDER)
     list_parser.add_argument("-a", "--all", action="store_true")
     list_parser.add_argument("--ready-only", action="store_true")
     add_format_argument(list_parser)
@@ -441,13 +443,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     update_parser = sub.add_parser("update", help="update issue fields")
     update_parser.add_argument("issue_id")
-    update_parser.add_argument("--title")
-    update_parser.add_argument("--body")
+    update_parser.add_argument("-t", "--title")
+    update_parser.add_argument("-b", "--body")
     update_parser.add_argument("--state", choices=STATE_ORDER)
     update_parser.add_argument("--status", choices=STATE_ORDER)
     update_parser.add_argument("--owner")
-    update_parser.add_argument("--label", action="append")
-    update_parser.add_argument("--priority", type=int)
+    update_parser.add_argument("-l", "--label", action="append")
+    update_parser.add_argument("-p", "--priority", type=int)
     update_parser.set_defaults(func=cmd_update)
 
     dep_parser = sub.add_parser("dep", help="add dependencies")
@@ -483,8 +485,8 @@ def build_parser() -> argparse.ArgumentParser:
     resume_parser.add_argument("--format", choices=("text", "json"), default="text")
     resume_parser.set_defaults(func=cmd_resume)
 
-    log_parser = sub.add_parser("log", help="show git history for an issue file")
-    log_parser.add_argument("issue_id")
+    log_parser = sub.add_parser("log", help="show git history for an issue file, or all recent changes")
+    log_parser.add_argument("issue_id", nargs="?")
     log_parser.set_defaults(func=cmd_log)
 
     summary_parser = sub.add_parser("summary", help="print compact state counts")
