@@ -17,7 +17,7 @@ def marker(issue: Issue, tracker) -> str:
     return "*"
 
 
-def render_compact(issue: Issue, tracker) -> str:
+def render_compact(issue: Issue, _tracker) -> str:
     return f"{issue.issue_id} p{issue.priority} {issue.state} {issue.title}"
 
 

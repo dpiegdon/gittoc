@@ -38,6 +38,7 @@ def run_git(
         cwd=str(cwd) if cwd else None,
         text=True,
         capture_output=True,
+        check=False,
     )
     if check and proc.returncode != 0:
         raise subprocess.CalledProcessError(

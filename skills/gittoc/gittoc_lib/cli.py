@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
 from .common import (
     DEFAULT_PRIORITY,
@@ -101,7 +102,7 @@ def print_resume_text(data: dict) -> None:
             print(f"- {format_history_entry(entry)}")
 
 
-def cmd_init(args: argparse.Namespace) -> int:
+def cmd_init(_args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     if not tracker.configured_remote():
         inferred = tracker.effective_remote()
@@ -224,7 +225,7 @@ def cmd_claim(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_summary(args: argparse.Namespace) -> int:
+def cmd_summary(_args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     counts = tracker.summary()
     print(
@@ -485,7 +486,9 @@ def build_parser() -> argparse.ArgumentParser:
     resume_parser.add_argument("--format", choices=("text", "json"), default="text")
     resume_parser.set_defaults(func=cmd_resume)
 
-    log_parser = sub.add_parser("log", help="show git history for an issue file, or all recent changes")
+    log_parser = sub.add_parser(
+        "log", help="show git history for an issue file, or all recent changes"
+    )
     log_parser.add_argument("issue_id", nargs="?")
     log_parser.set_defaults(func=cmd_log)
 
