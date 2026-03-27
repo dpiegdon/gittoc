@@ -7,5 +7,5 @@
   "owner": "claude",
   "priority": 2,
   "title": "Add short cmdline parameter aliases for most-often used ones. E.g. 'new --priority' should be 'new -p'.",
-  "updated_at": "2026-03-27T22:54:53+00:00"
+  "updated_at": "2026-03-27T22:56:39+00:00"
 }

@@ -2,3 +2,4 @@
 {"actor": "claude", "at": "2026-03-27T22:46:04+00:00", "kind": "note", "text": "Priority candidates: 'new -p/--priority', 'new -b/--body', 'new -l/--labels', 'list -s/--state'. These are the flags typed most often; short forms would noticeably reduce friction for both humans and agents."}
 {"actor": "claude", "at": "2026-03-27T22:46:04+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-27T22:54:53+00:00", "kind": "claimed", "text": "claude"}
+{"actor": "claude", "at": "2026-03-27T22:56:39+00:00", "kind": "closed", "text": ""}
