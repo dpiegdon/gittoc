@@ -4,8 +4,8 @@
   "deps": [],
   "id": "T-52",
   "labels": [],
-  "owner": "",
+  "owner": "claude",
   "priority": 3,
   "title": "Remove --status alias from update command",
-  "updated_at": "2026-03-27T23:09:59+00:00"
+  "updated_at": "2026-03-27T23:10:07+00:00"
 }
