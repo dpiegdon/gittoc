@@ -1,0 +1,11 @@
+{
+  "body": "Two inefficiencies:\n1. summary() calls ready() per issue, which loads each dep from disk \u2014 O(n*d) reads. An in-memory set of closed IDs for the duration of the call would fix it.\n2. add_note() rewrites the issue JSON just to bump updated_at, making every note commit touch two files. Consider leaving the issue JSON untouched for note-only operations.",
+  "created_at": "2026-03-27T23:10:00+00:00",
+  "deps": [],
+  "id": "T-53",
+  "labels": [],
+  "owner": "",
+  "priority": 3,
+  "title": "Reduce unnecessary disk I/O in summary and add_note",
+  "updated_at": "2026-03-27T23:10:00+00:00"
+}
