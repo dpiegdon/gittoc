@@ -1,1 +1,2 @@
 {"actor": "dpiegdon", "at": "2026-03-27T21:14:22+00:00", "kind": "created", "text": "Add 'reject' command"}
+{"actor": "dpiegdon", "at": "2026-03-27T21:18:58+00:00", "kind": "note", "text": "'reject' command and current 'close' command don't match well. Maybe rename 'close' to 'finish' then?"}
