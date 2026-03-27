@@ -1,0 +1,11 @@
+{
+  "body": "One should be able to mark one ticket as duplicate of another. The usual behaviour is that the marked one is closed after adding a comment and a 'duplicate-of' relation to both. Note that one parent-ticket can thus have multiple closed duplicates, but in a cloud of duplicates, there can only ever be one ticket that wasn't closed due to duplication. It is either still open, rejected or finished.",
+  "created_at": "2026-03-27T21:12:35+00:00",
+  "deps": [],
+  "id": "T-45",
+  "labels": [],
+  "owner": "",
+  "priority": 3,
+  "title": "Add 'duplicate ticket' feature",
+  "updated_at": "2026-03-27T21:12:35+00:00"
+}
