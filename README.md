@@ -59,70 +59,83 @@ from the repo people are already working in.
 
 ## Current commands
 
-Examples:
+Use `--help` on any command for full argument documentation.
 
 ```bash
-skills/gittoc/gittoc summary
-skills/gittoc/gittoc list
-skills/gittoc/gittoc ready
-skills/gittoc/gittoc resume
-skills/gittoc/gittoc resume --format json
-skills/gittoc/gittoc show T-27
-skills/gittoc/gittoc show T-27 --field id --field title --field priority
-skills/gittoc/gittoc note T-27 "found a race during ticket creation"
-skills/gittoc/gittoc history T-27 --notes-only --limit 3
-skills/gittoc/gittoc remote --format json
-skills/gittoc/gittoc pull origin
-skills/gittoc/gittoc push origin
-skills/gittoc/gittoc pl origin
-skills/gittoc/gittoc ps origin
+# backlog overview
+gittoc summary
+gittoc list
+gittoc list -l bug                  # filter by label
+gittoc list -l feature -l ux        # AND of multiple labels
+gittoc list -a                      # all states
+gittoc labels                       # all labels in use with counts
+gittoc ready                        # only tickets with no blockers
+
+# working with tickets
+gittoc new "short title" -p 2 -b "longer context"
+gittoc claim T-42
+gittoc note T-42 "found a race during creation"
+gittoc update T-42 -p 1
+gittoc dep T-42 T-7                 # T-42 blocked by T-7
+gittoc close T-42
+
+# inspecting tickets
+gittoc show T-42
+gittoc show T-42 --field id --field title --field priority
+gittoc resume                       # auto-select next ticket with context
+gittoc resume T-42                  # show context for a specific ticket
+gittoc history T-42 --notes-only --limit 3
+gittoc log T-42                     # git history for one ticket
+gittoc log                          # all recent tracker changes
+
+# output format (-f on any command that supports it)
+gittoc list -f json
+gittoc resume -f json
+
+# syncing with a remote
+gittoc pull origin
+gittoc push origin
 ```
 
-If you have a local git alias such as `git toc`, the same workflow can also look
-like:
+Command aliases: `l`=list, `s`=summary, `r`=resume, `c`=claim, `n`=note,
+`sh`=show, `pl`=pull, `ps`=push.
+
+If you have a local git alias `git toc`, all commands work through that too:
 
 ```bash
-git toc list
-git toc resume
-git toc resume --format json
-git toc l
 git toc s
-git toc r --format json
+git toc l -l bug
+git toc r -f json
 ```
 
 ## Installation
 
-For the first release, the recommended installation model is:
+The recommended model is to vendor gittoc directly into the host repository.
+There is no install script yet — copy the files manually:
 
-- keep the executable visible in the host repository
-- keep mutable tracker state on the hidden `gittoc` branch and worktree
+```bash
+# from the gittoc development repository, copy into your target repo:
+cp -r skills/gittoc/gittoc_lib  <your-repo>/tools/gittoc_lib
+cp    skills/gittoc/gittoc       <your-repo>/tools/gittoc
+cp -r skills/gittoc/             <your-repo>/skills/gittoc/   # optional: skill docs
+```
 
-That means a host repository should usually vendor:
-
-- `tools/gittoc`
-- optionally `skills/gittoc/`
-
-Then initialize the tracker state with:
+Then initialize the tracker:
 
 ```bash
 tools/gittoc init
 ```
 
-or, in this development repository layout:
+Optionally add a repo-local git alias for a shorter command:
 
-```bash
-skills/gittoc/gittoc init
+```ini
+# in .git/config
+[alias]
+    toc = !tools/gittoc
 ```
 
-At the moment, there is no dedicated install script yet. The intended first
-release position is:
-
-- recommended: vendor the tool into the repository using a visible path
-- optional: keep a personal/global copy elsewhere and use that manually
-- optional: add a local git alias such as `git toc`
-
-The tool code should stay visible and reviewable on the normal branch. Only the
-mutable issue store is meant to live on the hidden `gittoc` branch.
+The tool code stays visible and reviewable on the normal branch. Only the
+mutable issue store lives on the hidden `gittoc` branch/worktree.
 
 ## Project layout
 
