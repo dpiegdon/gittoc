@@ -4,8 +4,8 @@
   "deps": [],
   "id": "T-38",
   "labels": [],
-  "owner": "",
+  "owner": "claude",
   "priority": 1,
   "title": "Run linters and fix the most critical findings",
-  "updated_at": "2026-03-27T21:09:44+00:00"
+  "updated_at": "2026-03-27T22:58:13+00:00"
 }
