@@ -5,9 +5,8 @@ description: Use when work spans multiple turns or sessions and needs a repo-loc
 
 # Gittoc
 
-`gittoc` is a repo-local task tracker for humans and agents. It combines
-`beads`-style dependency-aware work management with `ticgit`'s "tickets travel
-with git" model.
+`gittoc` is a repo-local task tracker for humans and agents. Tickets travel
+with git, with no database or background daemon.
 
 ## When to use it
 
@@ -16,126 +15,105 @@ Use this skill when:
 - work has multiple steps, blockers, or dependencies
 - progress must survive session loss or compaction
 - the repository needs a durable local backlog instead of chat-only planning
-- you want task state in git without a database or background daemon
 
 Do not use it for one-off work that can be completed in a single short turn.
 
 ## Operating rules
 
 - Prefer the CLI over reading the hidden tracker checkout directly.
-- Keep tickets concise. Store only durable task state, not long design notes.
-- Use dependencies to model blocking relationships instead of embedding plans in chat.
+- Keep tickets concise — store only durable task state, not long design notes.
+- Use dependencies to model blocking relationships.
 - Commit tracker changes with the code they describe when practical.
-- Prefer setting priority explicitly when triaging non-trivial work.
 
 ## Storage model
 
-- The canonical tracker lives on the `gittoc` branch.
-- The CLI keeps a hidden git worktree at `.git/gittoc/`.
-- Tickets live there as `issues/<state>/T-<n>.json`.
-- The directory is the canonical state: `open`, `claimed`, `blocked`, `closed`.
-- One ticket per file
-- Compact structured fields: `title`, `body`, `deps`, `labels`, `owner`, `priority`
-- Optional per-ticket event history lives in sibling `T-<n>.events.jsonl` files.
-- Git is the audit trail; `gittoc log` shows ticket history
-- Internal code is split into focused modules under `skills/gittoc/gittoc_lib/`.
-
-This keeps the backlog shared across feature branches while avoiding working-tree clutter.
+- Canonical tracker state lives on the `gittoc` branch.
+- A hidden git worktree at `.git/gittoc/` serves as the working checkout.
+- Tickets live as `issues/<state>/T-<n>.json`; directory is canonical state.
+- States: `open`, `claimed`, `blocked`, `closed`.
+- Fields: `title`, `body`, `deps`, `labels`, `owner`, `priority`.
+- Optional per-ticket event history in sibling `T-<n>.events.jsonl` files.
 
 ## Commands
 
-Run the CLI with:
+Invoke as `skills/gittoc/gittoc <command>` or `tools/gittoc <command>` or
+`git toc <command>` if the alias is configured. Use `--help` on any command
+for full argument documentation.
 
-`skills/gittoc/gittoc <command>`
+**Backlog**
+- `summary` / `s` — ticket counts by state
+- `list` / `l` — open tickets by priority; `-a` for all states
+- `list -s claimed -s blocked` — filter by state
+- `list -l bug` / `list -l feature -l ux` — filter by label (AND)
+- `list --ready-only` — only tickets with no unmet dependencies
+- `ready` — shorthand for `list --ready-only`
+- `labels` / `labels -a` — all labels in use with counts
 
-Core commands:
+**Working with tickets**
+- `new "Title" -p 2 -b "context" -l feature` — create a ticket
+- `claim T-1` / `c T-1` — claim a ticket (defaults owner to `$GITTOC_OWNER` / `$USER`)
+- `update T-1 --state blocked -p 4` — update fields
+- `dep T-2 T-1` — make T-2 depend on T-1
+- `note T-1 "context"` / `n T-1 "context"` — append a durable note
+- `close T-1` — mark done
 
-- `init`: create the store if missing
-- `refresh`: reload tracker state after conflict errors and print current summary
-- `remote --format json`: inspect inferred and configured tracker remote wiring
-- `remote --set origin`: configure the tracker branch to use a specific remote
-- `pull origin`: fetch and merge the tracker branch from a remote
-- `pl origin`, `pul origin`: short aliases for `pull`
-- `push origin`: push the tracker branch to a remote
-- `ps origin`, `pus origin`: short aliases for `push`
-- `new "Title" --body "..." --priority 2`: create a ticket
-- `list`: list open tickets by default, ordered by priority
-- `l`: short alias for `list`
-- `list --all`: list all tickets
-- `list --format compact|normal|verbose|json`: choose output detail
-- `list --state open --state claimed`: filter by state
-- `list --ready-only`: show only ready issues
-- `summary`: print compact counts by status and ready-ness
-- `s`: short alias for `summary`
-- `ready --format compact`: convenience alias for `list --ready-only`
-- `resume`: recover the most relevant current ticket context
-- `r`: short alias for `resume`
-- `resume T-1 --format json`: recover a specific ticket as structured data
-- `claim T-1 --owner alice`: claim a specific ticket
-- `c T-1 --owner alice`: short alias for `claim`
-- `show T-1`: print one ticket as JSON with the latest recent notes
-- `sh T-1`: short alias for `show`
-- `show T-1 --history`: print one ticket as JSON with full event history
-- `show T-1 --field id --field title --field priority`: request a minimal JSON field subset
-- `update T-1 --state blocked --priority 4`
-- `dep T-2 T-1`: make `T-2` depend on `T-1`
-- `note T-1 "local context"`: append a durable note to the issue history
-- `n T-1 "local context"`: short alias for `note`
-- `history T-1`: show per-issue event history
-- `history T-1 --limit 5`: show only the most recent events
-- `history T-1 --notes-only --limit 3`: show only recent durable notes
-- `close T-1`: mark done
-- `log T-1`: show git history for the ticket file
+**Inspecting tickets**
+- `show T-1` / `sh T-1` — one ticket as JSON with recent notes
+- `show T-1 --field id --field title` — minimal field subset
+- `show T-1 --history` — include full event history
+- `resume` / `r` — context for the most relevant current ticket
+- `resume T-1` — context for a specific ticket
+- `history T-1 --notes-only --limit 3` — recent notes only
+- `log T-1` — git history for one ticket file
+- `log` — all recent tracker changes
+
+**Output format** — most commands accept `-f compact|normal|verbose|json`
+
+**Remote sync**
+- `remote` — inspect tracker remote wiring
+- `remote --set origin` — configure tracker remote
+- `pull origin` / `pl origin` — fetch and merge tracker branch
+- `push origin` / `ps origin` — push tracker branch
+- `refresh` — reload tracker state after conflict errors
 
 ## Recommended workflow
 
 At the start of multi-step work:
 
 ```bash
-skills/gittoc/gittoc summary
-skills/gittoc/gittoc refresh
-skills/gittoc/gittoc resume
-skills/gittoc/gittoc list --ready-only --format compact
+gittoc summary
+gittoc resume
 ```
 
-When beginning a task:
+Beginning a task:
 
 ```bash
-skills/gittoc/gittoc claim T-1 --owner alice
+gittoc claim T-1
 ```
 
 When new follow-up work appears:
 
 ```bash
-skills/gittoc/gittoc new "Add feature"
-skills/gittoc/gittoc dep T-3 T-1
+gittoc new "Add feature" -p 3
+gittoc dep T-3 T-1   # if T-3 is blocked by T-1
 ```
 
-When finishing:
+Finishing:
 
 ```bash
-skills/gittoc/gittoc close T-1
+gittoc close T-1
 ```
-
-## Design intent
-
-This tool is intentionally boring:
-
-- no database
-- no background service
-- no hidden remote state beyond git itself
-- no manual branch switching by the caller
-
-If the script is missing or broken, callers can still inspect the hidden worktree and the `gittoc` branch directly as a fallback.
 
 ## Notes
 
-- Mutating commands use optimistic concurrency checks and will refuse to commit if the tracker changed mid-command.
-- When that happens, run `skills/gittoc/gittoc refresh` and retry against the new tracker head.
-- `init` will auto-configure `gittoc.remote` from the repo's inferred main remote when one is available.
-- `pull <remote>` fetches and attempts a normal merge of `remote/gittoc`; merge conflicts are left for explicit resolution in `.git/gittoc`.
-- `resume` without an id prefers claimed tickets owned by the current user, then the highest-priority ready issue, then the highest-priority open issue.
-- `resume` includes recent notes by default so it can replace most one-ticket “what now?” lookups.
-- In some sandboxed agent environments, writes under `.git/gittoc/` may require explicit approval even though this is not normally a problem in a local shell.
-- If tracker mutations fail with a read-only or permission error under `.git/gittoc/`, the environment may be blocking `.git` writes rather than the tool itself.
-- For embedding guidance in a host repository, see [references/embedding.md](references/embedding.md).
+- Mutating commands use optimistic concurrency; they refuse to commit if the
+  tracker changed mid-command. Run `refresh` and retry when that happens.
+- `resume` without an ID prefers claimed tickets owned by the current user,
+  then highest-priority ready issue, then highest-priority open issue.
+- `pull` fetches and attempts a normal merge; conflicts are left for manual
+  resolution in `.git/gittoc/`.
+- `init` auto-configures `gittoc.remote` from the repo's inferred main remote.
+- In sandboxed environments, writes under `.git/gittoc/` may require explicit
+  approval. If mutations fail with a permission error, the sandbox may be
+  blocking `.git` writes rather than the tool itself.
+- For embedding guidance, see [references/embedding.md](references/embedding.md).
