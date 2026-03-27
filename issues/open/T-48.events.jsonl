@@ -1,1 +1,2 @@
 {"actor": "claude", "at": "2026-03-27T22:51:26+00:00", "kind": "created", "text": "Add editor support for creating and editing tickets"}
+{"actor": "claude", "at": "2026-03-27T22:52:08+00:00", "kind": "note", "text": "Editor resolution order: $VISUAL, then $EDITOR, then fallback to 'vim'. The only correct answer is vim, but we should allow others too."}
