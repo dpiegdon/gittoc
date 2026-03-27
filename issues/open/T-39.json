@@ -1,5 +1,5 @@
 {
-  "body": "Add a ticket-type attribute with candidates such as bug, feature, epic, and task. Treat type as descriptive metadata rather than workflow state. Listing should support filtering by type. Chore-like work can likely be folded into task unless later experience suggests otherwise.",
+  "body": "The labels field already exists on tickets. What's missing is the ability to filter by label in 'list'. Add '-l/--label' (repeatable) to the list command \u2014 show only tickets that carry all specified labels. Drop the ticket-type attribute idea; labels already cover that use case.",
   "created_at": "2026-03-27T20:43:27+00:00",
   "deps": [],
   "id": "T-39",
@@ -9,6 +9,6 @@
   ],
   "owner": "",
   "priority": 2,
-  "title": "Add ticket types and list filtering",
-  "updated_at": "2026-03-27T23:22:25+00:00"
+  "title": "Add --label filtering to list command",
+  "updated_at": "2026-03-27T23:23:00+00:00"
 }
