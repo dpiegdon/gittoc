@@ -6,7 +6,7 @@ from .models import Issue
 
 
 def marker(issue: Issue, tracker) -> str:
-    if issue.state == "closed":
+    if issue.state in ("closed", "rejected"):
         return "x"
     if tracker.ready(issue):
         return ">"

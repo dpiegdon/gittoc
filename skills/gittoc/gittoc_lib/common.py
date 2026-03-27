@@ -9,8 +9,9 @@ from pathlib import Path
 TRACKER_BRANCH = "gittoc"
 TRACKER_WORKTREE_PATH = Path(".git/gittoc")
 ISSUES_ROOT = Path("issues")
-STATE_ORDER = ("open", "claimed", "blocked", "closed")
+STATE_ORDER = ("open", "claimed", "blocked", "closed", "rejected")
 STATE_SET = set(STATE_ORDER)
+TERMINAL_STATES = frozenset(("closed", "rejected"))
 DEFAULT_PRIORITY = 3
 PRIORITY_MIN = 1
 PRIORITY_MAX = 5

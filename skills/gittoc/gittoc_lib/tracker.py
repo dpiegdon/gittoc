@@ -6,30 +6,13 @@ import subprocess
 from dataclasses import replace
 from pathlib import Path
 
-from .common import (
-    EVENT_SUFFIX,
-    ISSUES_ROOT,
-    STATE_ORDER,
-    STATE_SET,
-    TRACKER_BRANCH,
-    branch_exists,
-    current_branch,
-    default_owner,
-    has_legacy_hidden_clone,
-    infer_remote,
-    is_worktree,
-    issue_number,
-    list_remotes,
-    local_config_get,
-    local_config_set,
-    now_utc,
-    remote_branch_exists,
-    repo_root,
-    run_git,
-    validate_issue_id,
-    validate_priority,
-    worktree_path,
-)
+from .common import (EVENT_SUFFIX, ISSUES_ROOT, STATE_ORDER, STATE_SET,
+                     TERMINAL_STATES, TRACKER_BRANCH, branch_exists,
+                     current_branch, default_owner, has_legacy_hidden_clone,
+                     infer_remote, is_worktree, issue_number, list_remotes,
+                     local_config_get, local_config_set, now_utc,
+                     remote_branch_exists, repo_root, run_git,
+                     validate_issue_id, validate_priority, worktree_path)
 from .models import Issue
 
 
@@ -377,7 +360,7 @@ class Tracker:
 
     def dependency_closed(self, issue_id: str) -> bool:
         dep, _ = self.load_issue(issue_id)
-        return dep.state == "closed"
+        return dep.state in TERMINAL_STATES
 
     def ready(self, issue: Issue) -> bool:
         return issue.state == "open" and all(
@@ -471,6 +454,14 @@ class Tracker:
         self.append_event(updated, event_kind, event_text, actor=event_actor)
         self.commit_if_needed(message or f"Update issue {updated.issue_id}")
         return updated
+
+    def reject_issue(self, issue_id: str) -> Issue:
+        return self.update_issue(
+            issue_id,
+            state="rejected",
+            message=f"Reject issue {issue_id}",
+            event_kind="rejected",
+        )
 
     def set_dependencies(self, issue_id: str, dep_ids: list[str]) -> Issue:
         issue, path = self.load_issue(issue_id)

@@ -4,13 +4,8 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from .common import (
-    DEFAULT_PRIORITY,
-    STATE_SET,
-    issue_number,
-    validate_issue_id,
-    validate_priority,
-)
+from .common import (DEFAULT_PRIORITY, STATE_SET, issue_number,
+                     validate_issue_id, validate_priority)
 
 
 @dataclass(frozen=True)

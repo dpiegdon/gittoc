@@ -117,7 +117,7 @@ class GittocE2ETest(unittest.TestCase):
         alias_list = run(["l", "--format", "compact"], self.repo).splitlines()
         self.assertEqual(alias_list[0], f"{issue1} p1 open High priority task")
         self.assertEqual(
-            run(["s"], self.repo), "open=2 claimed=0 blocked=0 closed=0 ready=2"
+            run(["s"], self.repo), "open=2 claimed=0 blocked=0 closed=0 rejected=0 ready=2"
         )
 
         run(["dep", issue2, issue1], self.repo)
@@ -250,7 +250,7 @@ class GittocE2ETest(unittest.TestCase):
 
         run(["update", issue2, "--priority", "2", "--state", "blocked"], self.repo)
         summary = run(["summary"], self.repo)
-        self.assertEqual(summary, "open=1 claimed=0 blocked=1 closed=1 ready=0")
+        self.assertEqual(summary, "open=1 claimed=0 blocked=1 closed=1 rejected=0 ready=0")
 
         run(["update", issue2, "--state", "open"], self.repo)
         ready = run(["ready"], self.repo)
@@ -363,7 +363,7 @@ class GittocE2ETest(unittest.TestCase):
         )
 
         summary = run(["summary"], clone)
-        self.assertEqual(summary, "open=1 claimed=0 blocked=0 closed=0 ready=1")
+        self.assertEqual(summary, "open=1 claimed=0 blocked=0 closed=0 rejected=0 ready=1")
 
         issue_data = json.loads(run(["show", "T-1"], clone))
         self.assertEqual(issue_data["title"], "Remote tracker issue")

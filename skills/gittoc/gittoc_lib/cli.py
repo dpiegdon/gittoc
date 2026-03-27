@@ -4,14 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
-from .common import (
-    DEFAULT_PRIORITY,
-    STATE_ORDER,
-    TRACKER_BRANCH,
-    default_owner,
-    parse_state,
-    run_git,
-)
+from .common import (DEFAULT_PRIORITY, STATE_ORDER, TRACKER_BRANCH,
+                     default_owner, parse_state, run_git)
 from .render import print_issues
 from .tracker import StaleTrackerError, Tracker
 
@@ -243,20 +237,25 @@ def cmd_labels(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_reject(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    issue = tracker.reject_issue(args.issue_id)
+    print(issue.issue_id)
+    return 0
+
+
 def cmd_summary(_args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     counts = tracker.summary()
-    print(
-        " ".join(
-            [
-                f"open={counts['open']}",
-                f"claimed={counts['claimed']}",
-                f"blocked={counts['blocked']}",
-                f"closed={counts['closed']}",
-                f"ready={counts['ready']}",
-            ]
-        )
-    )
+    parts = [
+        f"open={counts['open']}",
+        f"claimed={counts['claimed']}",
+        f"blocked={counts['blocked']}",
+        f"closed={counts['closed']}",
+        f"rejected={counts['rejected']}",
+        f"ready={counts['ready']}",
+    ]
+    print(" ".join(parts))
     return 0
 
 
@@ -553,6 +552,12 @@ def build_parser() -> argparse.ArgumentParser:
     ready_parser = sub.add_parser("ready", help="list ready open issues by priority")
     add_format_argument(ready_parser)
     ready_parser.set_defaults(func=cmd_ready)
+
+    reject_parser = sub.add_parser(
+        "reject", help="mark an issue as won't-do / abandoned"
+    )
+    reject_parser.add_argument("issue_id", help="ticket to reject, e.g. T-42")
+    reject_parser.set_defaults(func=cmd_reject)
 
     refresh_parser = sub.add_parser(
         "refresh", help="reload tracker state after conflicts"
