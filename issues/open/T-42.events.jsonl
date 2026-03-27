@@ -1,2 +1,3 @@
 {"actor": "dpiegdon", "at": "2026-03-27T20:59:50+00:00", "kind": "created", "text": "Follow standard directory layout of skills"}
 {"actor": "claude", "at": "2026-03-27T23:22:25+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "claude", "at": "2026-03-27T23:44:51+00:00", "kind": "note", "text": "Reviewed: current layout is deliberate and self-consistent. The dev repo nests under skills/gittoc/ because it self-hosts. Target repo install layout is already described in embedding.md. The 'scripts/' and 'move to /' suggestions were speculative with no hard standard behind them. Closing as won't-do; pre-release effort should go into README/embedding docs instead."}
