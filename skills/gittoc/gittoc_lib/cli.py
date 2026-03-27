@@ -228,6 +228,21 @@ def cmd_claim(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_labels(args: argparse.Namespace) -> int:
+    tracker = Tracker.open()
+    states = STATE_ORDER if args.all else ("open",)
+    counts: dict[str, int] = {}
+    for issue in tracker.list_issues(states):
+        for label in issue.labels:
+            counts[label] = counts.get(label, 0) + 1
+    if args.format == "json":
+        print(json.dumps(counts, indent=2, sort_keys=True))
+    else:
+        for label in sorted(counts):
+            print(f"{label:<20} {counts[label]}")
+    return 0
+
+
 def cmd_summary(_args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     counts = tracker.summary()
@@ -494,6 +509,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     log_parser.add_argument("issue_id", nargs="?")
     log_parser.set_defaults(func=cmd_log)
+
+    labels_parser = sub.add_parser("labels", help="list all labels in use with counts")
+    labels_parser.add_argument("-a", "--all", action="store_true")
+    labels_parser.add_argument("--format", choices=("text", "json"), default="text")
+    labels_parser.set_defaults(func=cmd_labels)
 
     summary_parser = sub.add_parser("summary", help="print compact state counts")
     summary_parser.set_defaults(func=cmd_summary)
