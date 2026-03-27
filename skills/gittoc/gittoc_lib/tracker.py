@@ -351,6 +351,22 @@ class Tracker:
     def ready(self, issue: Issue) -> bool:
         return issue.state == "open" and all(self.dependency_closed(dep_id) for dep_id in issue.deps)
 
+    def _would_introduce_cycle(self, issue_id: str, dep_id: str) -> bool:
+        if dep_id == issue_id:
+            return True
+        seen: set[str] = set()
+        stack = [dep_id]
+        while stack:
+            current = stack.pop()
+            if current == issue_id:
+                return True
+            if current in seen:
+                continue
+            seen.add(current)
+            current_issue, _ = self.load_issue(current)
+            stack.extend(current_issue.deps)
+        return False
+
     def ready_issues(self) -> list[Issue]:
         return sorted([issue for issue in self.list_issues(("open",)) if self.ready(issue)], key=self.sort_key)
 
@@ -396,11 +412,17 @@ class Tracker:
         event_actor: str | None = None,
     ) -> Issue:
         issue, path = self.load_issue(issue_id)
+        target_state = issue.state if state is None else state
+        if target_state == "claimed" and issue.state != "claimed":
+            if issue.state != "open":
+                raise SystemExit(f"cannot claim issue from state {issue.state}: {issue.issue_id}")
+            if not self.ready(issue):
+                raise SystemExit(f"cannot claim non-ready issue: {issue.issue_id}")
         updated = replace(
             issue,
             title=issue.title if title is None else title,
             body=issue.body if body is None else body,
-            state=issue.state if state is None else state,
+            state=target_state,
             owner=issue.owner if owner is None else owner,
             labels=issue.labels if labels is None else tuple(labels),
             priority=issue.priority if priority is None else validate_priority(priority),
@@ -418,6 +440,10 @@ class Tracker:
         for dep_id in dep_ids:
             dep = validate_issue_id(dep_id)
             self.find_issue_path(dep)
+            if self._would_introduce_cycle(issue.issue_id, dep):
+                raise SystemExit(
+                    f"dependency would introduce a cycle: {issue.issue_id} -> {dep}"
+                )
             deps.add(dep)
         updated = replace(issue, deps=tuple(sorted(deps, key=issue_number)), updated_at=now_utc())
         self.write_issue(updated, previous_path=path)
