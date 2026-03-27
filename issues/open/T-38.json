@@ -1,0 +1,11 @@
+{
+  "body": "Run the configured lint tools from AGENTS.md and address the highest-value findings first. This is meant as the immediate next maintenance step, not a promise to chase every minor style complaint.",
+  "created_at": "2026-03-27T20:43:26+00:00",
+  "deps": [],
+  "id": "T-38",
+  "labels": [],
+  "owner": "",
+  "priority": 1,
+  "title": "Run linters and fix the most critical findings",
+  "updated_at": "2026-03-27T20:43:26+00:00"
+}
