@@ -391,6 +391,7 @@ def add_format_argument(
     parser: argparse.ArgumentParser, default: str = "normal"
 ) -> None:
     parser.add_argument(
+        "-f",
         "--format",
         choices=("compact", "normal", "verbose", "json"),
         default=default,
@@ -398,85 +399,77 @@ def add_format_argument(
     )
 
 
+def add_text_format_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="skills/gittoc/gittoc")
     sub = parser.add_subparsers(dest="command", required=True)
 
+    claim_parser = sub.add_parser("claim", help="claim a specific issue")
+    claim_parser.add_argument("issue_id", help="ticket to claim, e.g. T-42")
+    claim_parser.add_argument(
+        "--owner",
+        help="owner name (default: $GITTOC_OWNER or $USER)",
+    )
+    add_format_argument(claim_parser)
+    claim_parser.set_defaults(func=cmd_claim)
+
+    close_parser = sub.add_parser("close", help="mark an issue as done")
+    close_parser.add_argument("issue_id", help="ticket to close, e.g. T-42")
+    close_parser.set_defaults(func=cmd_close)
+
+    dep_parser = sub.add_parser("dep", help="add blocking dependencies to an issue")
+    dep_parser.add_argument("issue_id", help="ticket to add dependencies to")
+    dep_parser.add_argument(
+        "dep_ids",
+        nargs="+",
+        metavar="dep_id",
+        help="one or more blocking ticket IDs",
+    )
+    dep_parser.set_defaults(func=cmd_dep)
+
+    history_parser = sub.add_parser("history", help="show per-issue event history")
+    history_parser.add_argument("issue_id", help="ticket to inspect, e.g. T-42")
+    history_parser.add_argument(
+        "--limit",
+        type=int,
+        help="maximum number of entries to show",
+    )
+    history_parser.add_argument(
+        "--kind",
+        action="append",
+        help="filter by event kind (repeatable)",
+    )
+    history_parser.add_argument(
+        "--notes-only",
+        action="store_true",
+        help="show only note events",
+    )
+    add_text_format_argument(history_parser)
+    history_parser.set_defaults(func=cmd_history)
+
     init_parser = sub.add_parser("init", help="initialize tracker worktree")
     init_parser.set_defaults(func=cmd_init)
 
-    refresh_parser = sub.add_parser(
-        "refresh", help="reload tracker state after conflicts"
+    labels_parser = sub.add_parser(
+        "labels", help="list all labels in use across tickets with counts"
     )
-    refresh_parser.add_argument(
-        "--format",
-        choices=("text", "json"),
-        default="text",
-        help="output format (default: text)",
-    )
-    refresh_parser.set_defaults(func=cmd_refresh)
-
-    remote_parser = sub.add_parser(
-        "remote", help="show or configure tracker remote wiring"
-    )
-    remote_parser.add_argument(
-        "--set",
-        metavar="REMOTE",
-        help="configure tracker to use this remote",
-    )
-    remote_parser.add_argument(
-        "--auto",
+    labels_parser.add_argument(
+        "-a",
+        "--all",
         action="store_true",
-        help="infer and configure remote automatically",
+        help="include closed tickets (default: open only)",
     )
-    remote_parser.add_argument(
-        "--format",
-        choices=("text", "json"),
-        default="text",
-        help="output format (default: text)",
-    )
-    remote_parser.set_defaults(func=cmd_remote)
-
-    pull_parser = sub.add_parser(
-        "pull", help="fetch and merge the tracker branch from a remote"
-    )
-    pull_parser.add_argument("remote", help="remote name, e.g. origin")
-    pull_parser.add_argument(
-        "--format",
-        choices=("text", "json"),
-        default="text",
-        help="output format (default: text)",
-    )
-    pull_parser.set_defaults(func=cmd_pull)
-
-    push_parser = sub.add_parser("push", help="push the tracker branch to a remote")
-    push_parser.add_argument("remote", help="remote name, e.g. origin")
-    push_parser.add_argument(
-        "--format",
-        choices=("text", "json"),
-        default="text",
-        help="output format (default: text)",
-    )
-    push_parser.set_defaults(func=cmd_push)
-
-    new_parser = sub.add_parser("new", help="create an issue")
-    new_parser.add_argument("title", help="one-line summary of the issue")
-    new_parser.add_argument("-b", "--body", help="longer description or context")
-    new_parser.add_argument(
-        "-l",
-        "--label",
-        action="append",
-        metavar="LABEL",
-        help="tag for this issue (repeatable)",
-    )
-    new_parser.add_argument(
-        "-p",
-        "--priority",
-        type=int,
-        default=DEFAULT_PRIORITY,
-        help=f"1 (highest) to 5 (lowest), default {DEFAULT_PRIORITY}",
-    )
-    new_parser.set_defaults(func=cmd_new)
+    add_text_format_argument(labels_parser)
+    labels_parser.set_defaults(func=cmd_labels)
 
     list_parser = sub.add_parser("list", help="list issues ordered by priority")
     list_parser.add_argument(
@@ -507,71 +500,34 @@ def build_parser() -> argparse.ArgumentParser:
     add_format_argument(list_parser)
     list_parser.set_defaults(func=cmd_list)
 
-    ready_parser = sub.add_parser("ready", help="list ready open issues by priority")
-    add_format_argument(ready_parser)
-    ready_parser.set_defaults(func=cmd_ready)
+    log_parser = sub.add_parser(
+        "log", help="show git history for an issue, or all recent tracker changes"
+    )
+    log_parser.add_argument(
+        "issue_id",
+        nargs="?",
+        help="ticket to inspect; omit to show full tracker branch log",
+    )
+    log_parser.set_defaults(func=cmd_log)
 
-    claim_parser = sub.add_parser("claim", help="claim a specific issue")
-    claim_parser.add_argument("issue_id", help="ticket to claim, e.g. T-42")
-    claim_parser.add_argument(
-        "--owner",
-        help="owner name (default: $GITTOC_OWNER or $USER)",
-    )
-    add_format_argument(claim_parser)
-    claim_parser.set_defaults(func=cmd_claim)
-
-    show_parser = sub.add_parser("show", help="show one issue as JSON")
-    show_parser.add_argument("issue_id", help="ticket to show, e.g. T-42")
-    show_parser.add_argument(
-        "--history",
-        action="store_true",
-        help="include full event history",
-    )
-    show_parser.add_argument(
-        "--field",
-        action="append",
-        metavar="FIELD",
-        help="show only this field (repeatable)",
-    )
-    show_parser.set_defaults(func=cmd_show)
-
-    update_parser = sub.add_parser("update", help="update issue fields")
-    update_parser.add_argument("issue_id", help="ticket to update, e.g. T-42")
-    update_parser.add_argument("-t", "--title", help="new title")
-    update_parser.add_argument("-b", "--body", help="new body text")
-    update_parser.add_argument("--state", choices=STATE_ORDER, help="new state")
-    update_parser.add_argument(
-        "--owner",
-        help="assign to this owner",
-    )
-    update_parser.add_argument(
+    new_parser = sub.add_parser("new", help="create an issue")
+    new_parser.add_argument("title", help="one-line summary of the issue")
+    new_parser.add_argument("-b", "--body", help="longer description or context")
+    new_parser.add_argument(
         "-l",
         "--label",
         action="append",
         metavar="LABEL",
-        help="replace label set with these labels (repeatable)",
+        help="tag for this issue (repeatable)",
     )
-    update_parser.add_argument(
+    new_parser.add_argument(
         "-p",
         "--priority",
         type=int,
-        help="1 (highest) to 5 (lowest)",
+        default=DEFAULT_PRIORITY,
+        help=f"1 (highest) to 5 (lowest), default {DEFAULT_PRIORITY}",
     )
-    update_parser.set_defaults(func=cmd_update)
-
-    dep_parser = sub.add_parser("dep", help="add blocking dependencies to an issue")
-    dep_parser.add_argument("issue_id", help="ticket to add dependencies to")
-    dep_parser.add_argument(
-        "dep_ids",
-        nargs="+",
-        metavar="dep_id",
-        help="one or more blocking ticket IDs",
-    )
-    dep_parser.set_defaults(func=cmd_dep)
-
-    close_parser = sub.add_parser("close", help="mark an issue as done")
-    close_parser.add_argument("issue_id", help="ticket to close, e.g. T-42")
-    close_parser.set_defaults(func=cmd_close)
+    new_parser.set_defaults(func=cmd_new)
 
     note_parser = sub.add_parser("note", help="append a note to an issue")
     note_parser.add_argument("issue_id", help="ticket to annotate, e.g. T-42")
@@ -582,30 +538,43 @@ def build_parser() -> argparse.ArgumentParser:
     )
     note_parser.set_defaults(func=cmd_note)
 
-    history_parser = sub.add_parser("history", help="show per-issue event history")
-    history_parser.add_argument("issue_id", help="ticket to inspect, e.g. T-42")
-    history_parser.add_argument(
-        "--format",
-        choices=("text", "json"),
-        default="text",
-        help="output format (default: text)",
+    pull_parser = sub.add_parser(
+        "pull", help="fetch and merge the tracker branch from a remote"
     )
-    history_parser.add_argument(
-        "--limit",
-        type=int,
-        help="maximum number of entries to show",
+    pull_parser.add_argument("remote", help="remote name, e.g. origin")
+    add_text_format_argument(pull_parser)
+    pull_parser.set_defaults(func=cmd_pull)
+
+    push_parser = sub.add_parser("push", help="push the tracker branch to a remote")
+    push_parser.add_argument("remote", help="remote name, e.g. origin")
+    add_text_format_argument(push_parser)
+    push_parser.set_defaults(func=cmd_push)
+
+    ready_parser = sub.add_parser("ready", help="list ready open issues by priority")
+    add_format_argument(ready_parser)
+    ready_parser.set_defaults(func=cmd_ready)
+
+    refresh_parser = sub.add_parser(
+        "refresh", help="reload tracker state after conflicts"
     )
-    history_parser.add_argument(
-        "--kind",
-        action="append",
-        help="filter by event kind (repeatable)",
+    add_text_format_argument(refresh_parser)
+    refresh_parser.set_defaults(func=cmd_refresh)
+
+    remote_parser = sub.add_parser(
+        "remote", help="show or configure tracker remote wiring"
     )
-    history_parser.add_argument(
-        "--notes-only",
+    remote_parser.add_argument(
+        "--set",
+        metavar="REMOTE",
+        help="configure tracker to use this remote",
+    )
+    remote_parser.add_argument(
+        "--auto",
         action="store_true",
-        help="show only note events",
+        help="infer and configure remote automatically",
     )
-    history_parser.set_defaults(func=cmd_history)
+    add_text_format_argument(remote_parser)
+    remote_parser.set_defaults(func=cmd_remote)
 
     resume_parser = sub.add_parser(
         "resume", help="show recovery context for a specific or auto-selected issue"
@@ -631,43 +600,50 @@ def build_parser() -> argparse.ArgumentParser:
         default=3,
         help="number of recent events to include (default: 3)",
     )
-    resume_parser.add_argument(
-        "--format",
-        choices=("text", "json"),
-        default="text",
-        help="output format (default: text)",
-    )
+    add_text_format_argument(resume_parser)
     resume_parser.set_defaults(func=cmd_resume)
 
-    log_parser = sub.add_parser(
-        "log", help="show git history for an issue, or all recent tracker changes"
-    )
-    log_parser.add_argument(
-        "issue_id",
-        nargs="?",
-        help="ticket to inspect; omit to show full tracker branch log",
-    )
-    log_parser.set_defaults(func=cmd_log)
-
-    labels_parser = sub.add_parser(
-        "labels", help="list all labels in use across tickets with counts"
-    )
-    labels_parser.add_argument(
-        "-a",
-        "--all",
+    show_parser = sub.add_parser("show", help="show one issue as JSON")
+    show_parser.add_argument("issue_id", help="ticket to show, e.g. T-42")
+    show_parser.add_argument(
+        "--history",
         action="store_true",
-        help="include closed tickets (default: open only)",
+        help="include full event history",
     )
-    labels_parser.add_argument(
-        "--format",
-        choices=("text", "json"),
-        default="text",
-        help="output format (default: text)",
+    show_parser.add_argument(
+        "--field",
+        action="append",
+        metavar="FIELD",
+        help="show only this field (repeatable)",
     )
-    labels_parser.set_defaults(func=cmd_labels)
+    show_parser.set_defaults(func=cmd_show)
 
     summary_parser = sub.add_parser("summary", help="print ticket counts by state")
     summary_parser.set_defaults(func=cmd_summary)
+
+    update_parser = sub.add_parser("update", help="update issue fields")
+    update_parser.add_argument("issue_id", help="ticket to update, e.g. T-42")
+    update_parser.add_argument("-t", "--title", help="new title")
+    update_parser.add_argument("-b", "--body", help="new body text")
+    update_parser.add_argument("--state", choices=STATE_ORDER, help="new state")
+    update_parser.add_argument(
+        "--owner",
+        help="assign to this owner",
+    )
+    update_parser.add_argument(
+        "-l",
+        "--label",
+        action="append",
+        metavar="LABEL",
+        help="replace label set with these labels (repeatable)",
+    )
+    update_parser.add_argument(
+        "-p",
+        "--priority",
+        type=int,
+        help="1 (highest) to 5 (lowest)",
+    )
+    update_parser.set_defaults(func=cmd_update)
 
     return parser
 
