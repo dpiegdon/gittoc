@@ -394,6 +394,7 @@ def add_format_argument(
         "--format",
         choices=("compact", "normal", "verbose", "json"),
         default=default,
+        help="output format (default: %(default)s)",
     )
 
 
@@ -407,41 +408,102 @@ def build_parser() -> argparse.ArgumentParser:
     refresh_parser = sub.add_parser(
         "refresh", help="reload tracker state after conflicts"
     )
-    refresh_parser.add_argument("--format", choices=("text", "json"), default="text")
+    refresh_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
     refresh_parser.set_defaults(func=cmd_refresh)
 
     remote_parser = sub.add_parser(
         "remote", help="show or configure tracker remote wiring"
     )
-    remote_parser.add_argument("--set")
-    remote_parser.add_argument("--auto", action="store_true")
-    remote_parser.add_argument("--format", choices=("text", "json"), default="text")
+    remote_parser.add_argument(
+        "--set",
+        metavar="REMOTE",
+        help="configure tracker to use this remote",
+    )
+    remote_parser.add_argument(
+        "--auto",
+        action="store_true",
+        help="infer and configure remote automatically",
+    )
+    remote_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
     remote_parser.set_defaults(func=cmd_remote)
 
     pull_parser = sub.add_parser(
         "pull", help="fetch and merge the tracker branch from a remote"
     )
-    pull_parser.add_argument("remote")
-    pull_parser.add_argument("--format", choices=("text", "json"), default="text")
+    pull_parser.add_argument("remote", help="remote name, e.g. origin")
+    pull_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
     pull_parser.set_defaults(func=cmd_pull)
 
     push_parser = sub.add_parser("push", help="push the tracker branch to a remote")
-    push_parser.add_argument("remote")
-    push_parser.add_argument("--format", choices=("text", "json"), default="text")
+    push_parser.add_argument("remote", help="remote name, e.g. origin")
+    push_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
     push_parser.set_defaults(func=cmd_push)
 
     new_parser = sub.add_parser("new", help="create an issue")
-    new_parser.add_argument("title")
-    new_parser.add_argument("-b", "--body")
-    new_parser.add_argument("-l", "--label", action="append")
-    new_parser.add_argument("-p", "--priority", type=int, default=DEFAULT_PRIORITY)
+    new_parser.add_argument("title", help="one-line summary of the issue")
+    new_parser.add_argument("-b", "--body", help="longer description or context")
+    new_parser.add_argument(
+        "-l",
+        "--label",
+        action="append",
+        metavar="LABEL",
+        help="tag for this issue (repeatable)",
+    )
+    new_parser.add_argument(
+        "-p",
+        "--priority",
+        type=int,
+        default=DEFAULT_PRIORITY,
+        help=f"1 (highest) to 5 (lowest), default {DEFAULT_PRIORITY}",
+    )
     new_parser.set_defaults(func=cmd_new)
 
     list_parser = sub.add_parser("list", help="list issues ordered by priority")
-    list_parser.add_argument("-s", "--state", action="append", choices=STATE_ORDER)
-    list_parser.add_argument("-l", "--label", action="append")
-    list_parser.add_argument("-a", "--all", action="store_true")
-    list_parser.add_argument("--ready-only", action="store_true")
+    list_parser.add_argument(
+        "-s",
+        "--state",
+        action="append",
+        choices=STATE_ORDER,
+        help="include this state (repeatable; default: open)",
+    )
+    list_parser.add_argument(
+        "-l",
+        "--label",
+        action="append",
+        metavar="LABEL",
+        help="filter to tickets carrying this label (repeatable, AND)",
+    )
+    list_parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="show all states",
+    )
+    list_parser.add_argument(
+        "--ready-only",
+        action="store_true",
+        help="show only tickets with no blocking dependencies",
+    )
     add_format_argument(list_parser)
     list_parser.set_defaults(func=cmd_list)
 
@@ -450,72 +512,161 @@ def build_parser() -> argparse.ArgumentParser:
     ready_parser.set_defaults(func=cmd_ready)
 
     claim_parser = sub.add_parser("claim", help="claim a specific issue")
-    claim_parser.add_argument("issue_id")
-    claim_parser.add_argument("--owner")
+    claim_parser.add_argument("issue_id", help="ticket to claim, e.g. T-42")
+    claim_parser.add_argument(
+        "--owner",
+        help="owner name (default: $GITTOC_OWNER or $USER)",
+    )
     add_format_argument(claim_parser)
     claim_parser.set_defaults(func=cmd_claim)
 
-    show_parser = sub.add_parser("show", help="show one issue")
-    show_parser.add_argument("issue_id")
-    show_parser.add_argument("--history", action="store_true")
-    show_parser.add_argument("--field", action="append")
+    show_parser = sub.add_parser("show", help="show one issue as JSON")
+    show_parser.add_argument("issue_id", help="ticket to show, e.g. T-42")
+    show_parser.add_argument(
+        "--history",
+        action="store_true",
+        help="include full event history",
+    )
+    show_parser.add_argument(
+        "--field",
+        action="append",
+        metavar="FIELD",
+        help="show only this field (repeatable)",
+    )
     show_parser.set_defaults(func=cmd_show)
 
     update_parser = sub.add_parser("update", help="update issue fields")
-    update_parser.add_argument("issue_id")
-    update_parser.add_argument("-t", "--title")
-    update_parser.add_argument("-b", "--body")
-    update_parser.add_argument("--state", choices=STATE_ORDER)
-    update_parser.add_argument("--owner")
-    update_parser.add_argument("-l", "--label", action="append")
-    update_parser.add_argument("-p", "--priority", type=int)
+    update_parser.add_argument("issue_id", help="ticket to update, e.g. T-42")
+    update_parser.add_argument("-t", "--title", help="new title")
+    update_parser.add_argument("-b", "--body", help="new body text")
+    update_parser.add_argument("--state", choices=STATE_ORDER, help="new state")
+    update_parser.add_argument(
+        "--owner",
+        help="assign to this owner",
+    )
+    update_parser.add_argument(
+        "-l",
+        "--label",
+        action="append",
+        metavar="LABEL",
+        help="replace label set with these labels (repeatable)",
+    )
+    update_parser.add_argument(
+        "-p",
+        "--priority",
+        type=int,
+        help="1 (highest) to 5 (lowest)",
+    )
     update_parser.set_defaults(func=cmd_update)
 
-    dep_parser = sub.add_parser("dep", help="add dependencies")
-    dep_parser.add_argument("issue_id")
-    dep_parser.add_argument("dep_ids", nargs="+")
+    dep_parser = sub.add_parser("dep", help="add blocking dependencies to an issue")
+    dep_parser.add_argument("issue_id", help="ticket to add dependencies to")
+    dep_parser.add_argument(
+        "dep_ids",
+        nargs="+",
+        metavar="dep_id",
+        help="one or more blocking ticket IDs",
+    )
     dep_parser.set_defaults(func=cmd_dep)
 
-    close_parser = sub.add_parser("close", help="move an issue to the closed state")
-    close_parser.add_argument("issue_id")
+    close_parser = sub.add_parser("close", help="mark an issue as done")
+    close_parser.add_argument("issue_id", help="ticket to close, e.g. T-42")
     close_parser.set_defaults(func=cmd_close)
 
-    note_parser = sub.add_parser("note", help="append a note to an issue history")
-    note_parser.add_argument("issue_id")
-    note_parser.add_argument("text")
-    note_parser.add_argument("--actor")
+    note_parser = sub.add_parser("note", help="append a note to an issue")
+    note_parser.add_argument("issue_id", help="ticket to annotate, e.g. T-42")
+    note_parser.add_argument("text", help="note text")
+    note_parser.add_argument(
+        "--actor",
+        help="override actor name (default: $GITTOC_OWNER or $USER)",
+    )
     note_parser.set_defaults(func=cmd_note)
 
     history_parser = sub.add_parser("history", help="show per-issue event history")
-    history_parser.add_argument("issue_id")
-    history_parser.add_argument("--format", choices=("text", "json"), default="text")
-    history_parser.add_argument("--limit", type=int)
-    history_parser.add_argument("--kind", action="append")
-    history_parser.add_argument("--notes-only", action="store_true")
+    history_parser.add_argument("issue_id", help="ticket to inspect, e.g. T-42")
+    history_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
+    history_parser.add_argument(
+        "--limit",
+        type=int,
+        help="maximum number of entries to show",
+    )
+    history_parser.add_argument(
+        "--kind",
+        action="append",
+        help="filter by event kind (repeatable)",
+    )
+    history_parser.add_argument(
+        "--notes-only",
+        action="store_true",
+        help="show only note events",
+    )
     history_parser.set_defaults(func=cmd_history)
 
     resume_parser = sub.add_parser(
-        "resume", help="show compact recovery context for a specific or inferred issue"
+        "resume", help="show recovery context for a specific or auto-selected issue"
     )
-    resume_parser.add_argument("issue_id", nargs="?")
-    resume_parser.add_argument("--owner")
-    resume_parser.add_argument("--notes-limit", type=int, default=3)
-    resume_parser.add_argument("--events-limit", type=int, default=3)
-    resume_parser.add_argument("--format", choices=("text", "json"), default="text")
+    resume_parser.add_argument(
+        "issue_id",
+        nargs="?",
+        help="ticket to resume; omit to auto-select by priority and ownership",
+    )
+    resume_parser.add_argument(
+        "--owner",
+        help="owner for auto-selection (default: $GITTOC_OWNER or $USER)",
+    )
+    resume_parser.add_argument(
+        "--notes-limit",
+        type=int,
+        default=3,
+        help="number of recent notes to include (default: 3)",
+    )
+    resume_parser.add_argument(
+        "--events-limit",
+        type=int,
+        default=3,
+        help="number of recent events to include (default: 3)",
+    )
+    resume_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
     resume_parser.set_defaults(func=cmd_resume)
 
     log_parser = sub.add_parser(
-        "log", help="show git history for an issue file, or all recent changes"
+        "log", help="show git history for an issue, or all recent tracker changes"
     )
-    log_parser.add_argument("issue_id", nargs="?")
+    log_parser.add_argument(
+        "issue_id",
+        nargs="?",
+        help="ticket to inspect; omit to show full tracker branch log",
+    )
     log_parser.set_defaults(func=cmd_log)
 
-    labels_parser = sub.add_parser("labels", help="list all labels in use with counts")
-    labels_parser.add_argument("-a", "--all", action="store_true")
-    labels_parser.add_argument("--format", choices=("text", "json"), default="text")
+    labels_parser = sub.add_parser(
+        "labels", help="list all labels in use across tickets with counts"
+    )
+    labels_parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="include closed tickets (default: open only)",
+    )
+    labels_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
     labels_parser.set_defaults(func=cmd_labels)
 
-    summary_parser = sub.add_parser("summary", help="print compact state counts")
+    summary_parser = sub.add_parser("summary", help="print ticket counts by state")
     summary_parser.set_defaults(func=cmd_summary)
 
     return parser
