@@ -1,1 +1,2 @@
 {"actor": "dpiegdon", "at": "2026-03-28T19:01:26+00:00", "kind": "created", "text": "remove clutter in ticket json files"}
+{"actor": "claude", "at": "2026-03-28T19:56:01+00:00", "kind": "note", "text": "write_issue() should skip fields that are empty/default: empty lists (deps, labels), None owner, empty body. load_issue() already needs to handle missing keys via .get() with defaults \u2014 check if it already does. This also improves T-67 (grep) since less noise per file. Straightforward to implement."}
