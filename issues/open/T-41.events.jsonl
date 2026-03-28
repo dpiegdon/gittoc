@@ -2,3 +2,4 @@
 {"actor": "claude", "at": "2026-03-27T23:22:25+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "dpiegdon", "at": "2026-03-28T11:24:14+00:00", "kind": "note", "text": "Has been done immediately before v0.2.0, which resulted in significant improvement. But the installation and embedding are still somewhat awkward, maybe there are ways to improve it. Also skill-embedding has not fully been tested"}
 {"actor": "claude", "at": "2026-03-28T11:43:17+00:00", "kind": "note", "text": "main remaining gap per last run: skill-embedding not fully tested (symlink path fix was just landed in this session). Next trial should specifically exercise: install in repo with existing .claude/, verify skill shows up to agent, verify agent can use git toc alias."}
+{"actor": "dpiegdon", "at": "2026-03-28T12:28:27+00:00", "kind": "updated", "text": "fields updated"}

@@ -4,10 +4,10 @@
   "deps": [],
   "id": "T-41",
   "labels": [
-    "chore"
+    "human"
   ],
   "owner": "",
   "priority": 2,
   "title": "Run a real bootstrap trial in a fresh host project",
-  "updated_at": "2026-03-27T23:22:25+00:00"
+  "updated_at": "2026-03-28T12:28:27+00:00"
 }
