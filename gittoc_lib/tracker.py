@@ -73,6 +73,10 @@ class Tracker:
     @staticmethod
     def _bootstrap_worktree(repo: Path, checkout: Path) -> Path:
         """Create an orphan tracker branch with an empty issues directory structure."""
+        # git worktree add requires at least one commit; create one if the repo is empty.
+        proc = run_git(["rev-parse", "--verify", "HEAD"], cwd=repo, check=False)
+        if proc.returncode != 0:
+            run_git(["commit", "--allow-empty", "-q", "-m", "Initial commit"], cwd=repo)
         run_git(
             ["worktree", "add", "--detach", "--force", str(checkout), "HEAD"], cwd=repo
         )
