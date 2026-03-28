@@ -1,2 +1,3 @@
 {"actor": "codex", "at": "2026-03-27T20:44:59+00:00", "kind": "created", "text": "Run a real bootstrap trial in a fresh host project"}
 {"actor": "claude", "at": "2026-03-27T23:22:25+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "dpiegdon", "at": "2026-03-28T11:24:14+00:00", "kind": "note", "text": "Has been done immediately before v0.2.0, which resulted in significant improvement. But the installation and embedding are still somewhat awkward, maybe there are ways to improve it. Also skill-embedding has not fully been tested"}
