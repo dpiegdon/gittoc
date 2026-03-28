@@ -467,12 +467,12 @@ def build_parser() -> argparse.ArgumentParser:
     close_parser.set_defaults(func=cmd_close)
 
     dep_parser = sub.add_parser("dep", help="add blocking dependencies to an issue")
-    dep_parser.add_argument("issue_id", help="ticket to add dependencies to")
+    dep_parser.add_argument("issue_id", help="ticket that depends on the others, e.g. T-42")
     dep_parser.add_argument(
         "dep_ids",
         nargs="+",
         metavar="dep_id",
-        help="one or more blocking ticket IDs",
+        help="one or more tickets that must complete first (repeatable)",
     )
     dep_parser.set_defaults(func=cmd_dep)
 
