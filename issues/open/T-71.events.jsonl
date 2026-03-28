@@ -1,3 +1,4 @@
 {"actor": "dpiegdon", "at": "2026-03-28T18:57:13+00:00", "kind": "created", "text": "output of \"gittoc log\" is missing information on actor."}
 {"actor": "dpiegdon", "at": "2026-03-28T19:00:17+00:00", "kind": "note", "text": "yeah, I think I'd care about the actor in commit-messages *on the ticket branch*."}
 {"actor": "claude", "at": "2026-03-28T19:56:02+00:00", "kind": "note", "text": "Per user's note: add actor to commit messages on the gittoc branch. commit_if_needed() currently takes a plain message string. Could append ' (by <actor>)' or similar. Need to thread actor through to commit_if_needed \u2014 some callers already have actor, others infer it. Small change, mostly plumbing."}
+{"actor": "dpiegdon", "at": "2026-03-28T19:58:41+00:00", "kind": "note", "text": "maybe we should even consider having a sensible summary message in all commits to the gittoc branch."}
