@@ -1,3 +1,5 @@
+"""Core tracker logic: worktree management, issue storage, and state transitions."""
+
 from __future__ import annotations
 
 import json
@@ -17,17 +19,21 @@ from .models import Issue
 
 
 class StaleTrackerError(Exception):
-    pass
+    """Raised when the tracker has been modified since it was opened."""
 
 
 class Tracker:
+    """Manages the gittoc issue store on the dedicated tracker branch."""
+
     def __init__(self, repo: Path, checkout: Path):
+        """Initialise with repo root and tracker worktree paths."""
         self.repo = repo
         self.checkout = checkout
         self.base_head = self.head()
 
     @classmethod
     def open(cls) -> "Tracker":
+        """Open the tracker, ensuring the worktree exists and running migrations."""
         repo = repo_root()
         checkout = cls._ensure_worktree(repo)
         tracker = cls(repo, checkout)
@@ -37,6 +43,7 @@ class Tracker:
 
     @staticmethod
     def _ensure_worktree(repo: Path) -> Path:
+        """Ensure the hidden gittoc worktree exists, creating or attaching it as needed."""
         checkout = worktree_path(repo)
         if has_legacy_hidden_clone(checkout):
             raise SystemExit(
@@ -65,6 +72,7 @@ class Tracker:
 
     @staticmethod
     def _bootstrap_worktree(repo: Path, checkout: Path) -> Path:
+        """Create an orphan tracker branch with an empty issues directory structure."""
         run_git(
             ["worktree", "add", "--detach", "--force", str(checkout), "HEAD"], cwd=repo
         )
@@ -89,22 +97,27 @@ class Tracker:
         return checkout
 
     def head(self) -> str:
+        """Return the current HEAD commit hash of the tracker branch."""
         proc = run_git(
             ["rev-parse", "--verify", "HEAD"], cwd=self.checkout, check=False
         )
         return proc.stdout.strip() if proc.returncode == 0 else ""
 
     def refresh(self) -> str:
+        """Reset the stale-check baseline to the current HEAD and return it."""
         self.base_head = self.head()
         return self.base_head
 
     def configured_remote(self) -> str:
+        """Return the explicitly configured tracker remote, or empty string."""
         return local_config_get(self.repo, "gittoc.remote")
 
     def effective_remote(self) -> str:
+        """Return the configured remote, falling back to the inferred one."""
         return self.configured_remote() or infer_remote(self.repo)
 
     def remote_status(self) -> dict[str, object]:
+        """Return a dict describing the current remote wiring state."""
         configured = self.configured_remote()
         inferred = infer_remote(self.repo)
         effective = configured or inferred
@@ -124,6 +137,7 @@ class Tracker:
         }
 
     def configure_remote(self, remote: str) -> dict[str, object]:
+        """Configure the tracker branch to use the given remote and return status."""
         if remote not in list_remotes(self.repo):
             raise SystemExit(f"unknown remote: {remote}")
         local_config_set(self.repo, "gittoc.remote", remote)
@@ -134,10 +148,12 @@ class Tracker:
         return self.remote_status()
 
     def _validate_remote(self, remote: str) -> None:
+        """Raise SystemExit if remote is not a known git remote."""
         if remote not in list_remotes(self.repo):
             raise SystemExit(f"unknown remote: {remote}")
 
     def pull_remote(self, remote: str) -> dict[str, str]:
+        """Fetch and merge the tracker branch from the given remote."""
         self._validate_remote(remote)
         run_git(["fetch", remote, TRACKER_BRANCH], cwd=self.repo)
         if not remote_branch_exists(self.repo, remote, TRACKER_BRANCH):
@@ -155,6 +171,7 @@ class Tracker:
         return {"action": "pull", "remote": remote, "head": self.base_head}
 
     def push_remote(self, remote: str) -> dict[str, str]:
+        """Push the tracker branch to the given remote."""
         self._validate_remote(remote)
         try:
             run_git(
@@ -168,6 +185,7 @@ class Tracker:
         return {"action": "push", "remote": remote, "head": self.base_head}
 
     def ensure_not_stale(self) -> None:
+        """Raise StaleTrackerError if the tracker has been modified since it was opened."""
         current = self.head()
         if current != self.base_head:
             raise StaleTrackerError(
@@ -175,20 +193,25 @@ class Tracker:
             )
 
     def issues_root(self) -> Path:
+        """Return the path to the issues root directory in the tracker worktree."""
         return self.checkout / ISSUES_ROOT
 
     def state_dir(self, state: str) -> Path:
+        """Return the directory path for a given issue state, raising on invalid state."""
         if state not in STATE_SET:
             raise SystemExit(f"invalid state: {state}")
         return self.issues_root() / state
 
     def issue_path(self, issue_id: str, state: str) -> Path:
+        """Return the expected JSON file path for an issue in the given state."""
         return self.state_dir(state) / f"{validate_issue_id(issue_id)}.json"
 
     def event_path(self, issue_id: str, state: str) -> Path:
+        """Return the expected event log path for an issue in the given state."""
         return self.state_dir(state) / f"{validate_issue_id(issue_id)}{EVENT_SUFFIX}"
 
     def find_issue_path(self, issue_id: str) -> Path:
+        """Search all state directories and return the path where the issue lives."""
         issue_id = validate_issue_id(issue_id)
         for state in STATE_ORDER:
             path = self.issue_path(issue_id, state)
@@ -197,6 +220,7 @@ class Tracker:
         raise SystemExit(f"issue not found: {issue_id}")
 
     def find_event_path(self, issue_id: str) -> Path | None:
+        """Return the event log path for an issue, or None if no log exists yet."""
         issue_id = validate_issue_id(issue_id)
         for state in STATE_ORDER:
             path = self.event_path(issue_id, state)
@@ -205,6 +229,7 @@ class Tracker:
         return None
 
     def commit_if_needed(self, message: str) -> None:
+        """Stage and commit any pending changes to the issues tree, if any exist."""
         proc = run_git(["status", "--porcelain", "--", "issues"], cwd=self.checkout)
         if not proc.stdout.strip():
             return
@@ -214,6 +239,7 @@ class Tracker:
         self.base_head = self.head()
 
     def write_issue(self, issue: Issue, previous_path: Path | None = None) -> Path:
+        """Write the issue JSON to disk, removing the old path if it has moved."""
         path = self.issue_path(issue.issue_id, issue.state)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
@@ -227,6 +253,7 @@ class Tracker:
     def move_event_file(
         self, issue_id: str, new_state: str, previous_path: Path | None
     ) -> None:
+        """Relocate the event log alongside the issue when its state directory changes."""
         if not previous_path:
             return
         previous_event = previous_path.with_name(previous_path.stem + EVENT_SUFFIX)
@@ -240,6 +267,7 @@ class Tracker:
     def append_event(
         self, issue: Issue, kind: str, text: str = "", actor: str | None = None
     ) -> None:
+        """Append a timestamped event entry to the issue's event log."""
         path = self.event_path(issue.issue_id, issue.state)
         path.parent.mkdir(parents=True, exist_ok=True)
         entry = {
@@ -252,6 +280,7 @@ class Tracker:
             handle.write(json.dumps(entry, sort_keys=True) + "\n")
 
     def event_entries(self, issue_id: str) -> list[dict]:
+        """Return all event log entries for an issue, in chronological order."""
         path = self.find_event_path(issue_id)
         if not path or not path.exists():
             return []
@@ -271,6 +300,7 @@ class Tracker:
         kinds: set[str] | None = None,
         limit: int | None = None,
     ) -> list[dict]:
+        """Return event entries filtered by kind and/or capped at limit (most recent)."""
         entries = self.event_entries(issue_id)
         if kinds:
             entries = [entry for entry in entries if entry.get("kind") in kinds]
@@ -279,6 +309,7 @@ class Tracker:
         return entries
 
     def note_count(self, issue_id: str) -> int:
+        """Return the number of note events recorded for an issue."""
         return sum(
             1 for entry in self.event_entries(issue_id) if entry["kind"] == "note"
         )
@@ -292,6 +323,7 @@ class Tracker:
         """
 
     def next_issue_id(self) -> str:
+        """Scan existing issue files and return the next unused T-<n> identifier."""
         highest = 0
         for path in self.issues_root().rglob("T-*.json"):
             if path.name.endswith(EVENT_SUFFIX):
@@ -300,6 +332,7 @@ class Tracker:
         return f"T-{highest + 1}"
 
     def issue_paths(self, states: tuple[str, ...] | None = None) -> list[Path]:
+        """Return sorted JSON file paths for issues in the given states (default: open)."""
         states = states or ("open",)
         paths: list[Path] = []
         for state in states:
@@ -316,6 +349,7 @@ class Tracker:
         return paths
 
     def sort_key(self, issue: Issue) -> tuple[int, int, int]:
+        """Return a (priority, state-order, issue-number) tuple for consistent sorting."""
         return (
             issue.priority,
             STATE_ORDER.index(issue.state),
@@ -323,12 +357,14 @@ class Tracker:
         )
 
     def list_issues(self, states: tuple[str, ...] | None = None) -> list[Issue]:
+        """Load and return issues in the given states, sorted by priority."""
         return sorted(
             [Issue.from_path(path) for path in self.issue_paths(states)],
             key=self.sort_key,
         )
 
     def load_issue(self, issue_id: str) -> tuple[Issue, Path]:
+        """Load an issue by ID and return it together with its file path."""
         path = self.find_issue_path(issue_id)
         return Issue.from_path(path), path
 
@@ -340,6 +376,7 @@ class Tracker:
         priority: int,
         state: str = "open",
     ) -> Issue:
+        """Create a new issue, write it to disk, append a created event, and commit."""
         timestamp = now_utc()
         issue = Issue(
             issue_id=self.next_issue_id(),
@@ -359,15 +396,18 @@ class Tracker:
         return issue
 
     def dependency_closed(self, issue_id: str) -> bool:
+        """Return True if the named dependency issue is in a terminal state."""
         dep, _ = self.load_issue(issue_id)
         return dep.state in TERMINAL_STATES
 
     def ready(self, issue: Issue) -> bool:
+        """Return True if the issue is open and all its dependencies are closed."""
         return issue.state == "open" and all(
             self.dependency_closed(dep_id) for dep_id in issue.deps
         )
 
     def _would_introduce_cycle(self, issue_id: str, dep_id: str) -> bool:
+        """Return True if adding dep_id as a dependency of issue_id would create a cycle."""
         if dep_id == issue_id:
             return True
         seen: set[str] = set()
@@ -384,12 +424,14 @@ class Tracker:
         return False
 
     def ready_issues(self) -> list[Issue]:
+        """Return all open issues with no unresolved dependencies, sorted by priority."""
         return sorted(
             [issue for issue in self.list_issues(("open",)) if self.ready(issue)],
             key=self.sort_key,
         )
 
     def resume_issue(self, owner: str) -> tuple[Issue | None, str | None]:
+        """Select the best issue to resume: owner's claimed > ready > open."""
         mine = [
             issue for issue in self.list_issues(("claimed",)) if issue.owner == owner
         ]
@@ -404,6 +446,7 @@ class Tracker:
         return None, None
 
     def summary(self) -> dict[str, int]:
+        """Return a dict of issue counts per state plus a 'ready' count."""
         counts = {state: 0 for state in STATE_ORDER}
         ready = 0
         for issue in self.list_issues(STATE_ORDER):
@@ -428,6 +471,7 @@ class Tracker:
         event_text: str = "",
         event_actor: str | None = None,
     ) -> Issue:
+        """Apply one or more field changes to an issue and commit the result."""
         issue, path = self.load_issue(issue_id)
         target_state = issue.state if state is None else state
         if target_state == "claimed" and issue.state != "claimed":
@@ -456,6 +500,7 @@ class Tracker:
         return updated
 
     def reject_issue(self, issue_id: str) -> Issue:
+        """Move an issue to the rejected state (won't-do / abandoned)."""
         return self.update_issue(
             issue_id,
             state="rejected",
@@ -464,6 +509,7 @@ class Tracker:
         )
 
     def set_dependencies(self, issue_id: str, dep_ids: list[str]) -> Issue:
+        """Add blocking dependencies to an issue, rejecting cycles."""
         issue, path = self.load_issue(issue_id)
         deps = set(issue.deps)
         for dep_id in dep_ids:
@@ -483,6 +529,7 @@ class Tracker:
         return updated
 
     def add_note(self, issue_id: str, text: str, actor: str | None = None) -> Issue:
+        """Append a free-text note event to an issue and commit."""
         issue, path = self.load_issue(issue_id)
         updated = replace(issue, updated_at=now_utc())
         self.write_issue(updated, previous_path=path)

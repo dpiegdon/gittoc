@@ -1,3 +1,5 @@
+"""Command-line interface: argument parsing and command implementations."""
+
 from __future__ import annotations
 
 import argparse
@@ -25,6 +27,7 @@ COMMAND_ALIASES = {
 
 
 def select_fields(data: dict, fields: list[str] | None) -> dict:
+    """Return a subset of data containing only the requested fields, or all if none given."""
     if not fields:
         return data
     selected: dict = {}
@@ -35,6 +38,7 @@ def select_fields(data: dict, fields: list[str] | None) -> dict:
 
 
 def format_history_entry(entry: dict) -> str:
+    """Format a single event log entry as a human-readable one-liner."""
     return f"{entry['at']} {entry['kind']} {entry['actor']}: {entry['text']}"
 
 
@@ -47,6 +51,7 @@ def resume_payload(
     events_limit: int,
     reason: str | None = None,
 ) -> dict:
+    """Build the full resume data dict including recent notes and events."""
     data = issue.to_display(
         path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id)
     )
@@ -67,6 +72,7 @@ def resume_payload(
 
 
 def print_resume_text(data: dict) -> None:
+    """Print the resume payload in human-readable text format."""
     marker = ">" if data["ready"] else "*"
     owner = f" owner={data['owner']}" if data["owner"] else ""
     deps = f" deps={len(data['deps'])}" if data["deps"] else ""
@@ -97,6 +103,7 @@ def print_resume_text(data: dict) -> None:
 
 
 def cmd_init(_args: argparse.Namespace) -> int:
+    """Initialize the tracker worktree and auto-configure the remote if possible."""
     tracker = Tracker.open()
     if not tracker.configured_remote():
         inferred = tracker.effective_remote()
@@ -107,6 +114,7 @@ def cmd_init(_args: argparse.Namespace) -> int:
 
 
 def cmd_refresh(args: argparse.Namespace) -> int:
+    """Reload the stale-check baseline and print the current HEAD and issue counts."""
     tracker = Tracker.open()
     head = tracker.refresh()
     counts = tracker.summary()
@@ -127,6 +135,7 @@ def cmd_refresh(args: argparse.Namespace) -> int:
 
 
 def cmd_remote(args: argparse.Namespace) -> int:
+    """Show or configure the remote wiring for the tracker branch."""
     tracker = Tracker.open()
     if args.set:
         status = tracker.configure_remote(args.set)
@@ -153,6 +162,7 @@ def cmd_remote(args: argparse.Namespace) -> int:
 
 
 def cmd_pull(args: argparse.Namespace) -> int:
+    """Fetch and merge the tracker branch from a remote."""
     tracker = Tracker.open()
     status = tracker.pull_remote(args.remote)
     if args.format == "json":
@@ -163,6 +173,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
 
 
 def cmd_push(args: argparse.Namespace) -> int:
+    """Push the tracker branch to a remote."""
     tracker = Tracker.open()
     status = tracker.push_remote(args.remote)
     if args.format == "json":
@@ -173,6 +184,7 @@ def cmd_push(args: argparse.Namespace) -> int:
 
 
 def cmd_new(args: argparse.Namespace) -> int:
+    """Create a new issue and print its ID."""
     tracker = Tracker.open()
     issue = tracker.create_issue(
         args.title, args.body or "", args.label or [], args.priority
@@ -182,6 +194,7 @@ def cmd_new(args: argparse.Namespace) -> int:
 
 
 def cmd_list(args: argparse.Namespace) -> int:
+    """List issues filtered by state, label, and/or readiness."""
     tracker = Tracker.open()
     if args.all:
         states = STATE_ORDER
@@ -200,6 +213,7 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 
 def cmd_ready(args: argparse.Namespace) -> int:
+    """List all open issues that have no unresolved blocking dependencies."""
     tracker = Tracker.open()
     issues = tracker.ready_issues()
     print_issues(issues, tracker, args.format)
@@ -207,6 +221,7 @@ def cmd_ready(args: argparse.Namespace) -> int:
 
 
 def cmd_claim(args: argparse.Namespace) -> int:
+    """Claim a ready issue, assigning it to the given or inferred owner."""
     tracker = Tracker.open()
     owner = args.owner or default_owner()
     issue = tracker.update_issue(
@@ -223,6 +238,7 @@ def cmd_claim(args: argparse.Namespace) -> int:
 
 
 def cmd_labels(args: argparse.Namespace) -> int:
+    """List all labels in use, with counts, across open (or all) tickets."""
     tracker = Tracker.open()
     states = STATE_ORDER if args.all else ("open",)
     counts: dict[str, int] = {}
@@ -238,6 +254,7 @@ def cmd_labels(args: argparse.Namespace) -> int:
 
 
 def cmd_reject(args: argparse.Namespace) -> int:
+    """Reject an issue (mark as won't-do / abandoned) and print its ID."""
     tracker = Tracker.open()
     issue = tracker.reject_issue(args.issue_id)
     print(issue.issue_id)
@@ -245,6 +262,7 @@ def cmd_reject(args: argparse.Namespace) -> int:
 
 
 def cmd_summary(_args: argparse.Namespace) -> int:
+    """Print a one-line summary of issue counts by state."""
     tracker = Tracker.open()
     counts = tracker.summary()
     parts = [
@@ -260,6 +278,7 @@ def cmd_summary(_args: argparse.Namespace) -> int:
 
 
 def cmd_show(args: argparse.Namespace) -> int:
+    """Print a single issue as a JSON object with optional history and field filtering."""
     tracker = Tracker.open()
     issue, path = tracker.load_issue(args.issue_id)
     data = issue.to_display(
@@ -285,6 +304,7 @@ def cmd_show(args: argparse.Namespace) -> int:
 
 
 def cmd_update(args: argparse.Namespace) -> int:
+    """Update one or more fields of an existing issue."""
     tracker = Tracker.open()
     state = parse_state(args.state)
     issue = tracker.update_issue(
@@ -302,6 +322,7 @@ def cmd_update(args: argparse.Namespace) -> int:
 
 
 def cmd_dep(args: argparse.Namespace) -> int:
+    """Add one or more blocking dependencies to an issue."""
     tracker = Tracker.open()
     issue = tracker.set_dependencies(args.issue_id, args.dep_ids)
     print(issue.issue_id)
@@ -309,6 +330,7 @@ def cmd_dep(args: argparse.Namespace) -> int:
 
 
 def cmd_close(args: argparse.Namespace) -> int:
+    """Mark an issue as closed (done) and print its ID."""
     tracker = Tracker.open()
     issue = tracker.update_issue(
         args.issue_id,
@@ -321,6 +343,7 @@ def cmd_close(args: argparse.Namespace) -> int:
 
 
 def cmd_log(args: argparse.Namespace) -> int:
+    """Print git log for a specific issue file, or the full tracker branch."""
     tracker = Tracker.open()
     if args.issue_id:
         _, path = tracker.load_issue(args.issue_id)
@@ -334,6 +357,7 @@ def cmd_log(args: argparse.Namespace) -> int:
 
 
 def cmd_note(args: argparse.Namespace) -> int:
+    """Append a note to an issue and print its ID."""
     tracker = Tracker.open()
     issue = tracker.add_note(args.issue_id, args.text, actor=args.actor)
     print(issue.issue_id)
@@ -341,6 +365,7 @@ def cmd_note(args: argparse.Namespace) -> int:
 
 
 def cmd_history(args: argparse.Namespace) -> int:
+    """Print the event history for an issue, optionally filtered by kind."""
     tracker = Tracker.open()
     kinds = set(args.kind or [])
     if args.notes_only:
@@ -357,6 +382,7 @@ def cmd_history(args: argparse.Namespace) -> int:
 
 
 def cmd_resume(args: argparse.Namespace) -> int:
+    """Show recovery context for a specific or auto-selected issue."""
     tracker = Tracker.open()
     reason: str | None = None
     if args.issue_id:
@@ -389,6 +415,7 @@ def cmd_resume(args: argparse.Namespace) -> int:
 def add_format_argument(
     parser: argparse.ArgumentParser, default: str = "normal"
 ) -> None:
+    """Add -f/--format with compact/normal/verbose/json choices to a subcommand parser."""
     parser.add_argument(
         "-f",
         "--format",
@@ -399,6 +426,7 @@ def add_format_argument(
 
 
 def add_text_format_argument(parser: argparse.ArgumentParser) -> None:
+    """Add -f/--format with text/json choices to a subcommand parser."""
     parser.add_argument(
         "-f",
         "--format",
@@ -409,6 +437,7 @@ def add_text_format_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build and return the top-level argument parser with all subcommands registered."""
     parser = argparse.ArgumentParser(prog="skills/gittoc/gittoc")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -654,6 +683,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Entry point: parse argv, resolve aliases, dispatch to the appropriate command."""
     if argv is None:
         argv = __import__("sys").argv[1:]
     else:
