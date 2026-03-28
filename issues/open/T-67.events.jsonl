@@ -1,2 +1,3 @@
 {"actor": "dpiegdon", "at": "2026-03-28T12:16:11+00:00", "kind": "created", "text": "grep feature"}
 {"actor": "dpiegdon", "at": "2026-03-28T12:24:44+00:00", "kind": "note", "text": "all additional parameters like '-i' should be passed to grep. grep should operate on whole files, so even meta-data could be grepped for."}
+{"actor": "dpiegdon", "at": "2026-03-28T17:16:10+00:00", "kind": "note", "text": "grepping would be improved if labels were listed in one line in the json file. currently they're listed in separate lines, with the 'label' keyword on a line by itself. that prevents expressions like 'labels.*feature'. (nice to have, but not critical, since labels can be searched for in other ways, too.)"}
