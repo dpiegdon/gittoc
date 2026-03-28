@@ -71,7 +71,7 @@ tools/gittoc/gittoc list
 tools/gittoc/gittoc claim T-1 --owner alice
 ```
 
-2. via git alias (after `git config alias.toc '!tools/gittoc/gittoc'`)
+2. via git alias (after `git config alias.toc "!$(git rev-parse --show-toplevel)/tools/gittoc/gittoc"`)
 
 ```bash
 git toc list
@@ -88,7 +88,14 @@ repository's `.git/config`, for example:
 
 ```ini
 [alias]
-    toc = !tools/gittoc/gittoc
+    toc = !/absolute/path/to/tools/gittoc/gittoc
+```
+
+Use an absolute path — some git versions escape `!` in relative paths, breaking
+the shell-escape prefix. Set it via:
+
+```bash
+git config alias.toc "!$(git rev-parse --show-toplevel)/tools/gittoc/gittoc"
 ```
 
 That would allow:
