@@ -1,1 +1,2 @@
 {"actor": "dpiegdon", "at": "2026-03-28T12:16:11+00:00", "kind": "created", "text": "grep feature"}
+{"actor": "dpiegdon", "at": "2026-03-28T12:24:44+00:00", "kind": "note", "text": "all additional parameters like '-i' should be passed to grep. grep should operate on whole files, so even meta-data could be grepped for."}
