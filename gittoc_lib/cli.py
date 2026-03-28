@@ -395,9 +395,9 @@ def cmd_log(args: argparse.Namespace) -> int:
     if args.issue_id:
         _, path = tracker.load_issue(args.issue_id)
         rel = path.relative_to(tracker.checkout)
-        git_args = ["log", "--follow", "--oneline", "--", str(rel)]
+        git_args = ["log", "--reverse", "--follow", "--oneline", "--", str(rel)]
     else:
-        git_args = ["log", "--oneline"]
+        git_args = ["log", "--reverse", "--oneline"]
     out = run_git(git_args, cwd=tracker.checkout)
     print(out.stdout.strip())
     return 0
