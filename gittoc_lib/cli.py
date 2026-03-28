@@ -258,19 +258,21 @@ def cmd_ready(args: argparse.Namespace) -> int:
 
 
 def cmd_claim(args: argparse.Namespace) -> int:
-    """Claim a ready issue, assigning it to the given or inferred owner."""
+    """Claim one or more issues, assigning them to the given or inferred owner."""
     tracker = Tracker.open()
     owner = args.owner or default_owner()
-    issue = tracker.update_issue(
-        args.issue_id,
-        state="claimed",
-        owner=owner,
-        message=f"Claim issue {args.issue_id} for {owner}",
-        event_kind="claimed",
-        event_text=owner,
-        event_actor=owner,
-    )
-    print_issues([issue], tracker, args.format)
+    issues = []
+    for issue_id in args.issue_ids:
+        issues.append(tracker.update_issue(
+            issue_id,
+            state="claimed",
+            owner=owner,
+            message=f"Claim issue {issue_id} for {owner}",
+            event_kind="claimed",
+            event_text=owner,
+            event_actor=owner,
+        ))
+    print_issues(issues, tracker, args.format)
     return 0
 
 
@@ -478,8 +480,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="gittoc")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    claim_parser = sub.add_parser("claim", help="claim a specific issue")
-    claim_parser.add_argument("issue_id", help="ticket to claim, e.g. T-42")
+    claim_parser = sub.add_parser("claim", help="claim one or more issues")
+    claim_parser.add_argument("issue_ids", nargs="+", metavar="issue_id", help="ticket(s) to claim, e.g. T-42 T-43")
     claim_parser.add_argument(
         "--owner",
         help="owner name (default: $GITTOC_OWNER or $USER)",
