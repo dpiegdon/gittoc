@@ -12,7 +12,7 @@ local context.
 In a fresh git repo:
 
 ```bash
-mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc && rm -rf gittoc/.git && mv gittoc tools/gittoc && tools/gittoc/gittoc init && tools/gittoc/gittoc summary
+mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc && rm -rf gittoc/.git && mv gittoc tools/gittoc && ./tools/gittoc/gittoc init && ./tools/gittoc/gittoc summary
 ```
 
 If you use Claude Code, also install the skill:
@@ -141,8 +141,8 @@ rm -rf <your-repo>/tools/gittoc/.git
 
 # initialize the tracker:
 cd <your-repo>
-tools/gittoc/gittoc init
-tools/gittoc/gittoc summary   # should print all-zero counts
+./tools/gittoc/gittoc init
+./tools/gittoc/gittoc summary   # should print all-zero counts
 
 # Claude Code users: install the skill
 mkdir -p .claude/skills
