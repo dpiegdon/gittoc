@@ -73,8 +73,8 @@ for full argument documentation.
 **Remote sync**
 - `remote` — inspect tracker remote wiring
 - `remote --set origin` — configure tracker remote
-- `pull origin` / `pl origin` — fetch and merge tracker branch
-- `push origin` / `ps origin` — push tracker branch
+- `pull` / `pull origin` — fetch and merge tracker branch (uses configured remote by default)
+- `push` / `push origin` — push tracker branch (uses configured remote by default)
 - `refresh` — reload tracker state after conflict errors
 
 ## Recommended workflow

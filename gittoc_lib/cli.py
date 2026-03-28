@@ -193,7 +193,11 @@ def cmd_remote(args: argparse.Namespace) -> int:
 def cmd_pull(args: argparse.Namespace) -> int:
     """Fetch and merge the tracker branch from a remote."""
     tracker = Tracker.open()
-    status = tracker.pull_remote(args.remote)
+    remote = args.remote or tracker.effective_remote()
+    if not remote:
+        print("error: no remote specified and none configured (run: gittoc remote --set <name>)")
+        return 1
+    status = tracker.pull_remote(remote)
     if args.format == "json":
         print(json.dumps(status, indent=2, sort_keys=True))
     else:
@@ -204,7 +208,11 @@ def cmd_pull(args: argparse.Namespace) -> int:
 def cmd_push(args: argparse.Namespace) -> int:
     """Push the tracker branch to a remote."""
     tracker = Tracker.open()
-    status = tracker.push_remote(args.remote)
+    remote = args.remote or tracker.effective_remote()
+    if not remote:
+        print("error: no remote specified and none configured (run: gittoc remote --set <name>)")
+        return 1
+    status = tracker.push_remote(remote)
     if args.format == "json":
         print(json.dumps(status, indent=2, sort_keys=True))
     else:
@@ -616,12 +624,12 @@ def build_parser() -> argparse.ArgumentParser:
     pull_parser = sub.add_parser(
         "pull", help="fetch and merge the tracker branch from a remote"
     )
-    pull_parser.add_argument("remote", help="remote name, e.g. origin")
+    pull_parser.add_argument("remote", nargs="?", help="remote name (default: configured gittoc remote)")
     add_text_format_argument(pull_parser)
     pull_parser.set_defaults(func=cmd_pull)
 
     push_parser = sub.add_parser("push", help="push the tracker branch to a remote")
-    push_parser.add_argument("remote", help="remote name, e.g. origin")
+    push_parser.add_argument("remote", nargs="?", help="remote name (default: configured gittoc remote)")
     add_text_format_argument(push_parser)
     push_parser.set_defaults(func=cmd_push)
 
