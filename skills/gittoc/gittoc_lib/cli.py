@@ -212,6 +212,14 @@ def cmd_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_claimed(args: argparse.Namespace) -> int:
+    """List all currently claimed issues."""
+    tracker = Tracker.open()
+    issues = tracker.list_issues(("claimed",))
+    print_issues(issues, tracker, args.format)
+    return 0
+
+
 def cmd_ready(args: argparse.Namespace) -> int:
     """List all open issues that have no unresolved blocking dependencies."""
     tracker = Tracker.open()
@@ -449,6 +457,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_format_argument(claim_parser)
     claim_parser.set_defaults(func=cmd_claim)
+
+    claimed_parser = sub.add_parser("claimed", help="list all currently claimed issues")
+    add_format_argument(claimed_parser)
+    claimed_parser.set_defaults(func=cmd_claimed)
 
     close_parser = sub.add_parser("close", help="mark an issue as done")
     close_parser.add_argument("issue_id", help="ticket to close, e.g. T-42")
