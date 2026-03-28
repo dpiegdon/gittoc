@@ -452,10 +452,12 @@ class Tracker:
     def summary(self) -> dict[str, int]:
         """Return a dict of issue counts per state plus a 'ready' count."""
         counts = {state: 0 for state in STATE_ORDER}
+        all_issues = self.list_issues(STATE_ORDER)
+        closed_ids = {i.issue_id for i in all_issues if i.state in TERMINAL_STATES}
         ready = 0
-        for issue in self.list_issues(STATE_ORDER):
+        for issue in all_issues:
             counts[issue.state] += 1
-            if self.ready(issue):
+            if issue.state == "open" and all(dep in closed_ids for dep in issue.deps):
                 ready += 1
         counts["ready"] = ready
         return counts
@@ -534,9 +536,7 @@ class Tracker:
 
     def add_note(self, issue_id: str, text: str, actor: str | None = None) -> Issue:
         """Append a free-text note event to an issue and commit."""
-        issue, path = self.load_issue(issue_id)
-        updated = replace(issue, updated_at=now_utc())
-        self.write_issue(updated, previous_path=path)
-        self.append_event(updated, "note", text, actor=actor)
-        self.commit_if_needed(f"Add note to {updated.issue_id}")
-        return updated
+        issue, _ = self.load_issue(issue_id)
+        self.append_event(issue, "note", text, actor=actor)
+        self.commit_if_needed(f"Add note to {issue.issue_id}")
+        return issue
