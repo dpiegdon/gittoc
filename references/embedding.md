@@ -129,7 +129,7 @@ primary home of the executable.
 Preferred pattern:
 
 - executable at `tools/gittoc/gittoc`
-- skill at `tools/gittoc/SKILL.md`, copied to `.claude/skills/gittoc.md`
+- skill at `tools/gittoc/SKILL.md`, symlinked as `.claude/skills/gittoc.md -> ../../tools/gittoc/SKILL.md`
 - skill examples invoke `tools/gittoc/gittoc`
 
 This separates:

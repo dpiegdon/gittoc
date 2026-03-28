@@ -12,7 +12,7 @@ local context.
 Requires Python 3.8+ and git. In your repo:
 
 ```bash
-mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools/gittoc && rm -rf tools/gittoc/.git && ./tools/gittoc/gittoc init && ./tools/gittoc/gittoc summary && mkdir -p .claude/skills && ln -s tools/gittoc/SKILL.md .claude/skills/gittoc.md && git toc l 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config
+mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools/gittoc && rm -rf tools/gittoc/.git && ./tools/gittoc/gittoc init && ./tools/gittoc/gittoc summary && mkdir -p .claude/skills && ln -s ../../tools/gittoc/SKILL.md .claude/skills/gittoc.md && git toc l 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config
 ```
 
 ## Repository
@@ -129,7 +129,7 @@ rm -rf tools/gittoc/.git
 
 # Claude Code users: symlink the skill so it stays in sync
 mkdir -p .claude/skills
-ln -s tools/gittoc/SKILL.md .claude/skills/gittoc.md
+ln -s ../../tools/gittoc/SKILL.md .claude/skills/gittoc.md
 
 # optional git alias (idempotent; printf avoids git config escaping '!'):
 git toc l 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config
