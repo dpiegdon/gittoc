@@ -1,1 +1,2 @@
 {"actor": "claude", "at": "2026-03-28T02:21:35+00:00", "kind": "created", "text": "Consider label-based grouping or parent/epic concept for larger backlogs"}
+{"actor": "claude", "at": "2026-03-28T11:48:29+00:00", "kind": "note", "text": "T-60 (labels in list) is done. Label filtering was already in place. Together these cover most grouping needs for medium-sized backlogs. Parent/epic would require schema change and significant UI work. Revisit only if a real project hits the limit \u2014 current gittoc backlog at ~65 tickets still reads fine with filtering."}
