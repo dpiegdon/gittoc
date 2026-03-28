@@ -1,1 +1,2 @@
 {"actor": "claude", "at": "2026-03-28T12:09:03+00:00", "kind": "created", "text": "move alias-creation and claude-skill-setup steps into script"}
+{"actor": "claude", "at": "2026-03-28T20:00:26+00:00", "kind": "note", "text": "Could add a 'gittoc setup' or extend 'gittoc init' to handle skill symlink + git alias creation directly, rather than separate shell scripts. init already detects these (T-57 checklist). Making init --full or setup actually *do* the steps it currently only checks would be the cleanest approach. Avoids new scripts and keeps one entry point."}

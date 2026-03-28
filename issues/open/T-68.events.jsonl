@@ -1,1 +1,2 @@
 {"actor": "dpiegdon", "at": "2026-03-28T14:53:40+00:00", "kind": "created", "text": "update 'Codex Thoughts' section in README"}
+{"actor": "claude", "at": "2026-03-28T20:02:30+00:00", "kind": "note", "text": "No body \u2014 needs content from a Codex session. This is a human/agent task: run gittoc in a Codex context, collect observations, write the section. Can't be implemented without that input."}
