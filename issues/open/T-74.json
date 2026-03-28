@@ -1,0 +1,13 @@
+{
+  "body": "I'd expect the latest change to be at the bottom. currently it's at the top, and likely scrolled out of the terminal window. just use 'git log --reverse' i suppose",
+  "created_at": "2026-03-28T19:18:40+00:00",
+  "deps": [],
+  "id": "T-74",
+  "labels": [
+    "ux"
+  ],
+  "owner": "",
+  "priority": 3,
+  "title": "reverse output order of 'gittoc log'",
+  "updated_at": "2026-03-28T19:18:40+00:00"
+}
