@@ -15,15 +15,8 @@ Requires Python 3.8+ and git. In your repo:
 git clone --depth=1 https://codeberg.org/dpiegdon/gittoc /tmp/gittoc && \
   mkdir -p tools && cp -r /tmp/gittoc tools/gittoc && rm -rf tools/gittoc/.git && \
   ./tools/gittoc/gittoc init && ./tools/gittoc/gittoc summary && \
-  mkdir -p .claude/skills && cp tools/gittoc/SKILL.md .claude/skills/gittoc.md
-```
-
-Optionally add a git alias by editing `.git/config` directly (do not use
-`git config` — it escapes the `!` on some git versions, breaking the alias):
-
-```ini
-[alias]
-    toc = !tools/gittoc/gittoc
+  mkdir -p .claude/skills && cp tools/gittoc/SKILL.md .claude/skills/gittoc.md && \
+  git toc l 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config
 ```
 
 ## Repository
@@ -146,11 +139,8 @@ cd <your-repo>
 mkdir -p .claude/skills
 cp tools/gittoc/SKILL.md .claude/skills/gittoc.md
 
-# optional git alias — edit .git/config directly, not via git config
-# (git config escapes '!' on some versions, breaking the shell-escape prefix)
-
-# [alias]
-#     toc = !tools/gittoc/gittoc
+# optional git alias (idempotent; printf avoids git config escaping '!'):
+git toc l 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config
 ```
 
 The tool code stays visible and reviewable on the normal branch. Only the
