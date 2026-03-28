@@ -7,6 +7,14 @@ of the task-selection and persistence ideas that matter more in agent workflows:
 dependencies, ready work discovery, compact machine-readable output, and durable
 local context.
 
+## Quick install
+
+In a fresh git repo:
+
+```bash
+git clone --depth=1 https://codeberg.org/dpiegdon/gittoc && mkdir -p tools .claude/skills && mv gittoc/skills/gittoc tools/gittoc && cp tools/gittoc/SKILL.md .claude/skills/gittoc.md && rm -rf gittoc && tools/gittoc/gittoc init
+```
+
 ## Repository
 
 - authoritative repository: https://codeberg.org/dpiegdon/gittoc
