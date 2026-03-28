@@ -11,7 +11,7 @@ This is a pragmatic checklist for a first public `gittoc` release.
 ## Repo contents
 
 - Confirm `README.md` is the shortest accurate introduction to the project.
-- Confirm `skills/gittoc/SKILL.md` is operational and succinct.
+- Confirm `SKILL.md` is operational and succinct.
 - Confirm `LICENSE` is present and correct.
 - Decide whether to add a short `AUTHORS` or `CREDITS` note.
 
@@ -24,7 +24,7 @@ This is a pragmatic checklist for a first public `gittoc` release.
 ## Installation story
 
 - Document the intended embedding model for another repository.
-- Decide whether the recommended CLI path is `tools/gittoc`, `skills/gittoc/gittoc`, or optional `git toc`.
+- Decide whether the recommended CLI path is `tools/gittoc`, `gittoc`, or optional `git toc`.
 - Decide whether repo-local git alias setup is included in the initial release or only documented.
 
 ## Feature boundaries

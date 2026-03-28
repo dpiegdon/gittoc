@@ -189,7 +189,7 @@ class Tracker:
         current = self.head()
         if current != self.base_head:
             raise StaleTrackerError(
-                "tracker changed during this command; run `skills/gittoc/gittoc refresh` and retry"
+                "tracker changed during this command; run `gittoc refresh` and retry"
             )
 
     def issues_root(self) -> Path:

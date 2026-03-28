@@ -446,7 +446,7 @@ def add_text_format_argument(parser: argparse.ArgumentParser) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     """Build and return the top-level argument parser with all subcommands registered."""
-    parser = argparse.ArgumentParser(prog="skills/gittoc/gittoc")
+    parser = argparse.ArgumentParser(prog="gittoc")
     sub = parser.add_subparsers(dest="command", required=True)
 
     claim_parser = sub.add_parser("claim", help="claim a specific issue")

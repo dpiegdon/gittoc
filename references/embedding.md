@@ -72,8 +72,8 @@ tools/gittoc claim T-1 --owner alice
 2. skill-adjacent embedding
 
 ```bash
-skills/gittoc/gittoc list
-skills/gittoc/gittoc claim T-1 --owner alice
+gittoc list
+gittoc claim T-1 --owner alice
 ```
 
 For a normal repository, `tools/gittoc` is the better default because it makes
@@ -117,7 +117,7 @@ Cons:
 Recommended stance:
 
 - support this as an optional convenience installed during `gittoc init` or an explicit install step
-- keep `tools/gittoc` or `skills/gittoc/gittoc` as the canonical documented path
+- keep `tools/gittoc` or `gittoc` as the canonical documented path
 - document `git toc` as a local ergonomic layer, not as the only supported interface
 
 ## Recommended skill relationship
@@ -128,7 +128,7 @@ primary home of the executable.
 Preferred pattern:
 
 - executable at `tools/gittoc`
-- skill at `skills/gittoc/SKILL.md`
+- skill at `SKILL.md`
 - skill examples invoke `tools/gittoc`
 
 This separates:
@@ -212,7 +212,7 @@ This keeps the release boring, inspectable, and easy to explain.
 The strongest default seems to be:
 
 - vendor `gittoc` into `tools/gittoc`
-- ship `skills/gittoc/` next to it
+- ship `gittoc/` next to it
 - keep all mutable tracker state on the `gittoc` branch via `.git/gittoc/`
 
 In short:
