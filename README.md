@@ -12,11 +12,7 @@ local context.
 Requires Python 3.8+ and git. In your repo:
 
 ```bash
-git clone --depth=1 https://codeberg.org/dpiegdon/gittoc /tmp/gittoc && \
-  mkdir -p tools && cp -r /tmp/gittoc tools/gittoc && rm -rf tools/gittoc/.git && \
-  ./tools/gittoc/gittoc init && ./tools/gittoc/gittoc summary && \
-  mkdir -p .claude/skills && cp tools/gittoc/SKILL.md .claude/skills/gittoc.md && \
-  git toc l 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config
+mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools/gittoc && rm -rf tools/gittoc/.git && ./tools/gittoc/gittoc init && ./tools/gittoc/gittoc summary && mkdir -p .claude/skills && ln -s tools/gittoc/SKILL.md .claude/skills/gittoc.md && git toc l 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config
 ```
 
 ## Repository
@@ -125,19 +121,15 @@ git toc r -f json
 The recommended model is to vendor gittoc directly into the host repository.
 
 ```bash
-# clone gittoc into a staging area, copy into your target repo:
-git clone https://codeberg.org/dpiegdon/gittoc /tmp/gittoc
-cp -r /tmp/gittoc <your-repo>/tools/gittoc
-rm -rf <your-repo>/tools/gittoc/.git
-
-# initialize the tracker:
-cd <your-repo>
+mkdir -p tools
+git clone https://codeberg.org/dpiegdon/gittoc tools/gittoc
+rm -rf tools/gittoc/.git
 ./tools/gittoc/gittoc init
-./tools/gittoc/gittoc summary   # should print all-zero counts
+./tools/gittoc/gittoc summary          # should print all-zero counts
 
-# Claude Code users: install the skill
+# Claude Code users: symlink the skill so it stays in sync
 mkdir -p .claude/skills
-cp tools/gittoc/SKILL.md .claude/skills/gittoc.md
+ln -s tools/gittoc/SKILL.md .claude/skills/gittoc.md
 
 # optional git alias (idempotent; printf avoids git config escaping '!'):
 git toc l 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config
