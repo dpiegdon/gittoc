@@ -16,8 +16,8 @@ rather than keeping state in chat.
 
 ## Ticket Workflow
 
-- Use `skills/gittoc/gittoc` or `git toc` if the alias is available.
-  See `skills/gittoc/SKILL.md` for command reference.
+- Use `gittoc` or `git toc` if the alias is available.
+  See `SKILL.md` for command reference.
 - Inspect the backlog at the start of work: `gittoc resume` or `gittoc list`.
 - Claim a ticket before starting substantive work.
 - Add notes to tickets when you discover context that would help a later
@@ -42,7 +42,7 @@ rather than keeping state in chat.
 
 ```bash
 python3 -m unittest skills.gittoc.tests.test_gittoc
-python3 -m py_compile skills/gittoc/gittoc skills/gittoc/gittoc_lib/*.py skills/gittoc/tests/test_gittoc.py
+python3 -m py_compile gittoc gittoc_lib/*.py tests/test_gittoc.py
 ```
 
 - Add regression tests when fixing bugs.
@@ -59,5 +59,5 @@ python3 -m py_compile skills/gittoc/gittoc skills/gittoc/gittoc_lib/*.py skills/
 ## Documentation
 
 - Update `README.md` when user-visible behavior changes.
-- Update `skills/gittoc/SKILL.md` when the agent-facing workflow changes.
+- Update `SKILL.md` when the agent-facing workflow changes.
 - Keep docs concise and operational.

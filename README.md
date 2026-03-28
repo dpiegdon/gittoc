@@ -12,7 +12,7 @@ local context.
 In a fresh git repo:
 
 ```bash
-git clone --depth=1 https://codeberg.org/dpiegdon/gittoc && mkdir -p tools .claude/skills && mv gittoc/skills/gittoc tools/gittoc && cp tools/gittoc/SKILL.md .claude/skills/gittoc.md && rm -rf gittoc && tools/gittoc/gittoc init
+git clone --depth=1 https://codeberg.org/dpiegdon/gittoc && mkdir -p tools .claude/skills && mv gittoc tools/gittoc && cp tools/gittoc/SKILL.md .claude/skills/gittoc.md && rm -rf tools/gittoc/.git && tools/gittoc/gittoc init
 ```
 
 ## Repository
@@ -123,7 +123,8 @@ The recommended model is to vendor gittoc directly into the host repository.
 ```bash
 # clone gittoc, then copy into your target repo:
 git clone https://codeberg.org/dpiegdon/gittoc /tmp/gittoc
-cp -r /tmp/gittoc/skills/gittoc <your-repo>/tools/gittoc
+cp -r /tmp/gittoc <your-repo>/tools/gittoc
+rm -rf <your-repo>/tools/gittoc/.git
 ```
 
 This places the CLI at `tools/gittoc/gittoc` and the library at
@@ -138,7 +139,7 @@ If you use Claude Code, install the skill so it is automatically loaded:
 
 ```bash
 mkdir -p .claude/skills
-cp /tmp/gittoc/skills/gittoc/SKILL.md .claude/skills/gittoc.md
+cp /tmp/gittoc/SKILL.md .claude/skills/gittoc.md
 ```
 
 Optionally add a repo-local git alias for a shorter command:
@@ -157,11 +158,11 @@ mutable issue store lives on the hidden `gittoc` branch/worktree.
 
 ## Project layout
 
-- `skills/gittoc/gittoc`: CLI entrypoint
-- `skills/gittoc/gittoc_lib`: internal modules
-- `skills/gittoc/SKILL.md`: skill instructions
-- `skills/gittoc/references/embedding.md`: embedding and installation notes
-- `skills/gittoc/tests/test_gittoc.py`: end-to-end test
+- `gittoc`: CLI entrypoint
+- `gittoc_lib/`: internal modules
+- `SKILL.md`: skill instructions
+- `references/embedding.md`: embedding and installation notes
+- `tests/test_gittoc.py`: end-to-end test
 
 ## Codex Thoughts
 

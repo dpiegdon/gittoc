@@ -10,8 +10,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
-CLI = ROOT / "skills" / "gittoc" / "gittoc"
+ROOT = Path(__file__).resolve().parents[1]
+CLI = ROOT / "gittoc"
 
 
 def run(args: list[str], cwd: Path) -> str:
