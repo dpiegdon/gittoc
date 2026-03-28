@@ -1,0 +1,11 @@
+{
+  "body": "the one-liner install process is still too long for my liking. claude-skill-setup and alias-creation could be moved each into a separate setup-script in e.g. gittoc_lic/, and a wrapper script that executes these. init-line should only call that script.",
+  "created_at": "2026-03-28T12:09:03+00:00",
+  "deps": [],
+  "id": "T-66",
+  "labels": [],
+  "owner": "",
+  "priority": 3,
+  "title": "move alias-creation and claude-skill-setup steps into script",
+  "updated_at": "2026-03-28T12:09:03+00:00"
+}
