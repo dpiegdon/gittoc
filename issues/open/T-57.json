@@ -1,0 +1,13 @@
+{
+  "body": "After init, print a short checklist of remaining optional steps: Claude Code skill symlink, git alias setup. Helps agents and humans know what 'fully initialized' looks like vs just tracker-branch initialized.",
+  "created_at": "2026-03-28T02:15:49+00:00",
+  "deps": [],
+  "id": "T-57",
+  "labels": [
+    "ux"
+  ],
+  "owner": "",
+  "priority": 3,
+  "title": "gittoc init should print post-install checklist",
+  "updated_at": "2026-03-28T02:15:49+00:00"
+}
