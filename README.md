@@ -111,19 +111,18 @@ git toc r -f json
 ## Installation
 
 The recommended model is to vendor gittoc directly into the host repository.
-There is no install script yet — copy the files manually:
 
 ```bash
-# from the gittoc development repository, copy into your target repo:
-cp -r skills/gittoc/gittoc_lib  <your-repo>/tools/gittoc_lib
-cp    skills/gittoc/gittoc       <your-repo>/tools/gittoc
-cp -r skills/gittoc/             <your-repo>/skills/gittoc/   # optional: skill docs
+# clone gittoc, then copy into your target repo:
+git clone https://codeberg.org/dpiegdon/gittoc /tmp/gittoc
+cp -r /tmp/gittoc/skills/gittoc <your-repo>/tools/gittoc
 ```
 
-Then initialize the tracker:
+This places the CLI at `tools/gittoc/gittoc` and the library at
+`tools/gittoc/gittoc_lib/`. Then initialize the tracker:
 
 ```bash
-tools/gittoc init
+tools/gittoc/gittoc init
 ```
 
 Optionally add a repo-local git alias for a shorter command:
