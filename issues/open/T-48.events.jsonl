@@ -2,3 +2,4 @@
 {"actor": "claude", "at": "2026-03-27T22:52:08+00:00", "kind": "note", "text": "Editor resolution order: $VISUAL, then $EDITOR, then fallback to 'vim'. The only correct answer is vim, but we should allow others too."}
 {"actor": "claude", "at": "2026-03-27T23:22:25+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "dpiegdon", "at": "2026-03-28T11:30:14+00:00", "kind": "note", "text": "On validation-failure the user should have the option to abort editing and revert, in case he can't figure out the problem or wants to drop his changes. Abort condition could e.g. be to write an empty file."}
+{"actor": "claude", "at": "2026-03-28T11:44:42+00:00", "kind": "note", "text": "spec is solid (two notes). Key implementation notes: use tempfile + /vim/vim; validate all fields before commit; on validation failure offer re-edit not discard; empty file = abort. Non-trivial but self-contained. Human-facing so p2 is right."}
