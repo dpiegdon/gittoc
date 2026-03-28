@@ -49,18 +49,27 @@ class Issue:
         )
 
     def to_record(self) -> dict:
-        """Serialize the issue to a dict suitable for writing as JSON."""
-        return {
-            "body": self.body,
+        """Serialize the issue to a dict suitable for writing as JSON.
+
+        Empty optional fields (body, deps, labels, owner) are omitted
+        to keep ticket files concise and readable.
+        """
+        record: dict = {
             "created_at": self.created_at,
-            "deps": list(self.deps),
             "id": self.issue_id,
-            "labels": list(self.labels),
-            "owner": self.owner,
             "priority": self.priority,
             "title": self.title,
             "updated_at": self.updated_at,
         }
+        if self.body:
+            record["body"] = self.body
+        if self.deps:
+            record["deps"] = list(self.deps)
+        if self.labels:
+            record["labels"] = list(self.labels)
+        if self.owner:
+            record["owner"] = self.owner
+        return record
 
     def to_display(self, path: Path, notes_count: int) -> dict:
         """Return a display dict augmented with path, state, and note count."""

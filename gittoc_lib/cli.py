@@ -74,13 +74,14 @@ def resume_payload(
 def print_resume_text(data: dict) -> None:
     """Print the resume payload in human-readable text format."""
     marker = ">" if data["ready"] else "*"
-    owner = f" owner={data['owner']}" if data["owner"] else ""
-    deps = f" deps={len(data['deps'])}" if data["deps"] else ""
+    owner = f" owner={data['owner']}" if data.get("owner") else ""
+    deps_list = data.get("deps", [])
+    deps = f" deps={len(deps_list)}" if deps_list else ""
     selection = f" selection={data['selection']}" if data.get("selection") else ""
     print(
         f"{marker} {data['id']} p{data['priority']} [{data['state']}] {data['title']}{deps}{owner}{selection}"
     )
-    if data["body"]:
+    if data.get("body"):
         print()
         print(data["body"])
     notes = data["recent_notes"]
