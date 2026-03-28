@@ -1,3 +1,4 @@
 {"actor": "dpiegdon", "at": "2026-03-28T19:18:40+00:00", "kind": "created", "text": "reverse output order of 'gittoc log'"}
 {"actor": "claude", "at": "2026-03-28T19:52:29+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-28T19:52:29+00:00", "kind": "note", "text": "One-liner fix: pass --reverse to git log in event_entries() or the CLI layer. Bumped to p2 since it's trivial and the current behavior (latest scrolled off top) actively hurts usability."}
+{"actor": "claude", "at": "2026-03-28T20:07:37+00:00", "kind": "claimed", "text": "claude"}
