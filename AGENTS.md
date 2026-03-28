@@ -41,7 +41,7 @@ rather than keeping state in chat.
 ## Testing
 
 ```bash
-python3 -m unittest skills.gittoc.tests.test_gittoc
+python3 -m unittest tests.test_gittoc
 python3 -m py_compile gittoc gittoc_lib/*.py tests/test_gittoc.py
 ```
 
