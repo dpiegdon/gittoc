@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from .common import (DEFAULT_PRIORITY, STATE_ORDER, TRACKER_BRANCH,
-                     default_owner, parse_state, run_git)
+                     default_owner, issue_number, parse_state, run_git)
 from .render import print_issues
 from .tracker import StaleTrackerError, Tracker
 
@@ -246,6 +246,8 @@ def cmd_list(args: argparse.Namespace) -> int:
     if args.label:
         required = set(args.label)
         issues = [issue for issue in issues if required.issubset(issue.labels)]
+    if args.sort == "id":
+        issues.sort(key=lambda i: issue_number(i.issue_id))
     print_issues(issues, tracker, args.format)
     return 0
 
@@ -580,6 +582,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--ready-only",
         action="store_true",
         help="show only tickets with no blocking dependencies",
+    )
+    list_parser.add_argument(
+        "--sort",
+        choices=["priority", "id"],
+        default="priority",
+        help="sort order: priority (default) or id (chronological)",
     )
     add_format_argument(list_parser)
     list_parser.set_defaults(func=cmd_list)
