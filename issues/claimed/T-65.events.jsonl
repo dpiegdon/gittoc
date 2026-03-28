@@ -1,3 +1,4 @@
 {"actor": "dpiegdon", "at": "2026-03-28T11:37:34+00:00", "kind": "created", "text": "gittoc push/pull with default remote"}
 {"actor": "claude", "at": "2026-03-28T11:41:07+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-28T11:41:07+00:00", "kind": "note", "text": "push/pull already accept a remote arg; just make it optional (nargs='?') and fall back to tracker.effective_remote(). init already auto-configures gittoc.remote so this is a one-liner fix. Small change, clear win."}
+{"actor": "claude", "at": "2026-03-28T11:50:28+00:00", "kind": "claimed", "text": "claude"}
