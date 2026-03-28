@@ -12,7 +12,7 @@ local context.
 In a fresh git repo:
 
 ```bash
-git clone --depth=1 https://codeberg.org/dpiegdon/gittoc && mv gittoc tools/gittoc && rm -rf tools/gittoc/.git && tools/gittoc/gittoc init && tools/gittoc/gittoc summary
+mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc && mv gittoc tools/gittoc && rm -rf tools/gittoc/.git && tools/gittoc/gittoc init && tools/gittoc/gittoc summary
 ```
 
 If you use Claude Code, also install the skill:
