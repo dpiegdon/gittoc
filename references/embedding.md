@@ -71,7 +71,7 @@ tools/gittoc/gittoc list
 tools/gittoc/gittoc claim T-1 --owner alice
 ```
 
-2. via git alias (after `git config alias.toc "!$(git rev-parse --show-toplevel)/tools/gittoc/gittoc"`)
+2. via git alias (after adding to `.git/config`)
 
 ```bash
 git toc list
@@ -83,22 +83,15 @@ git alias is an optional ergonomic layer — agents should not assume it exists.
 
 ## Optional repo-local git alias
 
-Another embedding idea is to install a local git alias into the target
-repository's `.git/config`, for example:
+Add this to `.git/config` directly (do not use `git config` — it escapes
+the `!` on some git versions, breaking the shell-escape prefix):
 
 ```ini
 [alias]
-    toc = !/absolute/path/to/tools/gittoc/gittoc
+    toc = !tools/gittoc/gittoc
 ```
 
-Use an absolute path — some git versions escape `!` in relative paths, breaking
-the shell-escape prefix. Set it via:
-
-```bash
-git config alias.toc "!$(git rev-parse --show-toplevel)/tools/gittoc/gittoc"
-```
-
-That would allow:
+That allows:
 
 ```bash
 git toc list

@@ -21,11 +21,11 @@ If you use Claude Code, also install the skill:
 mkdir -p .claude/skills && cp tools/gittoc/SKILL.md .claude/skills/gittoc.md
 ```
 
-Optionally add a git alias (double quotes expand the path at write time,
-avoiding `!` escaping issues in some git versions):
+Optionally add a git alias by editing `.git/config` directly:
 
-```bash
-git config alias.toc "!$(git rev-parse --show-toplevel)/tools/gittoc/gittoc"
+```ini
+[alias]
+    toc = !tools/gittoc/gittoc
 ```
 
 ## Repository
@@ -148,8 +148,9 @@ tools/gittoc/gittoc summary   # should print all-zero counts
 mkdir -p .claude/skills
 cp tools/gittoc/SKILL.md .claude/skills/gittoc.md
 
-# optional git alias (note: ! form can be finicky in some environments)
-git config alias.toc "!$(git rev-parse --show-toplevel)/tools/gittoc/gittoc"
+# optional git alias — edit .git/config directly, do not use git config:
+# [alias]
+#     toc = !tools/gittoc/gittoc
 ```
 
 The tool code stays visible and reviewable on the normal branch. Only the
