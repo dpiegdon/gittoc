@@ -1,3 +1,5 @@
+"""Issue data model for gittoc."""
+
 from __future__ import annotations
 
 import json
@@ -10,6 +12,8 @@ from .common import (DEFAULT_PRIORITY, STATE_SET, issue_number,
 
 @dataclass(frozen=True)
 class Issue:
+    """Immutable representation of a single gittoc ticket."""
+
     issue_id: str
     title: str
     body: str
@@ -23,6 +27,7 @@ class Issue:
 
     @classmethod
     def from_path(cls, path: Path) -> "Issue":
+        """Load an Issue from its JSON file, deriving state from the parent directory."""
         with path.open("r", encoding="utf-8") as handle:
             raw = json.load(handle)
         state = raw.get(
@@ -44,6 +49,7 @@ class Issue:
         )
 
     def to_record(self) -> dict:
+        """Serialize the issue to a dict suitable for writing as JSON."""
         return {
             "body": self.body,
             "created_at": self.created_at,
@@ -57,6 +63,7 @@ class Issue:
         }
 
     def to_display(self, path: Path, notes_count: int) -> dict:
+        """Return a display dict augmented with path, state, and note count."""
         data = self.to_record()
         data["notes_count"] = notes_count
         data["path"] = str(path)

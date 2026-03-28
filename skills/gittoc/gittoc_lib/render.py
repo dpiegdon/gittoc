@@ -1,3 +1,5 @@
+"""Formatting functions for issue output."""
+
 from __future__ import annotations
 
 import json
@@ -6,6 +8,7 @@ from .models import Issue
 
 
 def marker(issue: Issue, tracker) -> str:
+    """Return the one-character state marker for an issue."""
     if issue.state in ("closed", "rejected"):
         return "x"
     if tracker.ready(issue):
@@ -18,10 +21,12 @@ def marker(issue: Issue, tracker) -> str:
 
 
 def render_compact(issue: Issue, _tracker) -> str:
+    """Render an issue as a single compact line without state marker."""
     return f"{issue.issue_id} p{issue.priority} {issue.state} {issue.title}"
 
 
 def render_normal(issue: Issue, tracker) -> str:
+    """Render an issue as a single annotated line with marker, deps, owner, and note count."""
     deps = f" deps={len(issue.deps)}" if issue.deps else ""
     owner = f" owner={issue.owner}" if issue.owner else ""
     notes = tracker.note_count(issue.issue_id)
@@ -33,6 +38,7 @@ def render_normal(issue: Issue, tracker) -> str:
 
 
 def render_verbose(issue: Issue, tracker) -> str:
+    """Render an issue as a multi-line block with all fields."""
     deps = ", ".join(issue.deps) if issue.deps else "-"
     labels = ", ".join(issue.labels) if issue.labels else "-"
     owner = issue.owner or "-"
@@ -52,6 +58,7 @@ def render_verbose(issue: Issue, tracker) -> str:
 
 
 def print_issues(issues: list[Issue], tracker, fmt: str) -> None:
+    """Print a list of issues in the requested format."""
     if fmt == "json":
         payload = []
         for issue in issues:
