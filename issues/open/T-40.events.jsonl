@@ -1,3 +1,4 @@
 {"actor": "codex", "at": "2026-03-27T20:43:27+00:00", "kind": "created", "text": "Add related-ticket links separate from dependencies"}
 {"actor": "claude", "at": "2026-03-27T23:22:25+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-28T11:42:49+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "claude", "at": "2026-03-28T11:42:49+00:00", "kind": "note", "text": "workaround: 'gittoc note T-5 \"related: T-3\"' is sufficient for most cases. A real related-tickets field needs schema change + render + show changes for modest benefit. Deferring below T-65/T-64 which have clearer value. Revisit if user requests it concretely."}
