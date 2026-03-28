@@ -122,16 +122,27 @@ This places the CLI at `tools/gittoc/gittoc` and the library at
 `tools/gittoc/gittoc_lib/`. Then initialize the tracker:
 
 ```bash
+cd <your-repo>
 tools/gittoc/gittoc init
+```
+
+If you use Claude Code, install the skill so it is automatically loaded:
+
+```bash
+mkdir -p .claude/skills
+cp /tmp/gittoc/skills/gittoc/SKILL.md .claude/skills/gittoc.md
 ```
 
 Optionally add a repo-local git alias for a shorter command:
 
 ```ini
-# in .git/config
+# in .git/config or via: git config alias.toc '!tools/gittoc/gittoc'
 [alias]
-    toc = !tools/gittoc
+    toc = !tools/gittoc/gittoc
 ```
+
+Note: the `!` shell-escape form can be finicky in some environments. If
+`git toc` fails, invoke `tools/gittoc/gittoc` directly.
 
 The tool code stays visible and reviewable on the normal branch. Only the
 mutable issue store lives on the hidden `gittoc` branch/worktree.
