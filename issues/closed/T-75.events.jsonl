@@ -1,3 +1,4 @@
 {"actor": "dpiegdon", "at": "2026-03-28T19:27:57+00:00", "kind": "created", "text": "'list' should support ordering by ticket#"}
 {"actor": "claude", "at": "2026-03-28T20:00:26+00:00", "kind": "note", "text": "Add --sort flag: --sort=priority (default), --sort=id. Implementation: sort_key() already extracts priority; add an id-based sort key using int(issue_id.split('-')[1]). Straightforward."}
 {"actor": "claude", "at": "2026-03-28T20:10:25+00:00", "kind": "claimed", "text": "claude"}
+{"actor": "claude", "at": "2026-03-28T20:11:22+00:00", "kind": "closed", "text": ""}
