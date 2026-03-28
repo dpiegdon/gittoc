@@ -27,11 +27,13 @@ Concretely, the target repository would contain something like:
 ```text
 <target-repo>/
   tools/
-    gittoc
-  skills/
     gittoc/
-      SKILL.md
-      references/
+      gittoc          ← CLI entrypoint
+      gittoc_lib/     ← internal modules
+      SKILL.md        ← skill instructions
+  .claude/
+    skills/
+      gittoc.md       ← Claude Code skill (copy of tools/gittoc/SKILL.md)
 ```
 
 And at runtime `gittoc` would maintain:
@@ -62,23 +64,22 @@ live in the visible repository because:
 
 There are two good invocation patterns:
 
-1. tool-first embedding
+1. explicit tool path
 
 ```bash
-tools/gittoc list
-tools/gittoc claim T-1 --owner alice
+tools/gittoc/gittoc list
+tools/gittoc/gittoc claim T-1 --owner alice
 ```
 
-2. skill-adjacent embedding
+2. via git alias (after `git config alias.toc '!tools/gittoc/gittoc'`)
 
 ```bash
-gittoc list
-gittoc claim T-1 --owner alice
+git toc list
+git toc claim T-1 --owner alice
 ```
 
-For a normal repository, `tools/gittoc` is the better default because it makes
-the CLI feel like project infrastructure rather than skill internals. The skill
-can then reference `tools/gittoc`.
+For a normal repository, `tools/gittoc/gittoc` is the canonical path. The
+git alias is an optional ergonomic layer — agents should not assume it exists.
 
 ## Optional repo-local git alias
 
@@ -87,7 +88,7 @@ repository's `.git/config`, for example:
 
 ```ini
 [alias]
-    toc = !tools/gittoc
+    toc = !tools/gittoc/gittoc
 ```
 
 That would allow:
@@ -117,7 +118,7 @@ Cons:
 Recommended stance:
 
 - support this as an optional convenience installed during `gittoc init` or an explicit install step
-- keep `tools/gittoc` or `gittoc` as the canonical documented path
+- keep `tools/gittoc/gittoc` as the canonical documented path
 - document `git toc` as a local ergonomic layer, not as the only supported interface
 
 ## Recommended skill relationship
@@ -127,9 +128,9 @@ primary home of the executable.
 
 Preferred pattern:
 
-- executable at `tools/gittoc`
-- skill at `SKILL.md`
-- skill examples invoke `tools/gittoc`
+- executable at `tools/gittoc/gittoc`
+- skill at `tools/gittoc/SKILL.md`, copied to `.claude/skills/gittoc.md`
+- skill examples invoke `tools/gittoc/gittoc`
 
 This separates:
 
@@ -211,8 +212,8 @@ This keeps the release boring, inspectable, and easy to explain.
 
 The strongest default seems to be:
 
-- vendor `gittoc` into `tools/gittoc`
-- ship `gittoc/` next to it
+- vendor `gittoc` into `tools/gittoc/`
+- copy `SKILL.md` to `.claude/skills/gittoc.md` for Claude Code users
 - keep all mutable tracker state on the `gittoc` branch via `.git/gittoc/`
 
 In short:

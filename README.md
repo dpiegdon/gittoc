@@ -12,7 +12,19 @@ local context.
 In a fresh git repo:
 
 ```bash
-git clone --depth=1 https://codeberg.org/dpiegdon/gittoc && mkdir -p tools .claude/skills && mv gittoc tools/gittoc && cp tools/gittoc/SKILL.md .claude/skills/gittoc.md && rm -rf tools/gittoc/.git && tools/gittoc/gittoc init
+git clone --depth=1 https://codeberg.org/dpiegdon/gittoc && mv gittoc tools/gittoc && rm -rf tools/gittoc/.git && tools/gittoc/gittoc init && tools/gittoc/gittoc summary
+```
+
+If you use Claude Code, also install the skill:
+
+```bash
+mkdir -p .claude/skills && cp tools/gittoc/SKILL.md .claude/skills/gittoc.md
+```
+
+Optionally add a git alias:
+
+```bash
+git config alias.toc '!tools/gittoc/gittoc'
 ```
 
 ## Repository
@@ -121,37 +133,23 @@ git toc r -f json
 The recommended model is to vendor gittoc directly into the host repository.
 
 ```bash
-# clone gittoc, then copy into your target repo:
+# clone gittoc into a staging area, copy into your target repo:
 git clone https://codeberg.org/dpiegdon/gittoc /tmp/gittoc
 cp -r /tmp/gittoc <your-repo>/tools/gittoc
 rm -rf <your-repo>/tools/gittoc/.git
-```
 
-This places the CLI at `tools/gittoc/gittoc` and the library at
-`tools/gittoc/gittoc_lib/`. Then initialize the tracker:
-
-```bash
+# initialize the tracker:
 cd <your-repo>
 tools/gittoc/gittoc init
-```
+tools/gittoc/gittoc summary   # should print all-zero counts
 
-If you use Claude Code, install the skill so it is automatically loaded:
-
-```bash
+# Claude Code users: install the skill
 mkdir -p .claude/skills
-cp /tmp/gittoc/SKILL.md .claude/skills/gittoc.md
+cp tools/gittoc/SKILL.md .claude/skills/gittoc.md
+
+# optional git alias (note: ! form can be finicky in some environments)
+git config alias.toc '!tools/gittoc/gittoc'
 ```
-
-Optionally add a repo-local git alias for a shorter command:
-
-```ini
-# in .git/config or via: git config alias.toc '!tools/gittoc/gittoc'
-[alias]
-    toc = !tools/gittoc/gittoc
-```
-
-Note: the `!` shell-escape form can be finicky in some environments. If
-`git toc` fails, invoke `tools/gittoc/gittoc` directly.
 
 The tool code stays visible and reviewable on the normal branch. Only the
 mutable issue store lives on the hidden `gittoc` branch/worktree.
