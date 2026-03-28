@@ -96,7 +96,7 @@ When new follow-up work appears:
 
 ```bash
 gittoc new "Add feature" -p 3
-gittoc dep T-3 T-1   # if T-3 is blocked by T-1
+gittoc dep T-3 T-1   # T-3 depends on T-1 (T-1 must complete first)
 ```
 
 Finishing:

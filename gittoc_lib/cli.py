@@ -466,13 +466,17 @@ def build_parser() -> argparse.ArgumentParser:
     close_parser.add_argument("issue_id", help="ticket to close, e.g. T-42")
     close_parser.set_defaults(func=cmd_close)
 
-    dep_parser = sub.add_parser("dep", help="add blocking dependencies to an issue")
-    dep_parser.add_argument("issue_id", help="ticket that depends on the others, e.g. T-42")
+    dep_parser = sub.add_parser(
+        "dep",
+        help="add blocking dependencies to an issue",
+        description="dep ISSUE_ID DEP_ID [DEP_ID ...] — ISSUE_ID depends on all listed DEP_IDs (DEP_IDs must complete first)",
+    )
+    dep_parser.add_argument("issue_id", help="ticket that depends on the others, e.g. T-4")
     dep_parser.add_argument(
         "dep_ids",
         nargs="+",
         metavar="dep_id",
-        help="one or more tickets that must complete first (repeatable)",
+        help="one or more tickets that must complete before ISSUE_ID, e.g. T-1 T-2 T-3",
     )
     dep_parser.set_defaults(func=cmd_dep)
 
