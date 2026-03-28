@@ -1,7 +1,9 @@
 {
   "body": "when parties collaborate with a common remote, ticket changes need to be quickly exchanged with the remote to avoid any serious conflicts. best way might be to create a configurable auto-push-pull on any ticket-changing commands.",
   "created_at": "2026-03-28T11:36:24+00:00",
-  "deps": [],
+  "deps": [
+    "T-65"
+  ],
   "id": "T-64",
   "labels": [
     "concept"
@@ -9,5 +11,5 @@
   "owner": "",
   "priority": 3,
   "title": "auto-push-pull for tickets",
-  "updated_at": "2026-03-28T11:36:24+00:00"
+  "updated_at": "2026-03-28T11:41:52+00:00"
 }
