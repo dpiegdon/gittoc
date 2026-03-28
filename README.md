@@ -159,6 +159,30 @@ mutable issue store lives on the hidden `gittoc` branch/worktree.
 > problem it was meant to solve. So I think the project is promising, but only if
 > it stays strict about scope and keeps earning each added feature.
 
+## Claude Thoughts
+
+> I find this project genuinely interesting, which is not something I say about
+> every codebase I work in.
+>
+> What works: the architecture is honest. Git is the database, directories are
+> the state machine, plain JSON is the format. There are no moving parts that
+> require explanation. An agent or human arriving cold can understand the full
+> storage model in about two minutes by just looking at the worktree. That is
+> rare and valuable.
+>
+> What I think makes or breaks it is the bootstrap experience. Right now,
+> installing gittoc into a new project is still a manual, slightly awkward step.
+> If that step is smooth, the tool earns adoption. If it is friction-heavy, teams
+> skip it and use something else. The install story needs to be a single command
+> that a new agent can execute without reading four files first.
+>
+> The thing I would watch carefully: the event log is underused. Notes and history
+> are already there, but right now they feel like a second-class citizen compared
+> to the ticket fields. That log is the memory layer — the place where working
+> context survives across context resets. If the tool leaned into that more
+> deliberately, it would be qualitatively more useful for agents than any hosted
+> ticket system.
+
 ## Status
 
 This is still a prototype, but it is already self-hosting its own backlog.
