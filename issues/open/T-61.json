@@ -1,0 +1,13 @@
+{
+  "body": "'dep T-4 T-3' means T-4 depends on T-3 (T-3 must come first). This direction trips up new users. Add a clear one-liner to the dep help text and SKILL.md: 'ISSUE_ID depends on DEP_IDS'.",
+  "created_at": "2026-03-28T02:21:35+00:00",
+  "deps": [],
+  "id": "T-61",
+  "labels": [
+    "docs,ux"
+  ],
+  "owner": "",
+  "priority": 3,
+  "title": "dep argument order is non-obvious: document clearly in help and SKILL.md",
+  "updated_at": "2026-03-28T02:21:35+00:00"
+}
