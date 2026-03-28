@@ -192,5 +192,6 @@ This is still a prototype, but it is already self-hosting its own backlog.
 Tests:
 
 ```bash
-python3 -m unittest skills.gittoc.tests.test_gittoc
+python3 -m unittest tests.test_gittoc        # from the gittoc dev repo
+python3 -m unittest tools.gittoc.tests.test_gittoc  # from a host repo where gittoc is vendored
 ```

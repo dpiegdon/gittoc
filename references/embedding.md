@@ -33,7 +33,7 @@ Concretely, the target repository would contain something like:
       SKILL.md        ← skill instructions
   .claude/
     skills/
-      gittoc.md       ← Claude Code skill (copy of tools/gittoc/SKILL.md)
+      gittoc.md       ← Claude Code skill (symlink to tools/gittoc/SKILL.md)
 ```
 
 And at runtime `gittoc` would maintain:
@@ -213,7 +213,7 @@ This keeps the release boring, inspectable, and easy to explain.
 The strongest default seems to be:
 
 - vendor `gittoc` into `tools/gittoc/`
-- copy `SKILL.md` to `.claude/skills/gittoc.md` for Claude Code users
+- symlink `SKILL.md` to `.claude/skills/gittoc.md` for Claude Code users
 - keep all mutable tracker state on the `gittoc` branch via `.git/gittoc/`
 
 In short:
