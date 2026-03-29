@@ -3,3 +3,4 @@
 {"actor": "claude", "at": "2026-03-28T19:52:29+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-28T19:52:29+00:00", "kind": "note", "text": "Clear spec: -l adds label(s), -L replaces all labels, -x removes label(s). Comma-separated input aligns with display format. Bumped to p2 since accidentally replacing all labels when adding one is a footgun. Backward-compat note: current -l users expect replace, so this is a breaking change \u2014 acceptable pre-1.0."}
 {"actor": "codex", "at": "2026-03-29T15:34:07+00:00", "kind": "claimed", "text": "codex"}
+{"actor": "codex", "at": "2026-03-29T15:35:42+00:00", "kind": "closed", "text": ""}
