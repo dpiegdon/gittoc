@@ -1,11 +1,8 @@
 {
   "body": "'gittoc grep [-s <state>] <pattern>' might be a nice addition for full-text search over all or specific tickets. should be simple to implement, since state-selection is done by directory. so either all dirs, or one specific.",
   "created_at": "2026-03-28T12:16:11+00:00",
-  "deps": [],
   "id": "T-67",
-  "labels": [],
-  "owner": "",
-  "priority": 3,
+  "priority": 2,
   "title": "grep feature",
-  "updated_at": "2026-03-28T12:16:11+00:00"
+  "updated_at": "2026-03-29T18:02:48+00:00"
 }
