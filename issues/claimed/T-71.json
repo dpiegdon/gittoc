@@ -1,11 +1,9 @@
 {
   "body": "the actor is needed to contextualize and quickly understand if oneself or someone else added the comment. maybe either add it to commit messages, which log shows, or change the command to list it. the prior would be easier to implement. if it is good to have this in a commit message is questionable. can be clutter, but can also be considered useful...",
   "created_at": "2026-03-28T18:57:13+00:00",
-  "deps": [],
   "id": "T-71",
-  "labels": [],
-  "owner": "",
+  "owner": "codex",
   "priority": 3,
   "title": "output of \"gittoc log\" is missing information on actor.",
-  "updated_at": "2026-03-28T18:57:13+00:00"
+  "updated_at": "2026-03-29T15:36:00+00:00"
 }
