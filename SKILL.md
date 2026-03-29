@@ -30,13 +30,13 @@ Do not use it for one-off work that can be completed in a single short turn.
 - Canonical tracker state lives on the `gittoc` branch.
 - A hidden git worktree at `.git/gittoc/` serves as the working checkout.
 - Tickets live as `issues/<state>/T-<n>.json`; directory is canonical state.
-- States: `open`, `claimed`, `blocked`, `closed`.
+- States: `open`, `claimed`, `blocked`, `closed`, `rejected`.
 - Fields: `title`, `body`, `deps`, `labels`, `owner`, `priority`.
 - Optional per-ticket event history in sibling `T-<n>.events.jsonl` files.
 
 ## Commands
 
-Invoke as `gittoc <command>` or `tools/gittoc <command>` or
+Invoke as `gittoc <command>` or `tools/gittoc/gittoc <command>` or
 `git toc <command>` if the alias is configured. Use `--help` on any command
 for full argument documentation.
 

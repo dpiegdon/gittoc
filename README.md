@@ -35,6 +35,7 @@ Current ticket states are directory-based:
 - `issues/claimed`
 - `issues/blocked`
 - `issues/closed`
+- `issues/rejected`
 
 ## Previous Work
 
