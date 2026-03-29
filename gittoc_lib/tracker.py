@@ -8,13 +8,31 @@ import subprocess
 from dataclasses import replace
 from pathlib import Path
 
-from .common import (EVENT_SUFFIX, ISSUES_ROOT, STATE_ORDER, STATE_SET,
-                     TERMINAL_STATES, TRACKER_BRANCH, branch_exists,
-                     current_branch, default_owner, has_legacy_hidden_clone,
-                     infer_remote, is_worktree, issue_number, list_remotes,
-                     local_config_get, local_config_set, now_utc,
-                     remote_branch_exists, repo_root, run_git,
-                     validate_issue_id, validate_priority, worktree_path)
+from .common import (
+    EVENT_SUFFIX,
+    ISSUES_ROOT,
+    STATE_ORDER,
+    STATE_SET,
+    TERMINAL_STATES,
+    TRACKER_BRANCH,
+    branch_exists,
+    current_branch,
+    default_owner,
+    has_legacy_hidden_clone,
+    infer_remote,
+    is_worktree,
+    issue_number,
+    list_remotes,
+    local_config_get,
+    local_config_set,
+    now_utc,
+    remote_branch_exists,
+    repo_root,
+    run_git,
+    validate_issue_id,
+    validate_priority,
+    worktree_path,
+)
 from .models import Issue
 
 
@@ -232,14 +250,17 @@ class Tracker:
                 return path
         return None
 
-    def commit_if_needed(self, message: str) -> None:
+    def commit_if_needed(self, message: str, actor: str | None = None) -> None:
         """Stage and commit any pending changes to the issues tree, if any exist."""
         proc = run_git(["status", "--porcelain", "--", "issues"], cwd=self.checkout)
         if not proc.stdout.strip():
             return
         self.ensure_not_stale()
         run_git(["add", "issues"], cwd=self.checkout)
-        run_git(["commit", "-q", "-m", message], cwd=self.checkout)
+        commit_actor = actor or default_owner()
+        run_git(
+            ["commit", "-q", "-m", f"{message} ({commit_actor})"], cwd=self.checkout
+        )
         self.base_head = self.head()
 
     def write_issue(self, issue: Issue, previous_path: Path | None = None) -> Path:
@@ -502,7 +523,9 @@ class Tracker:
         self.move_event_file(updated.issue_id, updated.state, path)
         self.write_issue(updated, previous_path=path)
         self.append_event(updated, event_kind, event_text, actor=event_actor)
-        self.commit_if_needed(message or f"Update issue {updated.issue_id}")
+        self.commit_if_needed(
+            message or f"Update issue {updated.issue_id}", actor=event_actor
+        )
         return updated
 
     def reject_issue(self, issue_id: str) -> Issue:
@@ -538,5 +561,5 @@ class Tracker:
         """Append a free-text note event to an issue and commit."""
         issue, _ = self.load_issue(issue_id)
         self.append_event(issue, "note", text, actor=actor)
-        self.commit_if_needed(f"Add note to {issue.issue_id}")
+        self.commit_if_needed(f"Add note to {issue.issue_id}", actor=actor)
         return issue
