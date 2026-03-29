@@ -5,3 +5,4 @@
 {"actor": "claude", "at": "2026-03-29T18:02:48+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-29T18:02:48+00:00", "kind": "note", "text": "Bumping to p2: T-72 (clean JSON) landed, grep implementation is now straightforward. High utility for agents scanning the backlog. Pure Python (re module + walk state dirs) keeps it zero-dep. Should support state filtering like list does."}
 {"actor": "claude", "at": "2026-03-29T18:09:15+00:00", "kind": "claimed", "text": "claude"}
+{"actor": "claude", "at": "2026-03-29T18:12:10+00:00", "kind": "closed", "text": ""}
