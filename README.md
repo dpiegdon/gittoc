@@ -12,7 +12,7 @@ local context.
 Requires Python 3.8+ and git. In your repo:
 
 ```bash
-mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools/gittoc && rm -rf tools/gittoc/.git && mkdir -p .claude/skills && ln -s ../../tools/gittoc/SKILL.md .claude/skills/gittoc.md && git config alias.toc 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config && ./tools/gittoc/gittoc init && ./tools/gittoc/gittoc summary
+mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools/gittoc && rm -rf tools/gittoc/.git && ./tools/gittoc/gittoc init --setup && ./tools/gittoc/gittoc summary
 ```
 
 ## Repository
@@ -127,15 +127,7 @@ The recommended model is to vendor gittoc directly into the host repository.
 mkdir -p tools
 git clone https://codeberg.org/dpiegdon/gittoc tools/gittoc
 rm -rf tools/gittoc/.git
-
-# Claude Code users: symlink the skill so it stays in sync
-mkdir -p .claude/skills
-ln -s ../../tools/gittoc/SKILL.md .claude/skills/gittoc.md
-
-# optional git alias (idempotent; printf avoids git config escaping '!'):
-git config alias.toc 2>/dev/null || printf '[alias]\n    toc = !tools/gittoc/gittoc\n' >> .git/config
-
-./tools/gittoc/gittoc init
+./tools/gittoc/gittoc init --setup     # creates tracker, skill symlink, and git alias
 ./tools/gittoc/gittoc summary          # should print all-zero counts
 ```
 

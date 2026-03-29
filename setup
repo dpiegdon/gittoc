@@ -1,0 +1,11 @@
+#!/bin/sh
+# Set up skill symlink and git alias for a vendored gittoc install.
+# Run from the project root, or via: gittoc init --setup
+set -e
+GITTOC_DIR="$(cd "$(dirname "$0")" && pwd)"
+GITTOC_REL="$(python3 -c "import os,sys; print(os.path.relpath(sys.argv[1]))" "$GITTOC_DIR")"
+
+mkdir -p .claude/skills
+[ -e .claude/skills/gittoc.md ] || ln -s "../../${GITTOC_REL}/SKILL.md" .claude/skills/gittoc.md
+
+git config alias.toc >/dev/null 2>&1 || printf '[alias]\n    toc = !%s/gittoc\n' "$GITTOC_REL" >> .git/config
