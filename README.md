@@ -84,7 +84,9 @@ gittoc ready                        # only tickets with no blockers
 gittoc new "short title" -p 2 -b "longer context"
 gittoc claim T-42
 gittoc note T-42 "found a race during creation"
-gittoc update T-42 -p 1
+gittoc update T-42 -p 1 -l bug,ux    # add labels
+gittoc update T-42 -x ux             # remove a label
+gittoc update T-42 -L task,docs      # replace all labels
 gittoc dep T-42 T-7                 # T-42 blocked by T-7
 gittoc close T-42
 

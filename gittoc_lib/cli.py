@@ -6,8 +6,15 @@ import argparse
 import json
 from pathlib import Path
 
-from .common import (DEFAULT_PRIORITY, STATE_ORDER, TRACKER_BRANCH,
-                     default_owner, issue_number, parse_state, run_git)
+from .common import (
+    DEFAULT_PRIORITY,
+    STATE_ORDER,
+    TRACKER_BRANCH,
+    default_owner,
+    issue_number,
+    parse_state,
+    run_git,
+)
 from .render import print_issues
 from .tracker import StaleTrackerError, Tracker
 
@@ -24,6 +31,22 @@ COMMAND_ALIASES = {
     "ps": "push",
     "pus": "push",
 }
+
+
+def parse_labels(values: list[str] | None) -> list[str]:
+    """Parse repeatable/comma-separated label arguments into a deduplicated list."""
+    if not values:
+        return []
+    labels: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        for label in value.split(","):
+            label = label.strip()
+            if not label or label in seen:
+                continue
+            seen.add(label)
+            labels.append(label)
+    return labels
 
 
 def select_fields(data: dict, fields: list[str] | None) -> dict:
@@ -196,7 +219,9 @@ def cmd_pull(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     remote = args.remote or tracker.effective_remote()
     if not remote:
-        print("error: no remote specified and none configured (run: gittoc remote --set <name>)")
+        print(
+            "error: no remote specified and none configured (run: gittoc remote --set <name>)"
+        )
         return 1
     status = tracker.pull_remote(remote)
     if args.format == "json":
@@ -211,7 +236,9 @@ def cmd_push(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     remote = args.remote or tracker.effective_remote()
     if not remote:
-        print("error: no remote specified and none configured (run: gittoc remote --set <name>)")
+        print(
+            "error: no remote specified and none configured (run: gittoc remote --set <name>)"
+        )
         return 1
     status = tracker.push_remote(remote)
     if args.format == "json":
@@ -274,15 +301,17 @@ def cmd_claim(args: argparse.Namespace) -> int:
     owner = args.owner or default_owner()
     issues = []
     for issue_id in args.issue_ids:
-        issues.append(tracker.update_issue(
-            issue_id,
-            state="claimed",
-            owner=owner,
-            message=f"Claim issue {issue_id} for {owner}",
-            event_kind="claimed",
-            event_text=owner,
-            event_actor=owner,
-        ))
+        issues.append(
+            tracker.update_issue(
+                issue_id,
+                state="claimed",
+                owner=owner,
+                message=f"Claim issue {issue_id} for {owner}",
+                event_kind="claimed",
+                event_text=owner,
+                event_actor=owner,
+            )
+        )
     print_issues(issues, tracker, args.format)
     return 0
 
@@ -357,13 +386,31 @@ def cmd_update(args: argparse.Namespace) -> int:
     """Update one or more fields of an existing issue."""
     tracker = Tracker.open()
     state = parse_state(args.state)
+    add_labels = parse_labels(args.label)
+    replace_labels = parse_labels(args.replace_label)
+    remove_labels = set(parse_labels(args.remove_label))
+    if replace_labels and (add_labels or remove_labels):
+        raise SystemExit(
+            "cannot combine --replace-label with --label or --remove-label"
+        )
+    labels = None
+    if replace_labels:
+        labels = replace_labels
+    elif add_labels or remove_labels:
+        issue, _ = tracker.load_issue(args.issue_id)
+        labels = list(issue.labels)
+        for label in add_labels:
+            if label not in labels:
+                labels.append(label)
+        if remove_labels:
+            labels = [label for label in labels if label not in remove_labels]
     issue = tracker.update_issue(
         args.issue_id,
         title=args.title,
         body=args.body,
         state=state,
         owner=args.owner,
-        labels=args.label,
+        labels=labels,
         priority=args.priority,
         event_text="fields updated",
     )
@@ -492,7 +539,12 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     claim_parser = sub.add_parser("claim", help="claim one or more issues")
-    claim_parser.add_argument("issue_ids", nargs="+", metavar="issue_id", help="ticket(s) to claim, e.g. T-42 T-43")
+    claim_parser.add_argument(
+        "issue_ids",
+        nargs="+",
+        metavar="issue_id",
+        help="ticket(s) to claim, e.g. T-42 T-43",
+    )
     claim_parser.add_argument(
         "--owner",
         help="owner name (default: $GITTOC_OWNER or $USER)",
@@ -513,7 +565,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="add blocking dependencies to an issue",
         description="dep ISSUE_ID DEP_ID [DEP_ID ...] — ISSUE_ID depends on all listed DEP_IDs (DEP_IDs must complete first)",
     )
-    dep_parser.add_argument("issue_id", help="ticket that depends on the others, e.g. T-4")
+    dep_parser.add_argument(
+        "issue_id", help="ticket that depends on the others, e.g. T-4"
+    )
     dep_parser.add_argument(
         "dep_ids",
         nargs="+",
@@ -633,12 +687,16 @@ def build_parser() -> argparse.ArgumentParser:
     pull_parser = sub.add_parser(
         "pull", help="fetch and merge the tracker branch from a remote"
     )
-    pull_parser.add_argument("remote", nargs="?", help="remote name (default: configured gittoc remote)")
+    pull_parser.add_argument(
+        "remote", nargs="?", help="remote name (default: configured gittoc remote)"
+    )
     add_text_format_argument(pull_parser)
     pull_parser.set_defaults(func=cmd_pull)
 
     push_parser = sub.add_parser("push", help="push the tracker branch to a remote")
-    push_parser.add_argument("remote", nargs="?", help="remote name (default: configured gittoc remote)")
+    push_parser.add_argument(
+        "remote", nargs="?", help="remote name (default: configured gittoc remote)"
+    )
     add_text_format_argument(push_parser)
     push_parser.set_defaults(func=cmd_push)
 
@@ -733,7 +791,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--label",
         action="append",
         metavar="LABEL",
-        help="replace label set with these labels (repeatable)",
+        help="add label(s); repeatable and comma-separated",
+    )
+    update_parser.add_argument(
+        "-L",
+        "--replace-label",
+        action="append",
+        metavar="LABEL",
+        help="replace all labels with this set; repeatable and comma-separated",
+    )
+    update_parser.add_argument(
+        "-x",
+        "--remove-label",
+        action="append",
+        metavar="LABEL",
+        help="remove label(s); repeatable and comma-separated",
     )
     update_parser.add_argument(
         "-p",
