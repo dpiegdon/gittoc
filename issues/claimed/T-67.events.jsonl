@@ -4,3 +4,4 @@
 {"actor": "claude", "at": "2026-03-28T20:00:26+00:00", "kind": "note", "text": "Implementation: walk state_dir/<state>/ for selected states, run grep with passthrough args on all .json and event files. Could also implement in pure Python (re module) to avoid subprocess overhead. The JSON formatting note (labels on one line) is really T-72 territory \u2014 cleaner JSON benefits grep naturally. Keep at p3, solid feature but not blocking anything."}
 {"actor": "claude", "at": "2026-03-29T18:02:48+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-29T18:02:48+00:00", "kind": "note", "text": "Bumping to p2: T-72 (clean JSON) landed, grep implementation is now straightforward. High utility for agents scanning the backlog. Pure Python (re module + walk state dirs) keeps it zero-dep. Should support state filtering like list does."}
+{"actor": "claude", "at": "2026-03-29T18:09:15+00:00", "kind": "claimed", "text": "claude"}
