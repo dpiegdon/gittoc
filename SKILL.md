@@ -48,6 +48,8 @@ for full argument documentation.
 - `list --ready-only` — only tickets with no unmet dependencies
 - `ready` — shorthand for `list --ready-only`
 - `labels` / `labels -a` — all labels in use with counts
+- `grep PATTERN [-i] [-n]` — search open ticket files; `-a` for all states, `-s closed` for specific
+- `list --sort=id` — chronological order instead of priority
 
 **Working with tickets**
 - `new "Title" -p 2 -b "context" -l feature` — create a ticket

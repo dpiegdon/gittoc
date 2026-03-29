@@ -426,6 +426,39 @@ def cmd_dep(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_grep(args: argparse.Namespace) -> int:
+    """Search ticket files for a pattern using grep."""
+    import subprocess
+
+    grep_args = [a for a in (args.grep_args or []) if a != "--"]
+    if not grep_args:
+        print("error: grep requires a pattern")
+        return 1
+    pattern = grep_args[0]
+    extra_flags = grep_args[1:]
+    tracker = Tracker.open()
+    if args.all:
+        states = STATE_ORDER
+    elif args.state:
+        states = tuple(args.state)
+    else:
+        states = ("open",)
+    files: list[str] = []
+    for state in states:
+        state_path = tracker.state_dir(state)
+        if state_path.is_dir():
+            files.extend(
+                str(p.relative_to(tracker.checkout))
+                for p in sorted(state_path.iterdir())
+                if p.is_file()
+            )
+    if not files:
+        return 1
+    cmd = ["grep", "-H"] + extra_flags + ["--", pattern] + files
+    result = subprocess.run(cmd, cwd=tracker.checkout)
+    return result.returncode
+
+
 def cmd_close(args: argparse.Namespace) -> int:
     """Mark an issue as closed (done) and print its ID."""
     tracker = Tracker.open()
@@ -575,6 +608,33 @@ def build_parser() -> argparse.ArgumentParser:
         help="one or more tickets that must complete before ISSUE_ID, e.g. T-1 T-2 T-3",
     )
     dep_parser.set_defaults(func=cmd_dep)
+
+    grep_parser = sub.add_parser(
+        "grep",
+        help="search ticket files for a pattern",
+        description="Search ticket JSON and event files with grep. "
+        "Use -s to select states, -a for all. "
+        "Pattern and grep flags follow: gittoc grep [-s STATE] [-a] PATTERN [-i] [-n] ...",
+    )
+    grep_parser.add_argument(
+        "-s",
+        "--state",
+        action="append",
+        choices=STATE_ORDER,
+        help="search this state (repeatable; default: open)",
+    )
+    grep_parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="search all states",
+    )
+    grep_parser.add_argument(
+        "grep_args",
+        nargs=argparse.REMAINDER,
+        help="pattern and optional grep flags (e.g. feature -i -n)",
+    )
+    grep_parser.set_defaults(func=cmd_grep)
 
     history_parser = sub.add_parser("history", help="show per-issue event history")
     history_parser.add_argument("issue_id", help="ticket to inspect, e.g. T-42")
