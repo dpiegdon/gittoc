@@ -2,3 +2,4 @@
 {"actor": "claude", "at": "2026-03-27T23:22:25+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-28T11:42:49+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-28T11:42:49+00:00", "kind": "note", "text": "workaround: 'gittoc note T-5 \"related: T-3\"' is sufficient for most cases. A real related-tickets field needs schema change + render + show changes for modest benefit. Deferring below T-65/T-64 which have clearer value. Revisit if user requests it concretely."}
+{"actor": "codex", "at": "2026-03-29T15:15:47+00:00", "kind": "note", "text": "Design note: relation-like features are starting to cluster (related tickets, duplicate-of, maybe parent/epic). If any of them get implemented, it would be better to choose a coherent relation model once than to add several unrelated ad-hoc fields over time."}
