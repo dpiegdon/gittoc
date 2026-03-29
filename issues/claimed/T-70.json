@@ -1,13 +1,12 @@
 {
   "body": "'update -l' replaces existing labels. that is unexpected when not reading the docs, but there definitely needs a way to override existing. but '-l' feels like it should *add* a label. maybe add more different options here: '-l' to add, '-L' to fully replace (like current '-l'), and *maybe* '-x' to remove a label?",
   "created_at": "2026-03-28T17:01:50+00:00",
-  "deps": [],
   "id": "T-70",
   "labels": [
     "ux"
   ],
-  "owner": "",
+  "owner": "codex",
   "priority": 2,
   "title": "'update -l' interface is unexpected",
-  "updated_at": "2026-03-28T19:52:29+00:00"
+  "updated_at": "2026-03-29T15:34:07+00:00"
 }
