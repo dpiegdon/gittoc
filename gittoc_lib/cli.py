@@ -126,7 +126,7 @@ def print_resume_text(data: dict) -> None:
             print(f"- {format_history_entry(entry)}")
 
 
-def cmd_init(args: argparse.Namespace) -> int:
+def cmd_init(_args: argparse.Namespace) -> int:
     """Initialize the tracker worktree and auto-configure the remote if possible."""
     tracker = Tracker.open()
     if not tracker.configured_remote():
@@ -134,13 +134,6 @@ def cmd_init(args: argparse.Namespace) -> int:
         if inferred:
             tracker.configure_remote(inferred)
     print(f"initialized tracker branch {TRACKER_BRANCH} at {tracker.checkout}")
-    if args.setup:
-        import subprocess
-
-        setup = Path(__file__).resolve().parent.parent / "setup"
-        result = subprocess.run([str(setup)], cwd=tracker.repo)
-        if result.returncode != 0:
-            return result.returncode
     _print_init_checklist(tracker.repo)
     return 0
 
@@ -664,11 +657,6 @@ def build_parser() -> argparse.ArgumentParser:
     history_parser.set_defaults(func=cmd_history)
 
     init_parser = sub.add_parser("init", help="initialize tracker worktree")
-    init_parser.add_argument(
-        "--setup",
-        action="store_true",
-        help="also create skill symlink and git alias if missing",
-    )
     init_parser.set_defaults(func=cmd_init)
 
     labels_parser = sub.add_parser(

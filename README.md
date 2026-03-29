@@ -12,7 +12,7 @@ local context.
 Requires Python 3.8+ and git. In your repo:
 
 ```bash
-mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools/gittoc && rm -rf tools/gittoc/.git && ./tools/gittoc/gittoc init --setup && ./tools/gittoc/gittoc summary
+mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools/gittoc && rm -rf tools/gittoc/.git && ./tools/gittoc/gittoc init && ./tools/gittoc/setup && ./tools/gittoc/gittoc summary
 ```
 
 ## Repository
@@ -127,7 +127,8 @@ The recommended model is to vendor gittoc directly into the host repository.
 mkdir -p tools
 git clone https://codeberg.org/dpiegdon/gittoc tools/gittoc
 rm -rf tools/gittoc/.git
-./tools/gittoc/gittoc init --setup     # creates tracker, skill symlink, and git alias
+./tools/gittoc/gittoc init             # initialize tracker branch
+./tools/gittoc/setup                   # create skill symlink and git alias
 ./tools/gittoc/gittoc summary          # should print all-zero counts
 ```
 
