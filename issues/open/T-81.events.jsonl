@@ -1,1 +1,2 @@
 {"actor": "copilot", "at": "2026-03-30T14:42:57+00:00", "kind": "created", "text": "Add single-command bootstrap flow"}
+{"actor": "copilot", "at": "2026-03-30T14:54:16+00:00", "kind": "note", "text": "Related bootstrap/install work: see also T-41 (fresh host-project bootstrap trial) and T-35 (bootstrap stub concept). T-81 is the concrete UX-focused umbrella for a smoother single-command setup path."}
