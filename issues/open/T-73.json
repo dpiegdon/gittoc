@@ -1,13 +1,11 @@
 {
   "body": "notes need to be addressable, so we should add a counter per ticket. otherwise I cannot say something like 'your comment in Note-17 ...'",
   "created_at": "2026-03-28T19:06:32+00:00",
-  "deps": [],
   "id": "T-73",
   "labels": [
     "ux"
   ],
-  "owner": "",
-  "priority": 3,
+  "priority": 4,
   "title": "notes need to be numbered",
-  "updated_at": "2026-03-28T19:06:32+00:00"
+  "updated_at": "2026-03-30T20:12:03+00:00"
 }
