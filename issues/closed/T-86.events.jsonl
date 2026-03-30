@@ -1,3 +1,4 @@
 {"actor": "copilot", "at": "2026-03-30T15:07:46+00:00", "kind": "created", "text": "Make new --label parsing consistent with update"}
 {"actor": "claude", "at": "2026-03-30T19:43:26+00:00", "kind": "note", "text": "Confirmed: cmd_new passes args.label directly to create_issue(), bypassing parse_labels(). Fix is one line: change 'args.label or []' to 'parse_labels(args.label)'. Quick fix, do first."}
 {"actor": "claude", "at": "2026-03-30T19:50:16+00:00", "kind": "claimed", "text": "claude"}
+{"actor": "claude", "at": "2026-03-30T19:50:27+00:00", "kind": "closed", "text": ""}
