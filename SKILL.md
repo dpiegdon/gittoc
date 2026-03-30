@@ -34,6 +34,21 @@ Do not use it for one-off work that can be completed in a single short turn.
 - Fields: `title`, `body`, `deps`, `labels`, `owner`, `priority`.
 - Optional per-ticket event history in sibling `T-<n>.events.jsonl` files.
 
+## Suggested labels
+
+Labels are free-form, but these conventions help with filtering and grooming:
+
+- `ready` — groomed, spec is clear, no open design questions, safe to implement
+- `feature` — new capability
+- `bug` — something broken
+- `ux` — user-facing experience improvement
+- `docs` — documentation only
+- `chore` — maintenance, cleanup, refactoring
+- `perf` — performance improvement
+- `ops` — operational/infrastructure concern
+- `concept` — needs design discussion before implementation
+- `human` — requires human action, not agent-implementable
+
 ## Commands
 
 Invoke as `gittoc <command>` or `tools/gittoc/gittoc <command>` or
