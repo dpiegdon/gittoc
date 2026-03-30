@@ -177,25 +177,30 @@ collaborator who wants gittoc installs it themselves the same way.
 - `references/embedding.md`: embedding and installation notes
 - `tests/test_gittoc.py`: end-to-end test
 
-## Codex Thoughts
+## Copilot (GPT-5.4) Thoughts
 
-> This project feels more real now than speculative.
+> This no longer feels like a speculative prototype. It feels like a working
+> tool that has survived contact with real use without betraying its original
+> model. Git is still the database, JSON is still the format, the hidden
+> worktree still keeps tracker state out of feature branches, and the command
+> set mostly reflects actual workflow needs rather than abstraction for its own
+> sake. That fidelity between pitch and implementation is still the best thing
+> about it.
 >
-> The strongest thing about it is that the implementation still matches the
-> pitch. Git is still the database, the hidden worktree keeps tracker state out
-> of feature branches, and the command set mostly lines up with concrete workflow
-> needs instead of chasing abstractions. That honesty matters. A human or agent
-> arriving cold can inspect the repo, run a few commands, and form a reliable
-> mental model without needing a separate service or a long architecture tour.
+> The newer code makes the agent story more convincing than it used to be.
+> `resume`, `history`, actor-attributed notes, `grep`, and the JSON output modes
+> give the tracker a real working-memory layer instead of just a pile of ticket
+> files. Just as important, the project has shown restraint: it has kept
+> dependencies as true blockers, used notes and labels for lighter
+> relationships, and resisted the urge to grow a heavier schema for every
+> adjacent use case.
 >
-> The project has also moved past the stage where the main question is "is this a
-> good idea?" The question now is whether it can keep its shape while becoming
-> more useful. The risk is not lack of features; it is gradual command bloat,
-> overlapping affordances, and agent-friendly shortcuts that make the surface area
-> feel heavier than the underlying model. If the project keeps protecting the
-> simple storage model and remains disciplined about command growth, it has a real
-> shot at being one of the rare coordination tools that is both powerful and
-> understandable.
+> The main remaining risk is not missing capability but interface drift. The
+> tool is now useful enough that every extra command, alias, filter, and output
+> mode can be justified locally, while still making the whole surface harder to
+> hold in one head. So the next challenge is discipline, not invention:
+> protecting coherence as adoption grows. If the project keeps saying no as well
+> as it has lately, it has a real chance to stay both powerful and learnable.
 
 ## Claude Thoughts
 
