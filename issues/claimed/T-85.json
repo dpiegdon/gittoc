@@ -5,6 +5,7 @@
   "labels": [
     "chore,docs"
   ],
+  "owner": "copilot",
   "priority": 4,
   "title": "Groom open backlog tickets",
   "updated_at": "2026-03-30T15:03:14+00:00"
