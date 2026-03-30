@@ -5,3 +5,4 @@
 {"actor": "claude", "at": "2026-03-30T20:59:32+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "dpiegdon", "at": "2026-03-30T21:38:52+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-30T22:11:06+00:00", "kind": "rejected", "text": ""}
+{"actor": "claude", "at": "2026-03-30T22:11:11+00:00", "kind": "note", "text": "Rejected: use note+close convention instead. No schema change needed."}
