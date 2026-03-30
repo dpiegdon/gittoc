@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from .common import (
@@ -220,7 +221,8 @@ def cmd_pull(args: argparse.Namespace) -> int:
     remote = args.remote or tracker.effective_remote()
     if not remote:
         print(
-            "error: no remote specified and none configured (run: gittoc remote --set <name>)"
+            "error: no remote specified and none configured (run: gittoc remote --set <name>)",
+            file=sys.stderr,
         )
         return 1
     status = tracker.pull_remote(remote)
@@ -237,7 +239,8 @@ def cmd_push(args: argparse.Namespace) -> int:
     remote = args.remote or tracker.effective_remote()
     if not remote:
         print(
-            "error: no remote specified and none configured (run: gittoc remote --set <name>)"
+            "error: no remote specified and none configured (run: gittoc remote --set <name>)",
+            file=sys.stderr,
         )
         return 1
     status = tracker.push_remote(remote)
@@ -432,7 +435,7 @@ def cmd_grep(args: argparse.Namespace) -> int:
 
     grep_args = [a for a in (args.grep_args or []) if a != "--"]
     if not grep_args:
-        print("error: grep requires a pattern")
+        print("error: grep requires a pattern", file=sys.stderr)
         return 1
     pattern = grep_args[0]
     extra_flags = grep_args[1:]
@@ -881,7 +884,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     """Entry point: parse argv, resolve aliases, dispatch to the appropriate command."""
     if argv is None:
-        argv = __import__("sys").argv[1:]
+        argv = sys.argv[1:]
     else:
         argv = list(argv)
     if argv:
@@ -891,5 +894,5 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return args.func(args)
     except StaleTrackerError as exc:
-        print(str(exc), file=__import__("sys").stderr)
+        print(str(exc), file=sys.stderr)
         return 2
