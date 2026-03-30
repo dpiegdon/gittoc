@@ -3,3 +3,4 @@
 {"actor": "copilot", "at": "2026-03-30T15:05:49+00:00", "kind": "note", "text": "If T-54 ever lands, a doctor/lint command should validate that any cached last-id metadata still matches the observed highest ticket ID. Otherwise the optimization becomes a new corruption vector."}
 {"actor": "claude", "at": "2026-03-30T19:43:26+00:00", "kind": "note", "text": "Depends naturally on T-82 (shared validation). Doctor command: walk all state dirs, call Issue.validate() on each, report issues. Also check: no dangling dep references, no cycles. Good first pass before T-54 or T-48 land."}
 {"actor": "claude", "at": "2026-03-30T19:43:33+00:00", "kind": "dependency", "text": "T-82"}
+{"actor": "claude", "at": "2026-03-30T20:10:14+00:00", "kind": "updated", "text": "fields updated"}
