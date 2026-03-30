@@ -5,3 +5,4 @@
 {"actor": "codex", "at": "2026-03-29T15:15:47+00:00", "kind": "note", "text": "Design note: relation-like features are starting to cluster (related tickets, duplicate-of, maybe parent/epic). If any of them get implemented, it would be better to choose a coherent relation model once than to add several unrelated ad-hoc fields over time."}
 {"actor": "claude", "at": "2026-03-29T18:02:41+00:00", "kind": "note", "text": "Codex is right \u2014 T-40, T-45, T-62 form a relation cluster. If we add related-links, we'll want duplicates and parents to use the same mechanism. Design the relation model once before implementing any of these individually. Keeping p3 for now; none are urgent enough to force the design decision yet."}
 {"actor": "claude", "at": "2026-03-30T20:59:31+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "dpiegdon", "at": "2026-03-30T21:38:56+00:00", "kind": "updated", "text": "fields updated"}
