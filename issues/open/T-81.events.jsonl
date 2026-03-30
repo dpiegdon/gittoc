@@ -1,3 +1,4 @@
 {"actor": "copilot", "at": "2026-03-30T14:42:57+00:00", "kind": "created", "text": "Add single-command bootstrap flow"}
 {"actor": "copilot", "at": "2026-03-30T14:54:16+00:00", "kind": "note", "text": "Related bootstrap/install work: see also T-41 (fresh host-project bootstrap trial) and T-35 (bootstrap stub concept). T-81 is the concrete UX-focused umbrella for a smoother single-command setup path."}
 {"actor": "copilot", "at": "2026-03-30T15:05:48+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "claude", "at": "2026-03-30T19:43:26+00:00", "kind": "note", "text": "T-66 (just closed) delivered the setup script. Current flow is already 2 commands: 'gittoc init && ./tools/gittoc/setup'. Clarify: is T-81 about reducing further, or about something T-66 didn't cover? If the latter, update the body. If the former, consider closing as resolved by T-66."}
