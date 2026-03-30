@@ -22,11 +22,12 @@ from .tracker import StaleTrackerError, Tracker
 SHOW_NOTES_LIMIT = 3
 COMMAND_ALIASES = {
     "l": "list",
-    "s": "summary",
+    "s": "show",
+    "sum": "summary",
     "r": "resume",
     "c": "claim",
     "n": "note",
-    "sh": "show",
+    "h": "history",
     "pl": "pull",
     "pul": "pull",
     "ps": "push",
@@ -254,7 +255,7 @@ def cmd_list(args: argparse.Namespace) -> int:
     if args.ready_only:
         issues = [issue for issue in issues if tracker.ready(issue)]
     if args.label:
-        required = set(args.label)
+        required = set(parse_labels(args.label))
         issues = [issue for issue in issues if required.issubset(issue.labels)]
     if args.sort == "id":
         issues.sort(key=lambda i: issue_number(i.issue_id))
@@ -316,26 +317,30 @@ def cmd_labels(args: argparse.Namespace) -> int:
 
 
 def cmd_reject(args: argparse.Namespace) -> int:
-    """Reject an issue (mark as won't-do / abandoned) and print its ID."""
+    """Reject an issue (mark as won't-do / abandoned) and print confirmation."""
     tracker = Tracker.open()
-    issue = tracker.reject_issue(args.issue_id)
-    print(issue.issue_id)
+    actor = args.actor or default_owner()
+    issue = tracker.reject_issue(args.issue_id, actor=actor)
+    print_issues([issue], tracker, args.format)
     return 0
 
 
-def cmd_summary(_args: argparse.Namespace) -> int:
+def cmd_summary(args: argparse.Namespace) -> int:
     """Print a one-line summary of issue counts by state."""
     tracker = Tracker.open()
     counts = tracker.summary()
-    parts = [
-        f"open={counts['open']}",
-        f"claimed={counts['claimed']}",
-        f"blocked={counts['blocked']}",
-        f"closed={counts['closed']}",
-        f"rejected={counts['rejected']}",
-        f"ready={counts['ready']}",
-    ]
-    print(" ".join(parts))
+    if args.format == "json":
+        print(json.dumps(counts, indent=2, sort_keys=True))
+    else:
+        parts = [
+            f"open={counts['open']}",
+            f"claimed={counts['claimed']}",
+            f"blocked={counts['blocked']}",
+            f"closed={counts['closed']}",
+            f"rejected={counts['rejected']}",
+            f"ready={counts['ready']}",
+        ]
+        print(" ".join(parts))
     return 0
 
 
@@ -443,15 +448,17 @@ def cmd_grep(args: argparse.Namespace) -> int:
 
 
 def cmd_close(args: argparse.Namespace) -> int:
-    """Mark an issue as closed (done) and print its ID."""
+    """Mark an issue as closed (done) and print confirmation."""
     tracker = Tracker.open()
+    actor = args.actor or default_owner()
     issue = tracker.update_issue(
         args.issue_id,
         state="closed",
         message=f"Close issue {args.issue_id}",
         event_kind="closed",
+        event_actor=actor,
     )
-    print(issue.issue_id)
+    print_issues([issue], tracker, args.format)
     return 0
 
 
@@ -574,6 +581,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     close_parser = sub.add_parser("close", help="mark an issue as done")
     close_parser.add_argument("issue_id", help="ticket to close, e.g. T-42")
+    close_parser.add_argument(
+        "--actor",
+        help="override actor name (default: $GITTOC_OWNER or $USER)",
+    )
+    add_format_argument(close_parser)
     close_parser.set_defaults(func=cmd_close)
 
     dep_parser = sub.add_parser(
@@ -751,6 +763,11 @@ def build_parser() -> argparse.ArgumentParser:
         "reject", help="mark an issue as won't-do / abandoned"
     )
     reject_parser.add_argument("issue_id", help="ticket to reject, e.g. T-42")
+    reject_parser.add_argument(
+        "--actor",
+        help="override actor name (default: $GITTOC_OWNER or $USER)",
+    )
+    add_format_argument(reject_parser)
     reject_parser.set_defaults(func=cmd_reject)
 
 
@@ -813,6 +830,7 @@ def build_parser() -> argparse.ArgumentParser:
     show_parser.set_defaults(func=cmd_show)
 
     summary_parser = sub.add_parser("summary", help="print ticket counts by state")
+    add_text_format_argument(summary_parser)
     summary_parser.set_defaults(func=cmd_summary)
 
     update_parser = sub.add_parser("update", help="update issue fields")

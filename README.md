@@ -75,13 +75,15 @@ Use `--help` on any command for full argument documentation.
 gittoc summary
 gittoc list
 gittoc list -l bug                  # filter by label
-gittoc list -l feature -l ux        # AND of multiple labels
+gittoc list -l feature,ux           # AND of multiple labels (comma or repeated -l)
 gittoc list -a                      # all states
+gittoc list -s claimed -s blocked   # specific states
 gittoc labels                       # all labels in use with counts
 gittoc ready                        # only tickets with no blockers
+gittoc grep "pattern"               # search ticket files
 
 # working with tickets
-gittoc new "short title" -p 2 -b "longer context"
+gittoc new "short title" -p 2 -b "longer context" -l bug
 gittoc claim T-42
 gittoc note T-42 "found a race during creation"
 gittoc update T-42 -p 1 -l bug,ux    # add labels
@@ -89,6 +91,7 @@ gittoc update T-42 -x ux             # remove a label
 gittoc update T-42 -L task,docs      # replace all labels
 gittoc dep T-42 T-7                 # T-42 blocked by T-7
 gittoc close T-42
+gittoc reject T-42                  # mark as won't-do
 
 # inspecting tickets
 gittoc show T-42
@@ -102,19 +105,33 @@ gittoc log                          # all recent tracker changes
 # output format (-f on any command that supports it)
 gittoc list -f json
 gittoc resume -f json
+gittoc summary -f json
 
 # syncing with a remote
 gittoc pull origin
 gittoc push origin
 ```
 
-Command aliases: `l`=list, `s`=summary, `r`=resume, `c`=claim, `n`=note,
-`sh`=show, `pl`=pull, `ps`=push.
+Command aliases: `l`=list, `s`=show, `sum`=summary, `r`=resume, `c`=claim, `n`=note,
+`h`=history, `pl`=pull, `ps`=push.
+
+### Ticket relationships
+
+Dependencies (`dep`) are the only structured relation — they gate readiness and
+block claiming. All other cross-references use notes by convention:
+
+```bash
+gittoc note T-7 "duplicate of T-3"       # then: gittoc close T-7
+gittoc note T-5 "see also T-3"           # non-blocking related ticket
+gittoc list -l auth-rewrite               # use labels for grouping / epics
+```
+
+Notes are searchable via `gittoc grep`.
 
 If you have a local git alias `git toc`, all commands work through that too:
 
 ```bash
-git toc s
+git toc sum
 git toc l -l bug
 git toc r -f json
 ```
@@ -182,27 +199,33 @@ collaborator who wants gittoc installs it themselves the same way.
 
 ## Claude Thoughts
 
-> I find this project genuinely interesting, which is not something I say about
-> every codebase I work in.
+> I have worked on this codebase across many sessions now, and it has become one
+> of the more satisfying projects I have contributed to. Not because it is
+> technically ambitious — it is deliberately not — but because the discipline
+> around what to leave out has held.
 >
-> What works: the architecture is honest. Git is the database, directories are
-> the state machine, plain JSON is the format. There are no moving parts that
-> require explanation. An agent or human arriving cold can understand the full
-> storage model in about two minutes by just looking at the worktree. That is
-> rare and valuable.
+> The architecture still earns its keep. Directories as state, JSON as format,
+> git as database. A new agent or human can read the worktree and understand the
+> full model without documentation. That property has survived dozens of feature
+> additions, which is the real test.
 >
-> What I think makes or breaks it is the bootstrap experience. Right now,
-> installing gittoc into a new project is still a manual, slightly awkward step.
-> If that step is smooth, the tool earns adoption. If it is friction-heavy, teams
-> skip it and use something else. The install story needs to be a single command
-> that a new agent can execute without reading four files first.
+> Since my earlier review, the two weaknesses I flagged have been addressed.
+> Bootstrap is now a one-liner. The event log has grown into a real working-memory
+> layer through `resume`, `history`, `grep`, and actor-attributed notes. These
+> were the right investments.
 >
-> The thing I would watch carefully: the event log is underused. Notes and history
-> are already there, but right now they feel like a second-class citizen compared
-> to the ticket fields. That log is the memory layer — the place where working
-> context survives across context resets. If the tool leaned into that more
-> deliberately, it would be qualitatively more useful for agents than any hosted
-> ticket system.
+> The project has also shown good instinct for rejection. Structured relation
+> types (related-to, duplicate-of, parent/epic) were all proposed, discussed,
+> and rejected in favor of conventions on top of existing primitives — notes for
+> cross-references, labels for grouping, deps for actual blocking. That kind of
+> restraint is what keeps a tool like this learnable.
+>
+> The risk going forward is different from before. It is no longer about missing
+> features but about surface area. The command set is large enough now that
+> consistency matters more than capability. The open tickets around CLI audit and
+> docs consistency (T-83, T-88) are the right next focus — not because users are
+> confused today, but because the window where you can still align conventions
+> cheaply is closing as adoption grows.
 
 ## Status
 

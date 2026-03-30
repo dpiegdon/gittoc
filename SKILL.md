@@ -56,10 +56,10 @@ Invoke as `gittoc <command>` or `tools/gittoc/gittoc <command>` or
 for full argument documentation.
 
 **Backlog**
-- `summary` / `s` — ticket counts by state
+- `summary` / `sum` — ticket counts by state
 - `list` / `l` — open tickets by priority; `-a` for all states
 - `list -s claimed -s blocked` — filter by state
-- `list -l bug` / `list -l feature -l ux` — filter by label (AND)
+- `list -l bug` / `list -l feature,ux` — filter by label (AND; comma or repeated -l)
 - `list --ready-only` — only tickets with no unmet dependencies
 - `ready` — shorthand for `list --ready-only`
 - `labels` / `labels -a` — all labels in use with counts
@@ -69,6 +69,7 @@ for full argument documentation.
 **Working with tickets**
 - `new "Title" -p 2 -b "context" -l feature` — create a ticket
 - `claim T-1` / `c T-1` — claim a ticket (defaults owner to `$GITTOC_OWNER` / `$USER`)
+- `claimed` — list all currently claimed issues
 - `update T-1 --state blocked -p 4` — update fields
 - `update T-1 -l bug,ux` — add labels
 - `update T-1 -x ux` — remove labels
@@ -76,19 +77,22 @@ for full argument documentation.
 - `dep T-2 T-1` — make T-2 depend on T-1 (T-1 must complete first)
 - `dep T-2 T-1 T-3 T-4` — add multiple blockers T-1, T-3, T-4 for T-2
 - `note T-1 "context"` / `n T-1 "context"` — append a durable note
-- `close T-1` — mark done
+- `close T-1` — mark done; `--actor NAME` to attribute
+- `reject T-1` — mark as won't-do; `--actor NAME` to attribute
 
 **Inspecting tickets**
-- `show T-1` / `sh T-1` — one ticket as JSON with recent notes
+- `show T-1` / `s T-1` — one ticket as JSON with recent notes
 - `show T-1 --field id --field title` — minimal field subset
 - `show T-1 --history` — include full event history
 - `resume` / `r` — context for the most relevant current ticket
 - `resume T-1` — context for a specific ticket
+- `history T-1` / `h T-1` — full event history for a ticket
 - `history T-1 --notes-only --limit 3` — recent notes only
 - `log T-1` — git history for one ticket file
 - `log` — all recent tracker changes
 
-**Output format** — most commands accept `-f compact|normal|verbose|json`
+**Output format** — listing commands accept `-f compact|normal|verbose|json`;
+other commands accept `-f text|json` where applicable
 
 **Remote sync**
 - `remote` — inspect tracker remote wiring
@@ -123,6 +127,29 @@ Finishing:
 ```bash
 gittoc close T-1
 ```
+
+## Ticket relationships
+
+Dependencies (`dep`) are the only structured relation. They gate readiness and
+block claiming — use them for real ordering constraints.
+
+All other cross-references use notes by convention:
+
+```bash
+# marking a duplicate
+gittoc note T-7 "duplicate of T-3"
+gittoc note T-3 "T-7 closed as duplicate"
+gittoc close T-7
+
+# related tickets (non-blocking)
+gittoc note T-5 "see also T-3"
+
+# grouping / epics
+gittoc update T-5 -l auth-rewrite
+gittoc list -l auth-rewrite
+```
+
+This keeps the schema minimal. Notes are searchable via `gittoc grep`.
 
 ## Notes
 

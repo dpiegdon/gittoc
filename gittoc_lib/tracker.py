@@ -523,13 +523,14 @@ class Tracker:
         )
         return updated
 
-    def reject_issue(self, issue_id: str) -> Issue:
+    def reject_issue(self, issue_id: str, *, actor: str | None = None) -> Issue:
         """Move an issue to the rejected state (won't-do / abandoned)."""
         return self.update_issue(
             issue_id,
             state="rejected",
             message=f"Reject issue {issue_id}",
             event_kind="rejected",
+            event_actor=actor,
         )
 
     def set_dependencies(self, issue_id: str, dep_ids: list[str]) -> Issue:

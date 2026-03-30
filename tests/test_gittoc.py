@@ -117,7 +117,7 @@ class GittocE2ETest(unittest.TestCase):
         alias_list = run(["l", "--format", "compact"], self.repo).splitlines()
         self.assertEqual(alias_list[0], f"{issue1} p1 open High priority task")
         self.assertEqual(
-            run(["s"], self.repo),
+            run(["sum"], self.repo),
             "open=2 claimed=0 blocked=0 closed=0 rejected=0 ready=2",
         )
 
@@ -215,7 +215,7 @@ class GittocE2ETest(unittest.TestCase):
         resume_alias = json.loads(run(["r", issue1, "--format", "json"], self.repo))
         self.assertEqual(resume_alias["id"], issue1)
 
-        shown_alias = json.loads(run(["sh", issue1], self.repo))
+        shown_alias = json.loads(run(["s", issue1], self.repo))
         self.assertEqual(shown_alias["id"], issue1)
 
         resume_auto = run(["resume", "--owner", "tester"], self.repo)
