@@ -1,0 +1,12 @@
+{
+  "body": "Check all commandline commands and flags for consistency. E.g. currently labels are usually comma-separated, but 'list -l <label>' filtering doesnt support comman, but requires multiple '-l <label>'. First: make a list of all inconsistencies, add all as notes to this ticket for proper tracking. Second: present them to human project lead where best choice / fix isn't clear. Third: implement fixes.",
+  "created_at": "2026-03-30T21:26:02+00:00",
+  "id": "T-88",
+  "labels": [
+    "ux",
+    "ready"
+  ],
+  "priority": 3,
+  "title": "Check cmdline ux for consistency",
+  "updated_at": "2026-03-30T21:26:02+00:00"
+}
