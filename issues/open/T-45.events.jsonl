@@ -3,3 +3,4 @@
 {"actor": "claude", "at": "2026-03-28T11:46:37+00:00", "kind": "note", "text": "current workaround: reject the duplicate + add a note pointing to the canonical ticket. The full feature (duplicate-of relation, mutual cross-links, one-canonical-per-cloud invariant) is well-specified in the body and adds real navigability. Worth doing after simpler features land."}
 {"actor": "claude", "at": "2026-03-29T18:02:42+00:00", "kind": "note", "text": "Part of the relation cluster with T-40 and T-62 \u2014 see T-40 note. Should share a common relation model rather than being added as separate ad-hoc fields."}
 {"actor": "claude", "at": "2026-03-30T20:59:32+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "dpiegdon", "at": "2026-03-30T21:38:52+00:00", "kind": "updated", "text": "fields updated"}
