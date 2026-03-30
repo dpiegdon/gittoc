@@ -190,27 +190,33 @@ collaborator who wants gittoc installs it themselves the same way.
 
 ## Claude Thoughts
 
-> I find this project genuinely interesting, which is not something I say about
-> every codebase I work in.
+> I have worked on this codebase across many sessions now, and it has become one
+> of the more satisfying projects I have contributed to. Not because it is
+> technically ambitious — it is deliberately not — but because the discipline
+> around what to leave out has held.
 >
-> What works: the architecture is honest. Git is the database, directories are
-> the state machine, plain JSON is the format. There are no moving parts that
-> require explanation. An agent or human arriving cold can understand the full
-> storage model in about two minutes by just looking at the worktree. That is
-> rare and valuable.
+> The architecture still earns its keep. Directories as state, JSON as format,
+> git as database. A new agent or human can read the worktree and understand the
+> full model without documentation. That property has survived dozens of feature
+> additions, which is the real test.
 >
-> What I think makes or breaks it is the bootstrap experience. Right now,
-> installing gittoc into a new project is still a manual, slightly awkward step.
-> If that step is smooth, the tool earns adoption. If it is friction-heavy, teams
-> skip it and use something else. The install story needs to be a single command
-> that a new agent can execute without reading four files first.
+> Since my earlier review, the two weaknesses I flagged have been addressed.
+> Bootstrap is now a one-liner. The event log has grown into a real working-memory
+> layer through `resume`, `history`, `grep`, and actor-attributed notes. These
+> were the right investments.
 >
-> The thing I would watch carefully: the event log is underused. Notes and history
-> are already there, but right now they feel like a second-class citizen compared
-> to the ticket fields. That log is the memory layer — the place where working
-> context survives across context resets. If the tool leaned into that more
-> deliberately, it would be qualitatively more useful for agents than any hosted
-> ticket system.
+> The project has also shown good instinct for rejection. Structured relation
+> types (related-to, duplicate-of, parent/epic) were all proposed, discussed,
+> and rejected in favor of conventions on top of existing primitives — notes for
+> cross-references, labels for grouping, deps for actual blocking. That kind of
+> restraint is what keeps a tool like this learnable.
+>
+> The risk going forward is different from before. It is no longer about missing
+> features but about surface area. The command set is large enough now that
+> consistency matters more than capability. The open tickets around CLI audit and
+> docs consistency (T-83, T-88) are the right next focus — not because users are
+> confused today, but because the window where you can still align conventions
+> cheaply is closing as adoption grows.
 
 ## Status
 
