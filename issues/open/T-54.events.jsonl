@@ -2,3 +2,4 @@
 {"actor": "claude", "at": "2026-03-27T23:17:31+00:00", "kind": "note", "text": "next_issue_id() only reads directory entries (filenames), not file contents \u2014 cheaper than initially noted. Still worth a last-id file once you hit a few hundred tickets, but low urgency. The id-field-removal idea was considered and rejected: makes raw JSON files less self-describing when read without filename context."}
 {"actor": "claude", "at": "2026-03-27T23:17:35+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-27T23:22:25+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "copilot", "at": "2026-03-30T15:05:49+00:00", "kind": "note", "text": "A cached last-id file should be treated as derived metadata, not the sole source of truth. It should be updated atomically and remain recoverable from the ticket filenames, or merges/corruption become harder to reason about."}
