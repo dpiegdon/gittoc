@@ -1,2 +1,3 @@
 {"actor": "copilot", "at": "2026-03-30T14:41:36+00:00", "kind": "created", "text": "Add structured error messages with recovery hints"}
 {"actor": "copilot", "at": "2026-03-30T15:05:48+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "copilot", "at": "2026-03-30T15:05:49+00:00", "kind": "note", "text": "Important implementation constraint: do not pollute JSON stdout with decorated errors. Human-readable errors and hints should go to stderr, or there should be an explicit structured error mode, so machine consumers can still rely on clean stdout."}
