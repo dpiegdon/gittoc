@@ -3,9 +3,10 @@
   "created_at": "2026-03-30T14:42:57+00:00",
   "id": "T-83",
   "labels": [
-    "docs,ux"
+    "docs",
+    "ux"
   ],
   "priority": 3,
   "title": "Audit docs for command and recovery consistency",
-  "updated_at": "2026-03-30T14:42:57+00:00"
+  "updated_at": "2026-03-30T15:05:48+00:00"
 }
