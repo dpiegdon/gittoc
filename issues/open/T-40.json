@@ -1,13 +1,12 @@
 {
   "body": "Tickets can already be linked by dependency, but not by general relation. Add a separate related-tickets field for non-blocking associations so tickets can reference each other without affecting readiness.",
   "created_at": "2026-03-27T20:43:27+00:00",
-  "deps": [],
   "id": "T-40",
   "labels": [
-    "feature"
+    "feature",
+    "concept"
   ],
-  "owner": "",
   "priority": 3,
   "title": "Add related-ticket links separate from dependencies",
-  "updated_at": "2026-03-28T11:42:49+00:00"
+  "updated_at": "2026-03-30T20:59:31+00:00"
 }
