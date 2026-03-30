@@ -1,3 +1,4 @@
 {"actor": "copilot", "at": "2026-03-30T14:42:57+00:00", "kind": "created", "text": "Validate tracker files on load"}
 {"actor": "copilot", "at": "2026-03-30T15:05:48+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "copilot", "at": "2026-03-30T15:05:49+00:00", "kind": "note", "text": "Try to make this reusable validation machinery, not just guardrails inside Issue.from_path(). T-48 (editor flow) and T-78 (doctor/lint) will likely want the same field, type, and dependency checks."}
+{"actor": "claude", "at": "2026-03-30T19:43:26+00:00", "kind": "note", "text": "Copilot's point is right: build shared validation machinery. Suggestion: add Issue.validate() \u2192 list[str] (returns list of error strings, empty = valid). Reuse in from_path() (warn/raise), T-48 editor flow (show errors, offer re-edit), and T-78 doctor command. Define 'valid' as: required fields present, deps are valid ticket IDs, priority in 1-5 range, labels are non-empty strings."}
