@@ -75,7 +75,7 @@ Use `--help` on any command for full argument documentation.
 gittoc summary
 gittoc list
 gittoc list -l bug                  # filter by label
-gittoc list -l feature -l ux        # AND of multiple labels
+gittoc list -l feature,ux           # AND of multiple labels (comma or repeated -l)
 gittoc list -a                      # all states
 gittoc labels                       # all labels in use with counts
 gittoc ready                        # only tickets with no blockers

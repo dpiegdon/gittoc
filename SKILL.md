@@ -59,7 +59,7 @@ for full argument documentation.
 - `summary` / `sum` — ticket counts by state
 - `list` / `l` — open tickets by priority; `-a` for all states
 - `list -s claimed -s blocked` — filter by state
-- `list -l bug` / `list -l feature -l ux` — filter by label (AND)
+- `list -l bug` / `list -l feature,ux` — filter by label (AND; comma or repeated -l)
 - `list --ready-only` — only tickets with no unmet dependencies
 - `ready` — shorthand for `list --ready-only`
 - `labels` / `labels -a` — all labels in use with counts
