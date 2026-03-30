@@ -135,6 +135,23 @@ rm -rf tools/gittoc/.git
 The tool code stays visible and reviewable on the normal branch. Only the
 mutable issue store lives on the hidden `gittoc` branch/worktree.
 
+### Local-only install (shared repos)
+
+If you want to use gittoc on a project without committing the tool upstream,
+exclude it from git tracking:
+
+```bash
+mkdir -p tools
+git clone https://codeberg.org/dpiegdon/gittoc tools/gittoc
+rm -rf tools/gittoc/.git
+echo 'tools/gittoc/' >> .git/info/exclude
+./tools/gittoc/gittoc init
+./tools/gittoc/setup
+```
+
+The tool stays local to your checkout — invisible to git, never pushed. Each
+collaborator who wants gittoc installs it themselves the same way.
+
 ## Project layout
 
 - `gittoc`: CLI entrypoint
