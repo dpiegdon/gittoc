@@ -2,3 +2,4 @@
 {"actor": "dpiegdon", "at": "2026-03-30T21:31:33+00:00", "kind": "note", "text": "close to T-83, could be done together"}
 {"actor": "claude", "at": "2026-03-30T22:19:43+00:00", "kind": "claimed", "text": "claude"}
 {"actor": "claude", "at": "2026-03-30T22:20:33+00:00", "kind": "note", "text": "Audit findings:\n1. list -l doesn't support comma-separated labels (new -l and update -l do via parse_labels)\n2. claim outputs full issue line, all other mutating commands output just the ID\n3. close and reject have no --actor flag (note has one)\n4. close and reject only accept one ticket ID (claim accepts multiple)\n5. show has no -f/--format flag (always JSON)\n6. summary has no -f/--format flag (always text)"}
+{"actor": "claude", "at": "2026-03-30T22:27:43+00:00", "kind": "closed", "text": ""}
