@@ -6,7 +6,7 @@
     "reliability",
     "feature"
   ],
-  "priority": 3,
+  "priority": 5,
   "title": "Validate tracker files on load",
-  "updated_at": "2026-03-30T15:05:48+00:00"
+  "updated_at": "2026-03-30T20:10:14+00:00"
 }
