@@ -80,7 +80,6 @@ for full argument documentation.
 - `remote --set origin` — configure tracker remote
 - `pull` / `pull origin` — fetch and merge tracker branch (uses configured remote by default)
 - `push` / `push origin` — push tracker branch (uses configured remote by default)
-- `refresh` — reload tracker state after conflict errors
 
 ## Recommended workflow
 
@@ -113,7 +112,7 @@ gittoc close T-1
 ## Notes
 
 - Mutating commands use optimistic concurrency; they refuse to commit if the
-  tracker changed mid-command. Run `refresh` and retry when that happens.
+  tracker changed mid-command. Simply re-run the command to retry.
 - `resume` without an ID prefers claimed tickets owned by the current user,
   then highest-priority ready issue, then highest-priority open issue.
 - `pull` fetches and attempts a normal merge; conflicts are left for manual

@@ -128,8 +128,8 @@ class GittocE2ETest(unittest.TestCase):
         self.assertIn(f"* {issue2} p4 [open] Lower priority task deps=1", listing[1])
         self.assertEqual(len(listing), 2)
 
-        refresh = run(["refresh", "--format", "json"], self.repo)
-        self.assertIn('"open": 2', refresh)
+        summary = run(["summary"], self.repo)
+        self.assertIn("open=2", summary)
 
         resume_initial = json.loads(run(["resume", "--format", "json"], self.repo))
         self.assertEqual(resume_initial["id"], issue1)

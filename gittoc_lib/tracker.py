@@ -125,11 +125,6 @@ class Tracker:
         )
         return proc.stdout.strip() if proc.returncode == 0 else ""
 
-    def refresh(self) -> str:
-        """Reset the stale-check baseline to the current HEAD and return it."""
-        self.base_head = self.head()
-        return self.base_head
-
     def configured_remote(self) -> str:
         """Return the explicitly configured tracker remote, or empty string."""
         return local_config_get(self.repo, "gittoc.remote")
@@ -187,7 +182,7 @@ class Tracker:
         )
         if proc.returncode != 0:
             raise SystemExit(
-                f"pull failed while merging {remote}/{TRACKER_BRANCH}; resolve in {self.checkout} and rerun refresh"
+                f"pull failed while merging {remote}/{TRACKER_BRANCH}; resolve conflicts in {self.checkout} and re-run your command"
             )
         self.base_head = self.head()
         return {"action": "pull", "remote": remote, "head": self.base_head}
@@ -211,7 +206,7 @@ class Tracker:
         current = self.head()
         if current != self.base_head:
             raise StaleTrackerError(
-                "tracker changed during this command; run `gittoc refresh` and retry"
+                "tracker changed during this command; re-run your command to retry"
             )
 
     def issues_root(self) -> Path:

@@ -167,26 +167,6 @@ def _print_init_checklist(repo: Path) -> None:
         print("\n".join(lines))
 
 
-def cmd_refresh(args: argparse.Namespace) -> int:
-    """Reload the stale-check baseline and print the current HEAD and issue counts."""
-    tracker = Tracker.open()
-    head = tracker.refresh()
-    counts = tracker.summary()
-    if args.format == "json":
-        print(
-            json.dumps(
-                {"head": head, "summary": counts},
-                indent=2,
-                sort_keys=True,
-            )
-        )
-    else:
-        print(
-            f"head={head} open={counts['open']} claimed={counts['claimed']} "
-            f"blocked={counts['blocked']} closed={counts['closed']} ready={counts['ready']}"
-        )
-    return 0
-
 
 def cmd_remote(args: argparse.Namespace) -> int:
     """Show or configure the remote wiring for the tracker branch."""
@@ -773,11 +753,6 @@ def build_parser() -> argparse.ArgumentParser:
     reject_parser.add_argument("issue_id", help="ticket to reject, e.g. T-42")
     reject_parser.set_defaults(func=cmd_reject)
 
-    refresh_parser = sub.add_parser(
-        "refresh", help="reload tracker state after conflicts"
-    )
-    add_text_format_argument(refresh_parser)
-    refresh_parser.set_defaults(func=cmd_refresh)
 
     remote_parser = sub.add_parser(
         "remote", help="show or configure tracker remote wiring"
