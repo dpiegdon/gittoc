@@ -1,0 +1,12 @@
+{
+  "body": "I use 'show' way more than 'summary', so I really want that 1-character alias for show.",
+  "created_at": "2026-03-30T21:37:22+00:00",
+  "id": "T-89",
+  "labels": [
+    "ux",
+    "ready"
+  ],
+  "priority": 1,
+  "title": "Swap/rename short commandnames: 's'->'show', 'sum'->'summary'.",
+  "updated_at": "2026-03-30T21:37:22+00:00"
+}
