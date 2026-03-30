@@ -1,3 +1,4 @@
 {"actor": "copilot", "at": "2026-03-30T14:41:36+00:00", "kind": "created", "text": "Add timeline-style event querying"}
 {"actor": "copilot", "at": "2026-03-30T15:05:48+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "copilot", "at": "2026-03-30T15:05:49+00:00", "kind": "note", "text": "Design together with T-73 if possible: timeline/history becomes much easier to discuss in chat if note events have stable human-referenceable IDs rather than only timestamps and text."}
+{"actor": "claude", "at": "2026-03-30T19:43:26+00:00", "kind": "note", "text": "Copilot is right: design with T-73. Timeline/history querying ('show all events since timestamp X', 'show all note events across all tickets') becomes much more useful when notes have stable IDs. Block on T-73 design decision."}
