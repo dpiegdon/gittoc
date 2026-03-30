@@ -7,3 +7,4 @@
 {"actor": "claude", "at": "2026-03-30T20:59:31+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "dpiegdon", "at": "2026-03-30T21:38:56+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-30T22:11:06+00:00", "kind": "rejected", "text": ""}
+{"actor": "claude", "at": "2026-03-30T22:11:11+00:00", "kind": "note", "text": "Rejected: notes cover this sufficiently. 'gittoc note T-5 \"see also T-3\"' is the convention."}
