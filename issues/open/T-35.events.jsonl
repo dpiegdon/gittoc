@@ -2,3 +2,4 @@
 {"actor": "claude", "at": "2026-03-27T23:22:24+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-28T11:45:30+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-28T11:45:30+00:00", "kind": "note", "text": "current vendoring model (clone to tools/gittoc/) is working well and is simple to understand. The bootstrap-stub architecture would reduce visible-branch churn but adds indirection and complexity. Only worth revisiting if the vendored-copy model causes real pain (e.g. updating gittoc across many repos becomes a burden)."}
+{"actor": "copilot", "at": "2026-03-30T14:54:16+00:00", "kind": "note", "text": "Related bootstrap work: see T-81 for the user-facing single-command bootstrap flow. T-35 is narrower and more conceptual (stub/delegation), so triage together before implementation."}
