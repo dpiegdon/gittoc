@@ -1,0 +1,11 @@
+{
+  "body": "Today 'gittoc update -l a,b' supports comma-separated labels via parse_labels(), but 'gittoc new -l a,b' passes raw args through and stores a single label string 'a,b'. This is surprising and easy to hit. Fix by reusing the same label parsing semantics for new, and update help/docs accordingly so all label-taking commands behave consistently.",
+  "created_at": "2026-03-30T15:07:46+00:00",
+  "id": "T-86",
+  "labels": [
+    "bug,ux"
+  ],
+  "priority": 2,
+  "title": "Make new --label parsing consistent with update",
+  "updated_at": "2026-03-30T15:07:46+00:00"
+}
