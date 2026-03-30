@@ -4,9 +4,10 @@
   "id": "T-83",
   "labels": [
     "docs",
-    "ux"
+    "ux",
+    "chore"
   ],
   "priority": 3,
   "title": "Audit docs for command and recovery consistency",
-  "updated_at": "2026-03-30T15:05:48+00:00"
+  "updated_at": "2026-03-30T20:59:33+00:00"
 }

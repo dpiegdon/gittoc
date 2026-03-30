@@ -3,3 +3,4 @@
 {"actor": "copilot", "at": "2026-03-30T15:05:49+00:00", "kind": "note", "text": "Best use of this ticket is probably after the next round of UX work (especially T-81, T-77, T-80, and T-82) and informed by T-41. Otherwise the docs risk getting polished twice: once now, and again after behavior settles."}
 {"actor": "copilot", "at": "2026-03-30T15:07:46+00:00", "kind": "note", "text": "Related docs/behavior issue: see T-86 for the inconsistency between new and update label parsing. When this is fixed, the help text and examples should be aligned across label-taking commands."}
 {"actor": "claude", "at": "2026-03-30T19:43:26+00:00", "kind": "note", "text": "Copilot's timing is right: do this after T-86, T-77, T-80, and T-82 settle. Otherwise docs get polished twice. Also: after T-41 bootstrap trial, which may reveal doc gaps."}
+{"actor": "claude", "at": "2026-03-30T20:59:33+00:00", "kind": "updated", "text": "fields updated"}
