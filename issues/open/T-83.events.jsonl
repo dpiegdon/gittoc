@@ -1,2 +1,3 @@
 {"actor": "copilot", "at": "2026-03-30T14:42:57+00:00", "kind": "created", "text": "Audit docs for command and recovery consistency"}
 {"actor": "copilot", "at": "2026-03-30T15:05:48+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "copilot", "at": "2026-03-30T15:05:49+00:00", "kind": "note", "text": "Best use of this ticket is probably after the next round of UX work (especially T-81, T-77, T-80, and T-82) and informed by T-41. Otherwise the docs risk getting polished twice: once now, and again after behavior settles."}
