@@ -1,2 +1,3 @@
 {"actor": "copilot", "at": "2026-03-30T14:42:57+00:00", "kind": "created", "text": "Improve label discovery and reuse"}
 {"actor": "copilot", "at": "2026-03-30T15:05:48+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "copilot", "at": "2026-03-30T15:05:49+00:00", "kind": "note", "text": "This is a low-risk hedge against T-62. If labels become easier to discover and reuse, the pressure for heavier grouping concepts like parent/epic may stay low."}
