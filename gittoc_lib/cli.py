@@ -22,11 +22,12 @@ from .tracker import StaleTrackerError, Tracker
 SHOW_NOTES_LIMIT = 3
 COMMAND_ALIASES = {
     "l": "list",
-    "s": "summary",
+    "s": "show",
+    "sum": "summary",
     "r": "resume",
     "c": "claim",
     "n": "note",
-    "sh": "show",
+    "h": "history",
     "pl": "pull",
     "pul": "pull",
     "ps": "push",

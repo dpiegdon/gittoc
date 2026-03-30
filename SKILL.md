@@ -56,7 +56,7 @@ Invoke as `gittoc <command>` or `tools/gittoc/gittoc <command>` or
 for full argument documentation.
 
 **Backlog**
-- `summary` / `s` — ticket counts by state
+- `summary` / `sum` — ticket counts by state
 - `list` / `l` — open tickets by priority; `-a` for all states
 - `list -s claimed -s blocked` — filter by state
 - `list -l bug` / `list -l feature -l ux` — filter by label (AND)
@@ -79,11 +79,12 @@ for full argument documentation.
 - `close T-1` — mark done
 
 **Inspecting tickets**
-- `show T-1` / `sh T-1` — one ticket as JSON with recent notes
+- `show T-1` / `s T-1` — one ticket as JSON with recent notes
 - `show T-1 --field id --field title` — minimal field subset
 - `show T-1 --history` — include full event history
 - `resume` / `r` — context for the most relevant current ticket
 - `resume T-1` — context for a specific ticket
+- `history T-1` / `h T-1` — full event history for a ticket
 - `history T-1 --notes-only --limit 3` — recent notes only
 - `log T-1` — git history for one ticket file
 - `log` — all recent tracker changes

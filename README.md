@@ -108,13 +108,13 @@ gittoc pull origin
 gittoc push origin
 ```
 
-Command aliases: `l`=list, `s`=summary, `r`=resume, `c`=claim, `n`=note,
-`sh`=show, `pl`=pull, `ps`=push.
+Command aliases: `l`=list, `s`=show, `sum`=summary, `r`=resume, `c`=claim, `n`=note,
+`h`=history, `pl`=pull, `ps`=push.
 
 If you have a local git alias `git toc`, all commands work through that too:
 
 ```bash
-git toc s
+git toc sum
 git toc l -l bug
 git toc r -f json
 ```
