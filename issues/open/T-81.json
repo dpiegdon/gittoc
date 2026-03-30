@@ -1,0 +1,11 @@
+{
+  "body": "The current install/init path still has noticeable friction. Add a single command that can initialize the tracker and perform the common repo-local setup steps (orchestrating init/setup/alias-skill wiring) with a clear success summary. Keep the command surface small and avoid magic beyond the common vendored use case.",
+  "created_at": "2026-03-30T14:42:57+00:00",
+  "id": "T-81",
+  "labels": [
+    "ux,install"
+  ],
+  "priority": 3,
+  "title": "Add single-command bootstrap flow",
+  "updated_at": "2026-03-30T14:42:57+00:00"
+}
