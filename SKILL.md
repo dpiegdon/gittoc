@@ -112,7 +112,7 @@ gittoc close T-1
 ## Notes
 
 - Mutating commands use optimistic concurrency; they refuse to commit if the
-  tracker changed mid-command. Simply re-run the command to retry.
+  tracker changed mid-command. Review the new state and re-run the command if still applicable.
 - `resume` without an ID prefers claimed tickets owned by the current user,
   then highest-priority ready issue, then highest-priority open issue.
 - `pull` fetches and attempts a normal merge; conflicts are left for manual
