@@ -1,0 +1,11 @@
+{
+  "body": "Make it easier to discover and reuse existing labels so humans and agents do not invent near-duplicates. This could be lightweight help-text improvements, better labels output, prefix filtering, or other minimal affordances that encourage consistent labeling without expanding the command surface too much.",
+  "created_at": "2026-03-30T14:42:57+00:00",
+  "id": "T-84",
+  "labels": [
+    "ux,feature"
+  ],
+  "priority": 4,
+  "title": "Improve label discovery and reuse",
+  "updated_at": "2026-03-30T14:42:57+00:00"
+}
