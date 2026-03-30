@@ -1,3 +1,4 @@
 {"actor": "copilot", "at": "2026-03-30T14:42:57+00:00", "kind": "created", "text": "Improve label discovery and reuse"}
 {"actor": "copilot", "at": "2026-03-30T15:05:48+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "copilot", "at": "2026-03-30T15:05:49+00:00", "kind": "note", "text": "This is a low-risk hedge against T-62. If labels become easier to discover and reuse, the pressure for heavier grouping concepts like parent/epic may stay low."}
+{"actor": "copilot", "at": "2026-03-30T15:07:46+00:00", "kind": "note", "text": "Related concrete bug/UX issue: see T-86 for the inconsistency where 'new -l a,b' does not parse labels the same way as update. Fix that baseline behavior before adding richer label-discovery affordances."}
