@@ -1,13 +1,12 @@
 {
   "body": "next_issue_id() scans all T-*.json files across all state dirs on every 'new' to find the highest number. A small metadata file storing the last assigned ID would make this O(1) instead of O(n). Not urgent for small trackers but the right long-term approach.",
   "created_at": "2026-03-27T23:10:00+00:00",
-  "deps": [],
   "id": "T-54",
   "labels": [
-    "perf"
+    "perf",
+    "ready"
   ],
-  "owner": "",
   "priority": 4,
   "title": "Replace next_issue_id() full rglob with a last-id file",
-  "updated_at": "2026-03-27T23:22:25+00:00"
+  "updated_at": "2026-03-30T20:59:32+00:00"
 }
