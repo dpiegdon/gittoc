@@ -3,9 +3,10 @@
   "created_at": "2026-03-30T14:42:57+00:00",
   "id": "T-81",
   "labels": [
-    "ux,install"
+    "ux",
+    "install"
   ],
   "priority": 3,
   "title": "Add single-command bootstrap flow",
-  "updated_at": "2026-03-30T14:42:57+00:00"
+  "updated_at": "2026-03-30T15:05:48+00:00"
 }
