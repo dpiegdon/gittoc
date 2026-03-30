@@ -5,3 +5,4 @@
 {"actor": "claude", "at": "2026-03-30T19:43:26+00:00", "kind": "note", "text": "Copilot's timing is right: do this after T-86, T-77, T-80, and T-82 settle. Otherwise docs get polished twice. Also: after T-41 bootstrap trial, which may reveal doc gaps."}
 {"actor": "claude", "at": "2026-03-30T20:59:33+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "dpiegdon", "at": "2026-03-30T21:31:59+00:00", "kind": "note", "text": "if T-88 isn't done yet, do them together"}
+{"actor": "claude", "at": "2026-03-30T22:29:03+00:00", "kind": "claimed", "text": "claude"}
