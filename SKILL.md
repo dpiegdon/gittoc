@@ -125,6 +125,29 @@ Finishing:
 gittoc close T-1
 ```
 
+## Ticket relationships
+
+Dependencies (`dep`) are the only structured relation. They gate readiness and
+block claiming — use them for real ordering constraints.
+
+All other cross-references use notes by convention:
+
+```bash
+# marking a duplicate
+gittoc note T-7 "duplicate of T-3"
+gittoc note T-3 "T-7 closed as duplicate"
+gittoc close T-7
+
+# related tickets (non-blocking)
+gittoc note T-5 "see also T-3"
+
+# grouping / epics
+gittoc update T-5 -l auth-rewrite
+gittoc list -l auth-rewrite
+```
+
+This keeps the schema minimal. Notes are searchable via `gittoc grep`.
+
 ## Notes
 
 - Mutating commands use optimistic concurrency; they refuse to commit if the

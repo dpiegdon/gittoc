@@ -111,6 +111,19 @@ gittoc push origin
 Command aliases: `l`=list, `s`=show, `sum`=summary, `r`=resume, `c`=claim, `n`=note,
 `h`=history, `pl`=pull, `ps`=push.
 
+### Ticket relationships
+
+Dependencies (`dep`) are the only structured relation — they gate readiness and
+block claiming. All other cross-references use notes by convention:
+
+```bash
+gittoc note T-7 "duplicate of T-3"       # mark duplicate, then close T-7
+gittoc note T-5 "see also T-3"           # non-blocking related ticket
+gittoc list -l auth-rewrite               # use labels for grouping / epics
+```
+
+Notes are searchable via `gittoc grep`.
+
 If you have a local git alias `git toc`, all commands work through that too:
 
 ```bash
