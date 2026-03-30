@@ -3,9 +3,9 @@
   "created_at": "2026-03-26T21:16:29+00:00",
   "id": "T-35",
   "labels": [
-    "feature"
+    "concept"
   ],
   "priority": 1,
   "title": "Consider bootstrap stub that delegates to tracker-branch tool",
-  "updated_at": "2026-03-30T20:36:06+00:00"
+  "updated_at": "2026-03-30T20:46:10+00:00"
 }
