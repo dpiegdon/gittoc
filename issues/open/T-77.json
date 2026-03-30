@@ -1,0 +1,11 @@
+{
+  "body": "Replace bare SystemExit-style failures with consistently formatted errors that include actionable hints (for example: refresh-and-retry for stale tracker, remote setup guidance, invalid priority bounds, issue-not-found suggestions). Distinguish validation/user errors from transient git/concurrency failures with stable exit codes where practical.",
+  "created_at": "2026-03-30T14:41:36+00:00",
+  "id": "T-77",
+  "labels": [
+    "ux,feature"
+  ],
+  "priority": 2,
+  "title": "Add structured error messages with recovery hints",
+  "updated_at": "2026-03-30T14:41:36+00:00"
+}
