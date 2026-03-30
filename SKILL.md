@@ -69,6 +69,7 @@ for full argument documentation.
 **Working with tickets**
 - `new "Title" -p 2 -b "context" -l feature` — create a ticket
 - `claim T-1` / `c T-1` — claim a ticket (defaults owner to `$GITTOC_OWNER` / `$USER`)
+- `claimed` — list all currently claimed issues
 - `update T-1 --state blocked -p 4` — update fields
 - `update T-1 -l bug,ux` — add labels
 - `update T-1 -x ux` — remove labels
@@ -76,7 +77,8 @@ for full argument documentation.
 - `dep T-2 T-1` — make T-2 depend on T-1 (T-1 must complete first)
 - `dep T-2 T-1 T-3 T-4` — add multiple blockers T-1, T-3, T-4 for T-2
 - `note T-1 "context"` / `n T-1 "context"` — append a durable note
-- `close T-1` — mark done
+- `close T-1` — mark done; `--actor NAME` to attribute
+- `reject T-1` — mark as won't-do; `--actor NAME` to attribute
 
 **Inspecting tickets**
 - `show T-1` / `s T-1` — one ticket as JSON with recent notes
@@ -89,7 +91,8 @@ for full argument documentation.
 - `log T-1` — git history for one ticket file
 - `log` — all recent tracker changes
 
-**Output format** — most commands accept `-f compact|normal|verbose|json`
+**Output format** — listing commands accept `-f compact|normal|verbose|json`;
+other commands accept `-f text|json` where applicable
 
 **Remote sync**
 - `remote` — inspect tracker remote wiring

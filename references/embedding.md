@@ -45,6 +45,7 @@ And at runtime `gittoc` would maintain:
     claimed/
     blocked/
     closed/
+    rejected/
 ```
 
 This keeps the operational data inside git, keeps the active branch clean, and
@@ -204,7 +205,7 @@ For the first public prototype release:
 - recommend a visible vendored tool in the host repository
 - keep mutable tracker state on the hidden `gittoc` branch/worktree
 - document repo-local `git toc` alias setup as optional
-- do not require or ship a dedicated install script yet
+- provide a `setup` script for skill symlink and git alias creation
 
 This keeps the release boring, inspectable, and easy to explain.
 
