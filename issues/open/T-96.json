@@ -1,0 +1,13 @@
+{
+  "body": "Running 'gittoc update T-1' with no field flags still updates updated_at and commits with message 'fields updated'. This creates noise in the git history. The command should detect when no actual field change was requested (no --title, --body, --state, --owner, --label, --priority) and either no-op or warn. The underlying commit_if_needed already skips empty diffs, but the updated_at timestamp change creates a real diff every time.",
+  "created_at": "2026-03-31T21:53:26+00:00",
+  "id": "T-96",
+  "labels": [
+    "bug",
+    "ux",
+    "ready"
+  ],
+  "priority": 3,
+  "title": "update with no changes still commits",
+  "updated_at": "2026-03-31T21:53:26+00:00"
+}
