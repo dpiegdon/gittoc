@@ -1,0 +1,13 @@
+{
+  "body": "tracker.py event_entries() calls json.loads() on each line of the .events.jsonl file with no error handling. A single corrupt or truncated line (e.g. from a crash mid-write) will raise json.JSONDecodeError and break all commands that touch that ticket's history: show, resume, history, note_count, list (via render). Should catch the error per-line and either skip with a warning or surface a clear diagnostic. Related to T-82 (validate tracker files on load) but narrower: this is a concrete crash path today.",
+  "created_at": "2026-03-31T21:52:12+00:00",
+  "id": "T-92",
+  "labels": [
+    "bug",
+    "reliability",
+    "ready"
+  ],
+  "priority": 2,
+  "title": "event_entries() crashes on malformed JSONL lines",
+  "updated_at": "2026-03-31T21:52:12+00:00"
+}
