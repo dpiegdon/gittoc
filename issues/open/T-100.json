@@ -4,9 +4,11 @@
   "id": "T-100",
   "labels": [
     "ux",
-    "chore"
+    "chore",
+    "agent",
+    "human"
   ],
   "priority": 4,
   "title": "show command has no text format",
-  "updated_at": "2026-03-31T21:55:01+00:00"
+  "updated_at": "2026-03-31T22:25:03+00:00"
 }
