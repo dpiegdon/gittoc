@@ -58,12 +58,50 @@ def render_verbose(issue: Issue, tracker) -> str:
     return "\n".join(lines)
 
 
+def render_show_text(data: dict) -> str:
+    """Render a show-command data dict as human-readable text."""
+    lines: list[str] = []
+    lines.append(f"{data.get('id', '?')} p{data.get('priority', '?')} [{data.get('state', '?')}] {data.get('title', '')}")
+    if data.get("body"):
+        lines.append(f"  body: {data['body']}")
+    deps = data.get("deps", [])
+    lines.append(f"  deps: {', '.join(deps) if deps else '-'}")
+    labels = data.get("labels", [])
+    lines.append(f"  labels: {', '.join(labels) if labels else '-'}")
+    lines.append(f"  owner: {data.get('owner') or '-'}")
+    lines.append(f"  created: {data.get('created_at', '-')}")
+    lines.append(f"  updated: {data.get('updated_at', '-')}")
+    notes_count = data.get("notes_count", data.get("recent_notes_total", 0))
+    lines.append(f"  notes: {notes_count}")
+    recent_notes = data.get("recent_notes", [])
+    if recent_notes:
+        lines.append("")
+        for note in recent_notes:
+            actor = note.get("actor", "?")
+            at = note.get("at", "")
+            text = note.get("text", "")
+            lines.append(f"  [{at}] {actor}: {text}")
+    hint = data.get("recent_notes_hint")
+    if hint:
+        lines.append(f"  ({hint})")
+    history = data.get("history")
+    if history:
+        lines.append("")
+        lines.append("  history:")
+        for entry in history:
+            kind = entry.get("kind", "?")
+            at = entry.get("at", "")
+            text = entry.get("text", "")
+            lines.append(f"    [{at}] {kind}: {text}")
+    return "\n".join(lines)
+
+
 def print_issues(issues: list[Issue], tracker, fmt: str) -> None:
     """Print a list of issues in the requested format."""
     if fmt == "json":
         payload = []
         for issue in issues:
-            _, path = tracker.load_issue(issue.issue_id)
+            path = tracker.issue_path(issue.issue_id, issue.state)
             payload.append(
                 issue.to_display(
                     path.relative_to(tracker.checkout),
