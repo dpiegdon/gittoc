@@ -1,0 +1,13 @@
+{
+  "body": "references/brainstorm.md lists pain points under 'What feels annoying or weak'. Several have been addressed: the single-file CLI was split into modules (T-10), embedding story improved. Review and update or remove stale items to keep the brainstorm document useful for future work.",
+  "created_at": "2026-03-31T21:58:43+00:00",
+  "id": "T-110",
+  "labels": [
+    "docs",
+    "chore",
+    "ready"
+  ],
+  "priority": 5,
+  "title": "references/brainstorm.md is partially stale",
+  "updated_at": "2026-03-31T21:58:43+00:00"
+}
