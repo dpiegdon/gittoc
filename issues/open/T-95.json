@@ -3,10 +3,9 @@
   "created_at": "2026-03-31T21:53:17+00:00",
   "id": "T-95",
   "labels": [
-    "ux",
-    "ready"
+    "ux"
   ],
   "priority": 3,
   "title": "close and reject should accept multiple issue IDs",
-  "updated_at": "2026-03-31T21:53:17+00:00"
+  "updated_at": "2026-03-31T22:19:12+00:00"
 }

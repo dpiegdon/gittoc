@@ -1,2 +1,3 @@
 {"actor": "copilot", "at": "2026-03-31T21:53:17+00:00", "kind": "created", "text": "close and reject should accept multiple issue IDs"}
 {"actor": "copilot", "at": "2026-03-31T22:18:42+00:00", "kind": "note", "text": "disagree. I think multi-ticket-claiming is fine, but close/reject should always be specific, for safety and for event-log."}
+{"actor": "copilot", "at": "2026-03-31T22:19:12+00:00", "kind": "updated", "text": "fields updated"}
