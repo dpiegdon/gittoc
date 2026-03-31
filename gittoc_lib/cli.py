@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+from . import __version__
 from .commands import (
     cmd_claim,
     cmd_claimed,
@@ -73,6 +74,9 @@ def add_text_format_argument(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     """Build and return the top-level argument parser with all subcommands registered."""
     parser = argparse.ArgumentParser(prog="gittoc")
+    parser.add_argument(
+        "-V", "--version", action="version", version=f"%(prog)s {__version__}"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     claim_parser = sub.add_parser("claim", help="claim one or more issues")
