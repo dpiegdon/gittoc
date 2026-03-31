@@ -6,7 +6,8 @@
     "ux",
     "ready"
   ],
+  "owner": "copilot",
   "priority": 2,
   "title": "Add --version flag",
-  "updated_at": "2026-03-31T21:52:19+00:00"
+  "updated_at": "2026-03-31T22:29:51+00:00"
 }
