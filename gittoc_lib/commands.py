@@ -378,6 +378,17 @@ def cmd_update(args: argparse.Namespace) -> int:
                 labels.append(label)
         if remove_labels:
             labels = [label for label in labels if label not in remove_labels]
+    has_changes = any([
+        args.title is not None,
+        args.body is not None,
+        state is not None,
+        args.owner is not None,
+        labels is not None,
+        args.priority is not None,
+    ])
+    if not has_changes:
+        print("no fields to update", file=sys.stderr)
+        return 1
     issue = tracker.update_issue(
         args.issue_id,
         title=args.title,

@@ -383,6 +383,13 @@ class TestUpdate(GittocTestBase):
         summary = run(["summary"], self.repo)
         self.assertIn("blocked=1", summary)
 
+    def test_update_no_fields_is_noop(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        result = run_fail(["update", "T-1"], self.repo)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("no fields to update", result.stderr)
+
 
 class TestCloseAndReject(GittocTestBase):
     def test_close(self) -> None:
