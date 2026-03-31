@@ -1,0 +1,12 @@
+{
+  "body": "cli.py is ~890 lines containing both argparse construction and all command handler functions. The brainstorm.md notes this: 'The single-file CLI is still carrying too many responsibilities.' Consider splitting into cli.py (build_parser, main, alias map) and commands.py (all cmd_* functions plus helpers like resume_payload, print_resume_text, format_history_entry). This would improve navigability without changing the public interface.",
+  "created_at": "2026-03-31T21:54:22+00:00",
+  "id": "T-99",
+  "labels": [
+    "chore",
+    "ready"
+  ],
+  "priority": 4,
+  "title": "Split cli.py into parser and command handlers",
+  "updated_at": "2026-03-31T21:54:22+00:00"
+}
