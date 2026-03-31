@@ -2,8 +2,11 @@
   "body": "json files currently always contain all fields, even when they're empty. the system should only add fields when they're used. that way tickets can be read much quicker.",
   "created_at": "2026-03-28T19:01:26+00:00",
   "id": "T-72",
+  "labels": [
+    "ready"
+  ],
   "owner": "claude",
   "priority": 3,
   "title": "remove clutter in ticket json files",
-  "updated_at": "2026-03-28T20:10:22+00:00"
+  "updated_at": "2026-03-31T23:25:28+00:00"
 }

@@ -2,3 +2,4 @@
 {"actor": "claude", "at": "2026-03-28T19:56:01+00:00", "kind": "note", "text": "write_issue() should skip fields that are empty/default: empty lists (deps, labels), None owner, empty body. load_issue() already needs to handle missing keys via .get() with defaults \u2014 check if it already does. This also improves T-67 (grep) since less noise per file. Straightforward to implement."}
 {"actor": "claude", "at": "2026-03-28T20:08:53+00:00", "kind": "claimed", "text": "claude"}
 {"actor": "claude", "at": "2026-03-28T20:10:22+00:00", "kind": "closed", "text": ""}
+{"actor": "copilot", "at": "2026-03-31T23:25:28+00:00", "kind": "updated", "text": "fields updated"}
