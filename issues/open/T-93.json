@@ -1,0 +1,12 @@
+{
+  "body": "gittoc has git tags (v0.3.0) but no way to query the version from the CLI. Add a --version/-V flag to the top-level parser that prints the current version. Embed the version string in a single place (e.g. gittoc_lib/__init__.py or a VERSION file) so it can be updated alongside release tags.",
+  "created_at": "2026-03-31T21:52:19+00:00",
+  "id": "T-93",
+  "labels": [
+    "ux",
+    "ready"
+  ],
+  "priority": 2,
+  "title": "Add --version flag",
+  "updated_at": "2026-03-31T21:52:19+00:00"
+}
