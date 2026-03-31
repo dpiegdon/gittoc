@@ -212,10 +212,10 @@ class TestDependenciesAndReady(GittocTestBase):
         issue1 = run(["new", "Blocker", "-p", "1"], self.repo)
         issue2 = run(["new", "Blocked", "-p", "2"], self.repo)
         run(["dep", issue2, issue1], self.repo)
-        shown = json.loads(run(["show", issue2], self.repo))
+        shown = json.loads(run(["show", issue2, "-f", "json"], self.repo))
         self.assertEqual(shown["deps"], [issue1])
         run(["dep", issue2, issue1, "--remove"], self.repo)
-        shown = json.loads(run(["show", issue2], self.repo))
+        shown = json.loads(run(["show", issue2, "-f", "json"], self.repo))
         self.assertNotIn("deps", shown)
 
     def test_remove_nonexistent_dep_fails(self) -> None:
@@ -226,6 +226,24 @@ class TestDependenciesAndReady(GittocTestBase):
             run(["dep", issue1, issue2, "--remove"], self.repo)
 
 
+    def test_cycle_check_with_missing_dep(self) -> None:
+        """Cycle detection should not crash if a dep references a non-existent issue."""
+        run(["init"], self.repo)
+        issue1 = run(["new", "A"], self.repo)
+        issue2 = run(["new", "B"], self.repo)
+        run(["dep", issue2, issue1], self.repo)
+        # Manually inject a non-existent dep into T-1's JSON
+        gittoc_dir = self.repo / ".git" / "gittoc"
+        t1_path = gittoc_dir / "issues" / "open" / "T-1.json"
+        data = json.loads(t1_path.read_text())
+        data["deps"] = ["T-999"]
+        t1_path.write_text(json.dumps(data, indent=2))
+        # Cycle check traverses T-2 -> T-1 deps -> T-999 (missing).
+        # Should not crash; T-1 depends on T-2 would still be a cycle.
+        with self.assertRaises(subprocess.CalledProcessError):
+            run(["dep", issue1, issue2], self.repo)
+
+
 class TestClaimWorkflow(GittocTestBase):
     def test_claim_and_show(self) -> None:
         run(["init"], self.repo)
@@ -233,7 +251,7 @@ class TestClaimWorkflow(GittocTestBase):
         claimed_out = run(["claim", issue1, "--owner", "tester"], self.repo)
         self.assertIn(f"! {issue1} p1 [claimed] Task owner=tester", claimed_out)
 
-        claimed = json.loads(run(["show", issue1], self.repo))
+        claimed = json.loads(run(["show", issue1, "-f", "json"], self.repo))
         self.assertEqual(claimed["state"], "claimed")
         self.assertTrue(claimed["path"].startswith("issues/claimed/"))
 
@@ -258,7 +276,7 @@ class TestLabels(GittocTestBase):
         run(["update", issue, "-l", "feature,ux"], self.repo)
         run(["update", issue, "-l", "bug"], self.repo)
         run(["update", issue, "-x", "ux"], self.repo)
-        labeled = json.loads(run(["show", issue], self.repo))
+        labeled = json.loads(run(["show", issue, "-f", "json"], self.repo))
         self.assertEqual(labeled["labels"], ["feature", "bug"])
 
     def test_replace_labels(self) -> None:
@@ -266,7 +284,7 @@ class TestLabels(GittocTestBase):
         issue = run(["new", "Task"], self.repo)
         run(["update", issue, "-l", "feature,ux"], self.repo)
         run(["update", issue, "-L", "task,docs"], self.repo)
-        replaced = json.loads(run(["show", issue], self.repo))
+        replaced = json.loads(run(["show", issue, "-f", "json"], self.repo))
         self.assertEqual(replaced["labels"], ["task", "docs"])
 
     def test_cannot_combine_replace_and_add(self) -> None:
@@ -307,11 +325,20 @@ class TestNotesAndHistory(GittocTestBase):
         for i in range(5):
             run(["note", issue, f"Note {i}", "--actor", "tester"], self.repo)
 
-        shown = json.loads(run(["show", issue], self.repo))
+        shown = json.loads(run(["show", issue, "-f", "json"], self.repo))
         self.assertEqual(shown["recent_notes_total"], 5)
         self.assertEqual(shown["recent_notes_shown"], 3)
         self.assertEqual(len(shown["recent_notes"]), 3)
         self.assertIn(f"history {issue} --notes-only", shown["recent_notes_hint"])
+
+    def test_show_text_format(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "My Task", "-p", "2", "-l", "bug"], self.repo)
+        run(["note", issue, "A note", "--actor", "tester"], self.repo)
+        text = run(["show", issue], self.repo)
+        self.assertIn("T-1 p2 [open] My Task", text)
+        self.assertIn("labels: bug", text)
+        self.assertIn("tester: A note", text)
 
     def test_history_alias(self) -> None:
         run(["init"], self.repo)
@@ -326,14 +353,14 @@ class TestShowAndResume(GittocTestBase):
         run(["init"], self.repo)
         run(["new", "High priority task", "-p", "1"], self.repo)
         selected = json.loads(
-            run(["show", "T-1", "--field", "id", "--field", "title", "--field", "priority"], self.repo)
+            run(["show", "T-1", "--field", "id", "--field", "title", "--field", "priority", "-f", "json"], self.repo)
         )
         self.assertEqual(selected, {"id": "T-1", "priority": 1, "title": "High priority task"})
 
     def test_show_alias(self) -> None:
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)
-        shown = json.loads(run(["s", "T-1"], self.repo))
+        shown = json.loads(run(["s", "T-1", "-f", "json"], self.repo))
         self.assertEqual(shown["id"], "T-1")
 
     def test_resume_auto_select(self) -> None:
@@ -382,7 +409,7 @@ class TestUpdate(GittocTestBase):
         run(["init"], self.repo)
         run(["new", "Original", "-p", "3"], self.repo)
         run(["update", "T-1", "--title", "Updated", "--priority", "1"], self.repo)
-        updated = json.loads(run(["show", "T-1", "--history"], self.repo))
+        updated = json.loads(run(["show", "T-1", "--history", "-f", "json"], self.repo))
         self.assertEqual(updated["title"], "Updated")
         self.assertEqual(updated["priority"], 1)
         self.assertTrue(any(entry["kind"] == "updated" for entry in updated["history"]))
@@ -536,7 +563,7 @@ class TestRemoteTracking(GittocTestBase):
             summary, "open=1 claimed=0 blocked=0 closed=0 rejected=0 ready=1"
         )
 
-        issue_data = json.loads(run(["show", "T-1"], clone))
+        issue_data = json.loads(run(["show", "T-1", "-f", "json"], clone))
         self.assertEqual(issue_data["title"], "Remote tracker issue")
         self.assertTrue(issue_data["path"].startswith("issues/open/"))
 
@@ -582,7 +609,7 @@ class TestPullAndPush(GittocTestBase):
         pull_out = json.loads(run(["pull", "origin", "--format", "json"], clone))
         self.assertEqual(pull_out["action"], "pull")
         self.assertEqual(pull_out["remote"], "origin")
-        pulled = json.loads(run(["show", "T-1"], clone))
+        pulled = json.loads(run(["show", "T-1", "-f", "json"], clone))
         self.assertEqual(pulled["title"], "Pulled tracker issue")
 
     def test_pull_alias(self) -> None:

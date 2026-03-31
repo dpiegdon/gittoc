@@ -472,7 +472,16 @@ class Tracker:
             if current in seen:
                 continue
             seen.add(current)
-            current_issue, _ = self.load_issue(current)
+            try:
+                current_issue, _ = self.load_issue(current)
+            except SystemExit:
+                # Referenced dep does not exist; treat as a leaf node.
+                print(
+                    f"warning: dependency {current} not found, "
+                    "skipping during cycle check",
+                    file=sys.stderr,
+                )
+                continue
             stack.extend(current_issue.deps)
         return False
 
