@@ -1,2 +1,3 @@
 {"actor": "copilot", "at": "2026-03-31T21:52:01+00:00", "kind": "created", "text": "Remove legacy 'status' field fallback in Issue.from_path"}
 {"actor": "copilot", "at": "2026-03-31T22:04:05+00:00", "kind": "claimed", "text": "copilot"}
+{"actor": "copilot", "at": "2026-03-31T22:07:56+00:00", "kind": "closed", "text": ""}
