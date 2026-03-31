@@ -307,7 +307,24 @@ class TestNotesAndHistory(GittocTestBase):
 
         history = run(["history", issue], self.repo)
         self.assertIn("claimed tester: tester", history)
-        self.assertIn("note tester: First note", history)
+        self.assertIn("note#1 tester: First note", history)
+
+    def test_note_ids_sequential(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "Task"], self.repo)
+        run(["note", issue, "Alpha", "--actor", "a"], self.repo)
+        run(["note", issue, "Beta", "--actor", "b"], self.repo)
+        run(["note", issue, "Gamma", "--actor", "c"], self.repo)
+        history = run(["history", issue, "--notes-only"], self.repo)
+        self.assertIn("note#1 a: Alpha", history)
+        self.assertIn("note#2 b: Beta", history)
+        self.assertIn("note#3 c: Gamma", history)
+        # JSON output should include note_id field
+        entries = json.loads(
+            run(["history", issue, "--notes-only", "-f", "json"], self.repo)
+        )
+        self.assertEqual(entries[0]["note_id"], 1)
+        self.assertEqual(entries[2]["note_id"], 3)
 
     def test_notes_only_with_limit(self) -> None:
         run(["init"], self.repo)

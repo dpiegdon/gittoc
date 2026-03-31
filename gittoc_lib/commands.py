@@ -51,7 +51,9 @@ def select_fields(data: dict, fields: list[str] | None) -> dict:
 
 def format_history_entry(entry: dict) -> str:
     """Format a single event log entry as a human-readable one-liner."""
-    return f"{entry['at']} {entry['kind']} {entry['actor']}: {entry['text']}"
+    note_id = entry.get("note_id")
+    kind = f"note#{note_id}" if note_id else entry["kind"]
+    return f"{entry['at']} {kind} {entry['actor']}: {entry['text']}"
 
 
 def resume_payload(

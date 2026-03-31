@@ -77,10 +77,12 @@ def render_show_text(data: dict) -> str:
     if recent_notes:
         lines.append("")
         for note in recent_notes:
+            note_id = note.get("note_id")
+            label = f"note#{note_id}" if note_id else "note"
             actor = note.get("actor", "?")
             at = note.get("at", "")
             text = note.get("text", "")
-            lines.append(f"  [{at}] {actor}: {text}")
+            lines.append(f"  [{at}] {label} {actor}: {text}")
     hint = data.get("recent_notes_hint")
     if hint:
         lines.append(f"  ({hint})")

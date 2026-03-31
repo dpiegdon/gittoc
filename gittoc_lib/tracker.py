@@ -307,6 +307,8 @@ class Tracker:
     def event_entries(self, issue_id: str) -> list[dict]:
         """Return all event log entries for an issue, in chronological order.
 
+        Note events are augmented with a computed ``note_id`` (1-based
+        sequential index) so that individual notes are human-addressable.
         Results are cached for the lifetime of this Tracker instance.
         """
         if issue_id in self._event_cache:
@@ -316,18 +318,24 @@ class Tracker:
             self._event_cache[issue_id] = []
             return []
         entries: list[dict] = []
+        note_seq = 0
         with path.open("r", encoding="utf-8") as handle:
             for lineno, line in enumerate(handle, 1):
                 line = line.strip()
                 if not line:
                     continue
                 try:
-                    entries.append(json.loads(line))
+                    entry = json.loads(line)
                 except json.JSONDecodeError:
                     print(
                         f"warning: skipping malformed event at {path}:{lineno}",
                         file=sys.stderr,
                     )
+                    continue
+                if entry.get("kind") == "note":
+                    note_seq += 1
+                    entry["note_id"] = note_seq
+                entries.append(entry)
         self._event_cache[issue_id] = entries
         return entries
 
