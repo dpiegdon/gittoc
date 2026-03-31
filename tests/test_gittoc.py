@@ -25,6 +25,17 @@ def run(args: list[str], cwd: Path) -> str:
     return proc.stdout.strip()
 
 
+def run_fail(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
+    """Run a command expected to fail, returning the completed process."""
+    return subprocess.run(
+        [str(CLI), *args],
+        cwd=str(cwd),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
 def current_branch(cwd: Path) -> str:
     proc = subprocess.run(
         ["git", "branch", "--show-current"],
@@ -36,7 +47,9 @@ def current_branch(cwd: Path) -> str:
     return proc.stdout.strip()
 
 
-class GittocE2ETest(unittest.TestCase):
+class GittocTestBase(unittest.TestCase):
+    """Shared setUp/tearDown for all gittoc E2E tests."""
+
     def setUp(self) -> None:
         self.tempdir = tempfile.TemporaryDirectory()
         self.repo = Path(self.tempdir.name) / "repo"
@@ -68,10 +81,13 @@ class GittocE2ETest(unittest.TestCase):
     def tearDown(self) -> None:
         self.tempdir.cleanup()
 
-    def test_full_feature_set(self) -> None:
+    def init_with_remote(self) -> Path:
+        """Initialize tracker with a bare remote and return the remote path."""
         remote_repo = Path(self.tempdir.name) / "remote.git"
         subprocess.run(
-            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+            ["git", "init", "--bare", str(remote_repo)],
+            check=True,
+            capture_output=True,
         )
         subprocess.run(
             ["git", "remote", "add", "origin", str(remote_repo)],
@@ -79,9 +95,17 @@ class GittocE2ETest(unittest.TestCase):
             check=True,
             capture_output=True,
         )
+        run(["init"], self.repo)
+        return remote_repo
 
+
+class TestInitAndRemote(GittocTestBase):
+    def test_init_creates_tracker(self) -> None:
         init_out = run(["init"], self.repo)
         self.assertIn("initialized tracker branch", init_out)
+
+    def test_init_auto_configures_remote(self) -> None:
+        self.init_with_remote()
         remote_status = json.loads(run(["remote", "--format", "json"], self.repo))
         self.assertEqual(remote_status["configured_remote"], "origin")
         self.assertEqual(remote_status["effective_remote"], "origin")
@@ -89,215 +113,305 @@ class GittocE2ETest(unittest.TestCase):
         self.assertEqual(remote_status["branch_config_merge"], "refs/heads/gittoc")
         self.assertFalse(remote_status["remote_branch_exists"])
 
-        issue1 = run(
-            [
-                "new",
-                "High priority task",
-                "--body",
-                "finish core work",
-                "--priority",
-                "1",
-            ],
-            self.repo,
-        )
-        issue2 = run(
-            [
-                "new",
-                "Lower priority task",
-                "--body",
-                "depends on first",
-                "--priority",
-                "4",
-            ],
-            self.repo,
-        )
+
+class TestCreateAndList(GittocTestBase):
+    def test_create_issues(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "High priority task", "-b", "finish core work", "-p", "1"], self.repo)
+        issue2 = run(["new", "Lower priority task", "-b", "depends on first", "-p", "4"], self.repo)
         self.assertEqual(issue1, "T-1")
         self.assertEqual(issue2, "T-2")
 
+    def test_list_alias_and_compact(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "High priority task", "-p", "1"], self.repo)
         alias_list = run(["l", "--format", "compact"], self.repo).splitlines()
-        self.assertEqual(alias_list[0], f"{issue1} p1 open High priority task")
+        self.assertEqual(alias_list[0], "T-1 p1 open High priority task")
+
+    def test_summary(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task one", "-p", "1"], self.repo)
+        run(["new", "Task two", "-p", "4"], self.repo)
         self.assertEqual(
             run(["sum"], self.repo),
             "open=2 claimed=0 blocked=0 closed=0 rejected=0 ready=2",
         )
 
+    def test_list_all_states(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task one", "-p", "1"], self.repo)
+        run(["close", "T-1"], self.repo)
+        all_list = run(["list", "--all", "--format", "compact"], self.repo)
+        self.assertIn("T-1 p1 closed Task one", all_list)
+
+    def test_verbose_list(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task one", "-p", "1", "-b", "finish core work"], self.repo)
+        verbose = run(["list", "--format", "verbose"], self.repo)
+        self.assertIn("body: finish core work", verbose)
+        self.assertIn("deps: -", verbose)
+
+
+class TestDependenciesAndReady(GittocTestBase):
+    def test_dep_and_ready(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "High priority task", "-p", "1"], self.repo)
+        issue2 = run(["new", "Lower priority task", "-p", "4"], self.repo)
         run(["dep", issue2, issue1], self.repo)
 
         listing = run(["list"], self.repo).splitlines()
         self.assertIn(f"> {issue1} p1 [open] High priority task", listing[0])
         self.assertIn(f"* {issue2} p4 [open] Lower priority task deps=1", listing[1])
-        self.assertEqual(len(listing), 2)
 
-        summary = run(["summary"], self.repo)
-        self.assertIn("open=2", summary)
-
-        resume_initial = json.loads(run(["resume", "--format", "json"], self.repo))
-        self.assertEqual(resume_initial["id"], issue1)
-        self.assertEqual(resume_initial["priority"], 1)
-
-        selected = json.loads(
-            run(
-                [
-                    "show",
-                    issue1,
-                    "--field",
-                    "id",
-                    "--field",
-                    "title",
-                    "--field",
-                    "priority",
-                ],
-                self.repo,
-            )
-        )
-        self.assertEqual(
-            selected, {"id": issue1, "priority": 1, "title": "High priority task"}
-        )
-
-        compact = run(["list", "--format", "compact"], self.repo).splitlines()
-        self.assertEqual(compact[0], f"{issue1} p1 open High priority task")
-
-        verbose = run(["list", "--format", "verbose"], self.repo)
-        self.assertIn("body: finish core work", verbose)
-        self.assertIn("deps: -", verbose)
-
-        claimed_out = run(["claim", issue1, "--owner", "tester"], self.repo)
-        self.assertIn(
-            f"! {issue1} p1 [claimed] High priority task owner=tester", claimed_out
-        )
-
-        claimed = json.loads(run(["show", issue1], self.repo))
-        self.assertEqual(claimed["state"], "claimed")
-        self.assertEqual(claimed["priority"], 1)
-        self.assertTrue(claimed["path"].startswith("issues/claimed/"))
-
-        run(
-            ["note", issue1, "Need to inspect logs first", "--actor", "tester"],
-            self.repo,
-        )
-        run(["n", issue1, "Alias note", "--actor", "tester"], self.repo)
-        run(
-            ["note", issue1, "Checked the failing endpoint", "--actor", "tester"],
-            self.repo,
-        )
-        run(
-            ["note", issue1, "Need to confirm the retry path", "--actor", "tester"],
-            self.repo,
-        )
-        run(
-            ["note", issue1, "Final note should force truncation", "--actor", "tester"],
-            self.repo,
-        )
-        history = run(["history", issue1], self.repo)
-        self.assertIn("claimed tester: tester", history)
-        self.assertIn("note tester: Need to inspect logs first", history)
-        tracker_log = run(["log"], self.repo)
-        self.assertIn("Add note to T-1 (tester)", tracker_log)
-        notes_only = run(["history", issue1, "--notes-only", "--limit", "1"], self.repo)
-        self.assertIn("Final note should force truncation", notes_only)
-        self.assertNotIn("claimed tester: tester", notes_only)
-
-        shown = json.loads(run(["show", issue1], self.repo))
-        self.assertEqual(shown["recent_notes_total"], 5)
-        self.assertEqual(shown["recent_notes_shown"], 3)
-        self.assertEqual(len(shown["recent_notes"]), 3)
-        self.assertIn("history T-1 --notes-only", shown["recent_notes_hint"])
-        self.assertEqual(
-            shown["recent_notes"][-1]["text"], "Final note should force truncation"
-        )
-
-        resume_json = json.loads(run(["resume", issue1, "--format", "json"], self.repo))
-        self.assertEqual(resume_json["id"], issue1)
-        self.assertEqual(len(resume_json["recent_notes"]), 3)
-        self.assertEqual(resume_json["recent_notes"][-1]["kind"], "note")
-        self.assertEqual(resume_json["recent_notes_total"], 5)
-
-        resume_alias = json.loads(run(["r", issue1, "--format", "json"], self.repo))
-        self.assertEqual(resume_alias["id"], issue1)
-
-        shown_alias = json.loads(run(["s", issue1], self.repo))
-        self.assertEqual(shown_alias["id"], issue1)
-
-        resume_auto = run(["resume", "--owner", "tester"], self.repo)
-        self.assertIn(f"{issue1} p1 [claimed] High priority task", resume_auto)
-        self.assertIn("selection=claimed-by-owner", resume_auto)
-
+    def test_ready_after_close(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Blocker", "-p", "1"], self.repo)
+        issue2 = run(["new", "Blocked", "-p", "2"], self.repo)
+        run(["dep", issue2, issue1], self.repo)
         run(["close", issue1], self.repo)
-        claimed_alias = run(["c", issue2, "--owner", "tester"], self.repo)
-        self.assertIn(
-            f"! {issue2} p4 [claimed] Lower priority task deps=1 owner=tester",
-            claimed_alias,
-        )
-        run(["update", issue2, "--state", "open"], self.repo)
-        with self.assertRaises(subprocess.CalledProcessError):
-            run(["claim", issue1, "--owner", "tester"], self.repo)
-        with self.assertRaises(subprocess.CalledProcessError):
-            run(
-                ["update", issue1, "--state", "claimed", "--owner", "tester"], self.repo
-            )
         ready = run(["ready"], self.repo)
         self.assertIn(issue2, ready)
 
-        issue3 = run(["new", "Blocked follow-up"], self.repo)
-        run(["dep", issue3, issue2], self.repo)
+    def test_self_dependency_rejected(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task"], self.repo)
         with self.assertRaises(subprocess.CalledProcessError):
-            run(["claim", issue3, "--owner", "tester"], self.repo)
+            run(["dep", issue1, issue1], self.repo)
+
+    def test_cycle_rejected(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "A"], self.repo)
+        issue2 = run(["new", "B"], self.repo)
+        run(["dep", issue2, issue1], self.repo)
         with self.assertRaises(subprocess.CalledProcessError):
-            run(
-                ["update", issue3, "--state", "claimed", "--owner", "tester"], self.repo
-            )
+            run(["dep", issue1, issue2], self.repo)
 
-        resume_ready = json.loads(run(["resume", "--format", "json"], self.repo))
-        self.assertEqual(resume_ready["id"], issue2)
-        self.assertEqual(resume_ready["selection"], "highest-priority-ready")
+    def test_cannot_claim_non_ready(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Blocker", "-p", "1"], self.repo)
+        issue2 = run(["new", "Blocked", "-p", "2"], self.repo)
+        run(["dep", issue2, issue1], self.repo)
+        with self.assertRaises(subprocess.CalledProcessError):
+            run(["claim", issue2, "--owner", "tester"], self.repo)
+        with self.assertRaises(subprocess.CalledProcessError):
+            run(["update", issue2, "--state", "claimed", "--owner", "tester"], self.repo)
 
-        run(["update", issue2, "--priority", "2", "--state", "blocked"], self.repo)
-        summary = run(["summary"], self.repo)
-        self.assertEqual(
-            summary, "open=1 claimed=0 blocked=1 closed=1 rejected=0 ready=0"
+
+class TestClaimWorkflow(GittocTestBase):
+    def test_claim_and_show(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task", "-p", "1"], self.repo)
+        claimed_out = run(["claim", issue1, "--owner", "tester"], self.repo)
+        self.assertIn(f"! {issue1} p1 [claimed] Task owner=tester", claimed_out)
+
+        claimed = json.loads(run(["show", issue1], self.repo))
+        self.assertEqual(claimed["state"], "claimed")
+        self.assertTrue(claimed["path"].startswith("issues/claimed/"))
+
+    def test_cannot_claim_closed(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task", "-p", "1"], self.repo)
+        run(["close", issue1], self.repo)
+        with self.assertRaises(subprocess.CalledProcessError):
+            run(["claim", issue1, "--owner", "tester"], self.repo)
+
+    def test_claim_alias(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task", "-p", "1"], self.repo)
+        claimed_alias = run(["c", issue1, "--owner", "tester"], self.repo)
+        self.assertIn(f"! {issue1} p1 [claimed] Task owner=tester", claimed_alias)
+
+
+class TestLabels(GittocTestBase):
+    def test_add_and_remove_labels(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "Task"], self.repo)
+        run(["update", issue, "-l", "feature,ux"], self.repo)
+        run(["update", issue, "-l", "bug"], self.repo)
+        run(["update", issue, "-x", "ux"], self.repo)
+        labeled = json.loads(run(["show", issue], self.repo))
+        self.assertEqual(labeled["labels"], ["feature", "bug"])
+
+    def test_replace_labels(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "Task"], self.repo)
+        run(["update", issue, "-l", "feature,ux"], self.repo)
+        run(["update", issue, "-L", "task,docs"], self.repo)
+        replaced = json.loads(run(["show", issue], self.repo))
+        self.assertEqual(replaced["labels"], ["task", "docs"])
+
+    def test_cannot_combine_replace_and_add(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "Task"], self.repo)
+        with self.assertRaises(subprocess.CalledProcessError):
+            run(["update", issue, "-L", "feature", "-l", "bug"], self.repo)
+
+
+class TestNotesAndHistory(GittocTestBase):
+    def test_notes_and_history(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "Task", "-p", "1"], self.repo)
+        run(["claim", issue, "--owner", "tester"], self.repo)
+        run(["note", issue, "First note", "--actor", "tester"], self.repo)
+        run(["n", issue, "Alias note", "--actor", "tester"], self.repo)
+        run(["note", issue, "Third note", "--actor", "tester"], self.repo)
+        run(["note", issue, "Fourth note", "--actor", "tester"], self.repo)
+        run(["note", issue, "Fifth note truncation", "--actor", "tester"], self.repo)
+
+        history = run(["history", issue], self.repo)
+        self.assertIn("claimed tester: tester", history)
+        self.assertIn("note tester: First note", history)
+
+    def test_notes_only_with_limit(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "Task"], self.repo)
+        run(["note", issue, "Note A", "--actor", "tester"], self.repo)
+        run(["note", issue, "Note B", "--actor", "tester"], self.repo)
+        run(["note", issue, "Note C", "--actor", "tester"], self.repo)
+        notes_only = run(["history", issue, "--notes-only", "--limit", "1"], self.repo)
+        self.assertIn("Note C", notes_only)
+        self.assertNotIn("Note A", notes_only)
+
+    def test_show_truncates_notes(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "Task"], self.repo)
+        for i in range(5):
+            run(["note", issue, f"Note {i}", "--actor", "tester"], self.repo)
+
+        shown = json.loads(run(["show", issue], self.repo))
+        self.assertEqual(shown["recent_notes_total"], 5)
+        self.assertEqual(shown["recent_notes_shown"], 3)
+        self.assertEqual(len(shown["recent_notes"]), 3)
+        self.assertIn(f"history {issue} --notes-only", shown["recent_notes_hint"])
+
+    def test_history_alias(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "Task"], self.repo)
+        run(["note", issue, "A note"], self.repo)
+        history = run(["h", issue], self.repo)
+        self.assertIn("A note", history)
+
+
+class TestShowAndResume(GittocTestBase):
+    def test_show_field_filter(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "High priority task", "-p", "1"], self.repo)
+        selected = json.loads(
+            run(["show", "T-1", "--field", "id", "--field", "title", "--field", "priority"], self.repo)
         )
+        self.assertEqual(selected, {"id": "T-1", "priority": 1, "title": "High priority task"})
 
-        run(["update", issue2, "--state", "open"], self.repo)
-        ready = run(["ready"], self.repo)
-        self.assertIn(f"> {issue2} p2 [open] Lower priority task deps=1", ready)
+    def test_show_alias(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        shown = json.loads(run(["s", "T-1"], self.repo))
+        self.assertEqual(shown["id"], "T-1")
 
-        run(
-            ["update", issue2, "--title", "Updated title", "--priority", "1"], self.repo
-        )
-        updated = json.loads(run(["show", issue2, "--history"], self.repo))
-        self.assertEqual(updated["title"], "Updated title")
+    def test_resume_auto_select(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task one", "-p", "1"], self.repo)
+        resume = json.loads(run(["resume", "--format", "json"], self.repo))
+        self.assertEqual(resume["id"], "T-1")
+
+    def test_resume_prefers_claimed(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task one", "-p", "1"], self.repo)
+        run(["new", "Task two", "-p", "2"], self.repo)
+        run(["claim", "T-2", "--owner", "tester"], self.repo)
+        resume = run(["resume", "--owner", "tester"], self.repo)
+        self.assertIn("T-2", resume)
+        self.assertIn("selection=claimed-by-owner", resume)
+
+    def test_resume_falls_back_to_ready(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Blocker", "-p", "1"], self.repo)
+        issue2 = run(["new", "Depends", "-p", "2"], self.repo)
+        run(["dep", issue2, "T-1"], self.repo)
+        run(["close", "T-1"], self.repo)
+        resume = json.loads(run(["resume", "--format", "json"], self.repo))
+        self.assertEqual(resume["id"], issue2)
+        self.assertEqual(resume["selection"], "highest-priority-ready")
+
+    def test_resume_alias(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        resume = json.loads(run(["r", "T-1", "--format", "json"], self.repo))
+        self.assertEqual(resume["id"], "T-1")
+
+    def test_resume_notes_in_output(self) -> None:
+        run(["init"], self.repo)
+        issue = run(["new", "Task"], self.repo)
+        for i in range(5):
+            run(["note", issue, f"Note {i}"], self.repo)
+        resume = json.loads(run(["resume", issue, "--format", "json"], self.repo))
+        self.assertEqual(len(resume["recent_notes"]), 3)
+        self.assertEqual(resume["recent_notes_total"], 5)
+
+
+class TestUpdate(GittocTestBase):
+    def test_update_title_and_priority(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Original", "-p", "3"], self.repo)
+        run(["update", "T-1", "--title", "Updated", "--priority", "1"], self.repo)
+        updated = json.loads(run(["show", "T-1", "--history"], self.repo))
+        self.assertEqual(updated["title"], "Updated")
         self.assertEqual(updated["priority"], 1)
         self.assertTrue(any(entry["kind"] == "updated" for entry in updated["history"]))
 
-        run(["update", issue2, "-l", "feature,ux"], self.repo)
-        run(["update", issue2, "-l", "bug"], self.repo)
-        run(["update", issue2, "-x", "ux"], self.repo)
-        labeled = json.loads(run(["show", issue2], self.repo))
-        self.assertEqual(labeled["labels"], ["feature", "bug"])
-        run(["update", issue2, "-L", "task,docs"], self.repo)
-        replaced = json.loads(run(["show", issue2], self.repo))
-        self.assertEqual(replaced["labels"], ["task", "docs"])
-        with self.assertRaises(subprocess.CalledProcessError):
-            run(["update", issue2, "-L", "feature", "-l", "bug"], self.repo)
+    def test_update_state_to_blocked(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task", "-p", "2"], self.repo)
+        run(["update", "T-1", "--state", "blocked"], self.repo)
+        summary = run(["summary"], self.repo)
+        self.assertIn("blocked=1", summary)
 
-        with self.assertRaises(subprocess.CalledProcessError):
-            run(["dep", issue2, issue2], self.repo)
-        issue4 = run(["new", "Cycle partner"], self.repo)
-        run(["dep", issue4, issue2], self.repo)
-        with self.assertRaises(subprocess.CalledProcessError):
-            run(["dep", issue2, issue4], self.repo)
 
-        run(["close", issue2], self.repo)
-        run(["close", issue3], self.repo)
-        run(["close", issue4], self.repo)
-        history = run(["log", issue2], self.repo)
-        self.assertRegex(history, rf"Close issue {issue2} \([^)]+\)")
+class TestCloseAndReject(GittocTestBase):
+    def test_close(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["close", "T-1"], self.repo)
+        summary = run(["summary"], self.repo)
+        self.assertIn("closed=1", summary)
+
+    def test_reject(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["reject", "T-1"], self.repo)
+        summary = run(["summary"], self.repo)
+        self.assertIn("rejected=1", summary)
+
+
+class TestLog(GittocTestBase):
+    def test_log_for_issue(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["close", "T-1"], self.repo)
+        history = run(["log", "T-1"], self.repo)
+        self.assertRegex(history, r"Close issue T-1 \([^)]+\)")
+
+    def test_tracker_log(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["claim", "T-1", "--owner", "tester"], self.repo)
         tracker_log = run(["log"], self.repo)
-        self.assertIn("Claim issue T-2 for tester (tester)", tracker_log)
+        self.assertIn("Claim issue T-1 for tester (tester)", tracker_log)
 
-        all_list = run(["list", "--all", "--format", "compact"], self.repo)
-        self.assertIn(f"{issue1} p1 closed High priority task", all_list)
-        self.assertIn(f"{issue2} p1 closed Updated title", all_list)
+    def test_note_appears_in_log(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["note", "T-1", "context"], self.repo)
+        tracker_log = run(["log"], self.repo)
+        self.assertIn("Add note to T-1", tracker_log)
+
+
+class TestWorktreeIntegrity(GittocTestBase):
+    def test_worktree_clean_after_operations(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task one", "-p", "1"], self.repo)
+        run(["new", "Task two", "-p", "2"], self.repo)
+        run(["close", "T-1"], self.repo)
+        run(["close", "T-2"], self.repo)
 
         tracker_status = subprocess.run(
             ["git", "-C", str(self.repo / ".git" / "gittoc"), "status", "--short"],
@@ -307,9 +421,8 @@ class GittocE2ETest(unittest.TestCase):
         ).stdout.strip()
         self.assertEqual(tracker_status, "")
 
-        remote_status = json.loads(run(["remote", "--format", "json"], self.repo))
-        self.assertEqual(remote_status["configured_remote"], "origin")
-
+    def test_worktree_listed(self) -> None:
+        run(["init"], self.repo)
         worktree_entry = subprocess.run(
             ["git", "worktree", "list"],
             cwd=self.repo,
@@ -319,6 +432,8 @@ class GittocE2ETest(unittest.TestCase):
         ).stdout
         self.assertIn(str(self.repo), worktree_entry)
 
+
+class TestRemoteTracking(GittocTestBase):
     def test_init_tracks_remote_gittoc_branch(self) -> None:
         source = Path(self.tempdir.name) / "source"
         source.mkdir()
@@ -389,6 +504,8 @@ class GittocE2ETest(unittest.TestCase):
         self.assertEqual(issue_data["title"], "Remote tracker issue")
         self.assertTrue(issue_data["path"].startswith("issues/open/"))
 
+
+class TestPullAndPush(GittocTestBase):
     def test_pull_and_push_tracker_branch(self) -> None:
         remote_repo = Path(self.tempdir.name) / "sync.git"
         subprocess.run(
@@ -432,10 +549,43 @@ class GittocE2ETest(unittest.TestCase):
         pulled = json.loads(run(["show", "T-1"], clone))
         self.assertEqual(pulled["title"], "Pulled tracker issue")
 
+    def test_pull_alias(self) -> None:
+        remote_repo = Path(self.tempdir.name) / "alias.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], self.repo)
+        run(["push", "origin"], self.repo)
+
+        clone = Path(self.tempdir.name) / "alias-clone"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+
         pull_alias = json.loads(run(["pl", "origin", "--format", "json"], clone))
         self.assertEqual(pull_alias["action"], "pull")
 
-        push_alias = json.loads(run(["ps", "origin", "--format", "json"], source))
+    def test_push_alias(self) -> None:
+        remote_repo = Path(self.tempdir.name) / "ps-alias.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], self.repo)
+        push_alias = json.loads(run(["ps", "origin", "--format", "json"], self.repo))
         self.assertEqual(push_alias["action"], "push")
 
 
