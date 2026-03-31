@@ -16,7 +16,7 @@ from .common import (
     parse_state,
     run_git,
 )
-from .render import print_issues
+from .render import print_issues, render_show_text
 from .tracker import Tracker
 
 SHOW_NOTES_LIMIT = 3
@@ -333,7 +333,7 @@ def cmd_summary(args: argparse.Namespace) -> int:
 
 
 def cmd_show(args: argparse.Namespace) -> int:
-    """Print a single issue as a JSON object with optional history and field filtering."""
+    """Print a single issue with optional history and field filtering."""
     tracker = Tracker.open()
     issue, path = tracker.load_issue(args.issue_id)
     data = issue.to_display(
@@ -353,8 +353,11 @@ def cmd_show(args: argparse.Namespace) -> int:
         )
     if args.history:
         data["history"] = tracker.event_entries(issue.issue_id)
-    data = select_fields(data, args.field)
-    print(json.dumps(data, indent=2, sort_keys=True))
+    if args.format == "json":
+        data = select_fields(data, args.field)
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print(render_show_text(data))
     return 0
 
 

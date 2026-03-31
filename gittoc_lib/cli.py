@@ -344,7 +344,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_text_format_argument(resume_parser)
     resume_parser.set_defaults(func=cmd_resume)
 
-    show_parser = sub.add_parser("show", help="show one issue as JSON")
+    show_parser = sub.add_parser("show", help="show one issue in detail")
     show_parser.add_argument("issue_id", help="ticket to show, e.g. T-42")
     show_parser.add_argument(
         "--history",
@@ -357,6 +357,7 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="FIELD",
         help="show only this field (repeatable)",
     )
+    add_text_format_argument(show_parser)
     show_parser.set_defaults(func=cmd_show)
 
     summary_parser = sub.add_parser("summary", help="print ticket counts by state")
