@@ -6,9 +6,10 @@
     "ux",
     "chore",
     "agent",
-    "human"
+    "human",
+    "ready"
   ],
   "priority": 4,
   "title": "show command has no text format",
-  "updated_at": "2026-03-31T22:25:03+00:00"
+  "updated_at": "2026-03-31T22:25:20+00:00"
 }
