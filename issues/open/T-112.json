@@ -1,0 +1,12 @@
+{
+  "body": "list -l ready,chore and list --ready-only -l chore return different results because --ready-only means 'no unmet dependencies' (structural readiness) while -l ready filters the user-assigned label 'ready' (groomed/specced). The word 'ready' is overloaded: the suggested-labels convention in SKILL.md defines 'ready' as 'groomed, spec is clear', while the CLI flag means 'deps satisfied'. This is confusing. Options: (1) rename the label convention to something like 'groomed' or 'specced', (2) rename --ready-only to --unblocked, (3) drop --ready-only entirely and rely on the 'ready' shorthand command, (4) document the distinction more clearly. Needs human input on preferred direction.",
+  "created_at": "2026-03-31T22:03:40+00:00",
+  "id": "T-112",
+  "labels": [
+    "ux",
+    "concept"
+  ],
+  "priority": 2,
+  "title": "Confusing overlap between --ready-only flag and 'ready' label",
+  "updated_at": "2026-03-31T22:03:40+00:00"
+}
