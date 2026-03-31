@@ -4,9 +4,10 @@
   "id": "T-101",
   "labels": [
     "ux",
-    "feature"
+    "feature",
+    "ready"
   ],
   "priority": 4,
   "title": "new command should support --owner and --dep flags",
-  "updated_at": "2026-03-31T21:55:10+00:00"
+  "updated_at": "2026-03-31T22:27:01+00:00"
 }
