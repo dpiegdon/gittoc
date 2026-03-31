@@ -4,9 +4,10 @@
   "id": "T-103",
   "labels": [
     "chore",
-    "perf"
+    "perf",
+    "ready"
   ],
   "priority": 5,
   "title": "print_issues JSON mode re-loads issues from disk unnecessarily",
-  "updated_at": "2026-03-31T21:56:26+00:00"
+  "updated_at": "2026-03-31T22:11:00+00:00"
 }
