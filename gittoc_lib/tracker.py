@@ -49,6 +49,8 @@ class Tracker:
         self.repo = repo
         self.checkout = checkout
         self.base_head = self.head()
+        self._event_cache: dict[str, list[dict]] = {}
+        self._state_cache: dict[str, str] = {}
 
     @classmethod
     def open(cls) -> "Tracker":
@@ -269,6 +271,7 @@ class Tracker:
         )
         if previous_path and previous_path != path and previous_path.exists():
             previous_path.unlink()
+        self._state_cache[issue.issue_id] = issue.state
         return path
 
     def move_event_file(
@@ -299,11 +302,18 @@ class Tracker:
         }
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(entry, sort_keys=True) + "\n")
+        self._event_cache.pop(issue.issue_id, None)
 
     def event_entries(self, issue_id: str) -> list[dict]:
-        """Return all event log entries for an issue, in chronological order."""
+        """Return all event log entries for an issue, in chronological order.
+
+        Results are cached for the lifetime of this Tracker instance.
+        """
+        if issue_id in self._event_cache:
+            return self._event_cache[issue_id]
         path = self.find_event_path(issue_id)
         if not path or not path.exists():
+            self._event_cache[issue_id] = []
             return []
         entries: list[dict] = []
         with path.open("r", encoding="utf-8") as handle:
@@ -318,6 +328,7 @@ class Tracker:
                         f"warning: skipping malformed event at {path}:{lineno}",
                         file=sys.stderr,
                     )
+        self._event_cache[issue_id] = entries
         return entries
 
     def filtered_events(
@@ -422,10 +433,25 @@ class Tracker:
         self.commit_if_needed(f"Add issue {issue.issue_id}: {issue.title}")
         return issue
 
+    def _issue_state(self, issue_id: str) -> str:
+        """Return the state of an issue, using cache when available."""
+        if issue_id in self._state_cache:
+            return self._state_cache[issue_id]
+        path = self.find_issue_path(issue_id)
+        state = path.parent.name
+        self._state_cache[issue_id] = state
+        return state
+
+    def _build_state_cache(self) -> None:
+        """Populate the state cache from all issue files on disk."""
+        for state in STATE_ORDER:
+            for path in self.state_dir(state).glob("T-*.json"):
+                if not path.name.endswith(EVENT_SUFFIX):
+                    self._state_cache[path.stem] = state
+
     def dependency_closed(self, issue_id: str) -> bool:
         """Return True if the named dependency issue is in a terminal state."""
-        dep, _ = self.load_issue(issue_id)
-        return dep.state in TERMINAL_STATES
+        return self._issue_state(issue_id) in TERMINAL_STATES
 
     def ready(self, issue: Issue) -> bool:
         """Return True if the issue is open and all its dependencies are closed."""
