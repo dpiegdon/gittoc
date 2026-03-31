@@ -1,0 +1,13 @@
+{
+  "body": "The dep command only adds blocking dependencies. There is no way to remove a dependency once added, short of manually editing the JSON file in the worktree. Add a --remove/-r flag to the dep command, e.g. 'gittoc dep T-4 --remove T-1', or a separate 'undep' command. Without this, a mistyped dependency requires manual file surgery.",
+  "created_at": "2026-03-31T21:53:08+00:00",
+  "id": "T-94",
+  "labels": [
+    "ux",
+    "feature",
+    "ready"
+  ],
+  "priority": 3,
+  "title": "No way to remove dependencies from a ticket",
+  "updated_at": "2026-03-31T21:53:08+00:00"
+}
