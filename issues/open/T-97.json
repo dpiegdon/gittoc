@@ -4,9 +4,10 @@
   "id": "T-97",
   "labels": [
     "perf",
-    "chore"
+    "chore",
+    "ready"
   ],
   "priority": 4,
   "title": "note_count() re-parses entire event file on every call",
-  "updated_at": "2026-03-31T21:53:34+00:00"
+  "updated_at": "2026-03-31T22:22:38+00:00"
 }
