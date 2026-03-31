@@ -1,0 +1,12 @@
+{
+  "body": "The show command always outputs JSON. Other commands (summary, resume, history) support both text and JSON via -f. For humans at the terminal, a text-formatted show would be more readable. Could reuse the verbose renderer from list or build a dedicated show text format. Low priority since agents prefer JSON, but it's an inconsistency in the CLI surface.",
+  "created_at": "2026-03-31T21:55:01+00:00",
+  "id": "T-100",
+  "labels": [
+    "ux",
+    "chore"
+  ],
+  "priority": 4,
+  "title": "show command has no text format",
+  "updated_at": "2026-03-31T21:55:01+00:00"
+}
