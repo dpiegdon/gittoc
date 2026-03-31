@@ -1,0 +1,12 @@
+{
+  "body": "cli.py line 171 has three blank lines between _print_init_checklist() and cmd_remote() instead of the PEP 8 standard two. Minor style fix.",
+  "created_at": "2026-03-31T21:57:19+00:00",
+  "id": "T-106",
+  "labels": [
+    "chore",
+    "ready"
+  ],
+  "priority": 5,
+  "title": "Extra blank line in cli.py between _print_init_checklist and cmd_remote",
+  "updated_at": "2026-03-31T21:57:19+00:00"
+}
