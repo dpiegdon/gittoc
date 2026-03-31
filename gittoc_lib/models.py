@@ -30,9 +30,7 @@ class Issue:
         """Load an Issue from its JSON file, deriving state from the parent directory."""
         with path.open("r", encoding="utf-8") as handle:
             raw = json.load(handle)
-        state = raw.get(
-            "status", path.parent.name if path.parent.name in STATE_SET else "open"
-        )
+        state = path.parent.name if path.parent.name in STATE_SET else "open"
         priority = int(raw.get("priority", DEFAULT_PRIORITY))
         validate_priority(priority)
         return cls(
