@@ -5,3 +5,4 @@
 {"actor": "claude", "at": "2026-03-30T20:10:14+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "copilot", "at": "2026-03-31T22:12:09+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "copilot", "at": "2026-03-31T22:14:06+00:00", "kind": "note", "text": "implementation should be minimal. just a proper, human-readable print in the exception handler + terminate cleanup with an appropriate exit code. nothing fancy. validation machine can be added later if it really is of interest. keep it simple for now."}
+{"actor": "copilot", "at": "2026-03-31T22:15:07+00:00", "kind": "note", "text": "semi-related to T-92"}
