@@ -1,0 +1,12 @@
+{
+  "body": "note_count() calls event_entries() which reads and parses the full JSONL file, then counts entries with kind=='note'. This is called per-issue during render_normal() and again during print_issues() JSON mode (which also calls load_issue separately). For a listing of N issues, each event file may be read 2-3 times. Consider caching parsed event entries on the Tracker instance during a single command invocation, or computing note_count more cheaply.",
+  "created_at": "2026-03-31T21:53:34+00:00",
+  "id": "T-97",
+  "labels": [
+    "perf",
+    "chore"
+  ],
+  "priority": 4,
+  "title": "note_count() re-parses entire event file on every call",
+  "updated_at": "2026-03-31T21:53:34+00:00"
+}
