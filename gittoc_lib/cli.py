@@ -233,6 +233,12 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         help="ticket to inspect; omit to show full tracker branch log",
     )
+    log_parser.add_argument(
+        "--reverse",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="show oldest-first (default: --reverse); pass --no-reverse for newest-first",
+    )
     log_parser.set_defaults(func=cmd_log)
 
     new_parser = sub.add_parser("new", help="create an issue")

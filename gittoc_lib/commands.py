@@ -468,12 +468,13 @@ def cmd_close(args: argparse.Namespace) -> int:
 def cmd_log(args: argparse.Namespace) -> int:
     """Print git log for a specific issue file, or the full tracker branch."""
     tracker = Tracker.open()
+    reverse = ["--reverse"] if args.reverse else []
     if args.issue_id:
         _, path = tracker.load_issue(args.issue_id)
         rel = path.relative_to(tracker.checkout)
-        git_args = ["log", "--reverse", "--follow", "--oneline", "--", str(rel)]
+        git_args = ["log", *reverse, "--follow", "--oneline", "--", str(rel)]
     else:
-        git_args = ["log", "--reverse", "--oneline"]
+        git_args = ["log", *reverse, "--oneline"]
     out = run_git(git_args, cwd=tracker.checkout)
     print(out.stdout.strip())
     return 0

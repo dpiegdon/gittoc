@@ -96,13 +96,15 @@ gittoc close T-42
 gittoc reject T-42                  # mark as won't-do
 
 # inspecting tickets
-gittoc show T-42
-gittoc show T-42 --field id --field title --field priority
+gittoc show T-42                                        # human-readable text
+gittoc show T-42 -f json                                # JSON output
+gittoc show T-42 --field id --field title --field priority  # select fields (JSON)
 gittoc resume                       # auto-select next ticket with context
 gittoc resume T-42                  # show context for a specific ticket
 gittoc history T-42 --notes-only --limit 3
 gittoc log T-42                     # git history for one ticket
-gittoc log                          # all recent tracker changes
+gittoc log                          # all recent tracker changes (oldest-first)
+gittoc log --no-reverse             # newest-first, like standard git log
 
 # output format (-f on any command that supports it)
 gittoc list -f json
