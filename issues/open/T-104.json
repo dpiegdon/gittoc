@@ -4,9 +4,10 @@
   "id": "T-104",
   "labels": [
     "bug",
-    "reliability"
+    "reliability",
+    "ready"
   ],
   "priority": 3,
   "title": "cycle detection in _would_introduce_cycle crashes if referenced dep does not exist",
-  "updated_at": "2026-03-31T21:56:35+00:00"
+  "updated_at": "2026-03-31T22:39:51+00:00"
 }
