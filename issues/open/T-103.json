@@ -1,0 +1,12 @@
+{
+  "body": "render.py print_issues() in JSON format calls tracker.load_issue(issue.issue_id) for each issue even though it already has the Issue object. The only reason is to get the file path. Refactor to pass (issue, path) pairs into print_issues, or have the caller pre-compute paths, to avoid redundant disk reads during listing.",
+  "created_at": "2026-03-31T21:56:26+00:00",
+  "id": "T-103",
+  "labels": [
+    "chore",
+    "perf"
+  ],
+  "priority": 5,
+  "title": "print_issues JSON mode re-loads issues from disk unnecessarily",
+  "updated_at": "2026-03-31T21:56:26+00:00"
+}
