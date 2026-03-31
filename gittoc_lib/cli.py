@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -166,7 +167,6 @@ def _print_init_checklist(repo: Path) -> None:
     if lines:
         print("\nSetup checklist:")
         print("\n".join(lines))
-
 
 
 def cmd_remote(args: argparse.Namespace) -> int:
@@ -416,8 +416,6 @@ def cmd_dep(args: argparse.Namespace) -> int:
 
 def cmd_grep(args: argparse.Namespace) -> int:
     """Search ticket files for a pattern using grep."""
-    import subprocess
-
     grep_args = [a for a in (args.grep_args or []) if a != "--"]
     if not grep_args:
         print("error: grep requires a pattern", file=sys.stderr)
