@@ -7,7 +7,8 @@
     "chore",
     "ready"
   ],
+  "owner": "copilot",
   "priority": 2,
   "title": "Remove legacy 'status' field fallback in Issue.from_path",
-  "updated_at": "2026-03-31T21:52:01+00:00"
+  "updated_at": "2026-03-31T22:04:05+00:00"
 }
