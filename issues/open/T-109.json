@@ -1,0 +1,13 @@
+{
+  "body": "references/agent-improvements.md lists 5 priority improvement ideas. Most have already been implemented or have dedicated tickets: concurrency protection (T-15, closed), notes (T-17, closed), machine output (T-27, closed), separation of concerns (T-10, closed), embedding (embedding.md). The file should either be updated to reflect current state or removed, since it creates confusion about what's still needed.",
+  "created_at": "2026-03-31T21:58:35+00:00",
+  "id": "T-109",
+  "labels": [
+    "docs",
+    "chore",
+    "ready"
+  ],
+  "priority": 5,
+  "title": "references/agent-improvements.md is stale",
+  "updated_at": "2026-03-31T21:58:35+00:00"
+}
