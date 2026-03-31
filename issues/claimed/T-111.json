@@ -7,7 +7,8 @@
     "bug",
     "ready"
   ],
+  "owner": "copilot",
   "priority": 2,
   "title": "README says 'Requires Python 3.8+' but code uses 3.10+ syntax",
-  "updated_at": "2026-03-31T21:58:53+00:00"
+  "updated_at": "2026-03-31T22:29:51+00:00"
 }
