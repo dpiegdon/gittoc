@@ -393,9 +393,12 @@ def cmd_update(args: argparse.Namespace) -> int:
 
 
 def cmd_dep(args: argparse.Namespace) -> int:
-    """Add one or more blocking dependencies to an issue."""
+    """Add or remove blocking dependencies for an issue."""
     tracker = Tracker.open()
-    issue = tracker.set_dependencies(args.issue_id, args.dep_ids)
+    if args.remove:
+        issue = tracker.remove_dependencies(args.issue_id, args.dep_ids)
+    else:
+        issue = tracker.set_dependencies(args.issue_id, args.dep_ids)
     print(issue.issue_id)
     return 0
 

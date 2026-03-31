@@ -76,6 +76,7 @@ for full argument documentation.
 - `update T-1 -L task,docs` — replace all labels
 - `dep T-2 T-1` — make T-2 depend on T-1 (T-1 must complete first)
 - `dep T-2 T-1 T-3 T-4` — add multiple blockers T-1, T-3, T-4 for T-2
+- `dep T-2 T-1 --remove` / `dep T-2 T-1 -r` — remove a dependency
 - `note T-1 "context"` / `n T-1 "context"` — append a durable note
 - `close T-1` — mark done; `--actor NAME` to attribute
 - `reject T-1` — mark as won't-do; `--actor NAME` to attribute

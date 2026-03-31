@@ -196,6 +196,24 @@ class TestDependenciesAndReady(GittocTestBase):
         with self.assertRaises(subprocess.CalledProcessError):
             run(["update", issue2, "--state", "claimed", "--owner", "tester"], self.repo)
 
+    def test_remove_dependency(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Blocker", "-p", "1"], self.repo)
+        issue2 = run(["new", "Blocked", "-p", "2"], self.repo)
+        run(["dep", issue2, issue1], self.repo)
+        shown = json.loads(run(["show", issue2], self.repo))
+        self.assertEqual(shown["deps"], [issue1])
+        run(["dep", issue2, issue1, "--remove"], self.repo)
+        shown = json.loads(run(["show", issue2], self.repo))
+        self.assertNotIn("deps", shown)
+
+    def test_remove_nonexistent_dep_fails(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "A"], self.repo)
+        issue2 = run(["new", "B"], self.repo)
+        with self.assertRaises(subprocess.CalledProcessError):
+            run(["dep", issue1, issue2, "--remove"], self.repo)
+
 
 class TestClaimWorkflow(GittocTestBase):
     def test_claim_and_show(self) -> None:

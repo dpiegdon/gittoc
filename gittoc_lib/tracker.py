@@ -553,6 +553,24 @@ class Tracker:
         self.commit_if_needed(f"Add dependencies to {updated.issue_id}")
         return updated
 
+    def remove_dependencies(self, issue_id: str, dep_ids: list[str]) -> Issue:
+        """Remove blocking dependencies from an issue."""
+        issue, path = self.load_issue(issue_id)
+        to_remove = set()
+        for dep_id in dep_ids:
+            validate_issue_id(dep_id)
+            if dep_id not in issue.deps:
+                raise SystemExit(
+                    f"{dep_id} is not a dependency of {issue.issue_id}"
+                )
+            to_remove.add(dep_id)
+        new_deps = tuple(d for d in issue.deps if d not in to_remove)
+        updated = replace(issue, deps=new_deps, updated_at=now_utc())
+        self.write_issue(updated, previous_path=path)
+        self.append_event(updated, "dependency", f"removed {' '.join(dep_ids)}")
+        self.commit_if_needed(f"Remove dependencies from {updated.issue_id}")
+        return updated
+
     def add_note(self, issue_id: str, text: str, actor: str | None = None) -> Issue:
         """Append a free-text note event to an issue and commit."""
         issue, _ = self.load_issue(issue_id)

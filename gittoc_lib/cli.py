@@ -108,8 +108,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     dep_parser = sub.add_parser(
         "dep",
-        help="add blocking dependencies to an issue",
-        description="dep ISSUE_ID DEP_ID [DEP_ID ...] — ISSUE_ID depends on all listed DEP_IDs (DEP_IDs must complete first)",
+        help="add or remove blocking dependencies",
+        description="dep ISSUE_ID DEP_ID [DEP_ID ...] — ISSUE_ID depends on all listed DEP_IDs (DEP_IDs must complete first). Use -r to remove.",
     )
     dep_parser.add_argument(
         "issue_id", help="ticket that depends on the others, e.g. T-4"
@@ -118,7 +118,13 @@ def build_parser() -> argparse.ArgumentParser:
         "dep_ids",
         nargs="+",
         metavar="dep_id",
-        help="one or more tickets that must complete before ISSUE_ID, e.g. T-1 T-2 T-3",
+        help="one or more dependency tickets, e.g. T-1 T-2 T-3",
+    )
+    dep_parser.add_argument(
+        "-r",
+        "--remove",
+        action="store_true",
+        help="remove the listed dependencies instead of adding them",
     )
     dep_parser.set_defaults(func=cmd_dep)
 
