@@ -1,0 +1,1 @@
+{"actor": "copilot", "at": "2026-03-31T21:56:35+00:00", "kind": "created", "text": "cycle detection in _would_introduce_cycle crashes if referenced dep does not exist"}
