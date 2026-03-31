@@ -1,0 +1,12 @@
+{
+  "body": "cmd_log passes --reverse to git log, showing oldest-first. This is the opposite of standard git log behavior (newest-first) and may surprise users. Consider removing --reverse to match git conventions, or making it opt-in with a flag. The current behavior may have been intentional for tracker archaeology but it's unexpected.",
+  "created_at": "2026-03-31T21:58:27+00:00",
+  "id": "T-108",
+  "labels": [
+    "ux",
+    "concept"
+  ],
+  "priority": 5,
+  "title": "log command uses --reverse by default which is unusual",
+  "updated_at": "2026-03-31T21:58:27+00:00"
+}
