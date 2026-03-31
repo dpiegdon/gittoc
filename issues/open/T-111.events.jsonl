@@ -1,0 +1,1 @@
+{"actor": "copilot", "at": "2026-03-31T21:58:53+00:00", "kind": "created", "text": "README says 'Requires Python 3.8+' but code uses 3.10+ syntax"}

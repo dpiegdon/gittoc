@@ -1,0 +1,13 @@
+{
+  "body": "README.md states 'Requires Python 3.8+ and git'. However the codebase uses type union syntax (X | Y) which requires Python 3.10+. Examples: common.py uses 'Path | None', 'str | None'; tracker.py uses 'Issue | None', 'tuple[str, ...] | None'; cli.py uses 'list[str] | None'. The 'from __future__ import annotations' import defers evaluation so this works at parse time on 3.8, but some runtime uses (e.g. isinstance checks with union types) would fail. The docs should clarify the actual minimum version, or the code should be tested on 3.8.",
+  "created_at": "2026-03-31T21:58:53+00:00",
+  "id": "T-111",
+  "labels": [
+    "docs",
+    "bug",
+    "ready"
+  ],
+  "priority": 2,
+  "title": "README says 'Requires Python 3.8+' but code uses 3.10+ syntax",
+  "updated_at": "2026-03-31T21:58:53+00:00"
+}
