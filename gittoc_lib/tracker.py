@@ -499,15 +499,23 @@ class Tracker:
         return None, None
 
     def summary(self) -> dict[str, int]:
-        """Return a dict of issue counts per state plus a 'ready' count."""
+        """Return a dict of issue counts per state plus a 'ready' count.
+
+        Counts for non-open states are computed by file glob to avoid parsing
+        every issue JSON. Only open issues are fully loaded (for readiness).
+        """
         counts = {state: 0 for state in STATE_ORDER}
-        all_issues = self.list_issues(STATE_ORDER)
-        closed_ids = {i.issue_id for i in all_issues if i.state in TERMINAL_STATES}
-        ready = 0
-        for issue in all_issues:
-            counts[issue.state] += 1
-            if issue.state == "open" and all(dep in closed_ids for dep in issue.deps):
-                ready += 1
+        for state in STATE_ORDER:
+            if state == "open":
+                continue
+            counts[state] = len(list(
+                p for p in self.state_dir(state).glob("T-*.json")
+                if not p.name.endswith(EVENT_SUFFIX)
+            ))
+        self._build_state_cache()
+        open_issues = self.list_issues(("open",))
+        counts["open"] = len(open_issues)
+        ready = sum(1 for issue in open_issues if self.ready(issue))
         counts["ready"] = ready
         return counts
 
