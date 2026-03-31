@@ -1,0 +1,13 @@
+{
+  "body": "Issue.from_path (models.py:33-35) falls back to reading a 'status' field from the JSON before using the directory name as canonical state. Since directory-as-state is the established model (T-8, closed), this fallback is misleading: a JSON file in issues/open/ with status='closed' would be loaded as closed. Remove the legacy path and always derive state from the parent directory name. This is a minor breaking change for any hand-edited files that relied on the inner status field.",
+  "created_at": "2026-03-31T21:52:01+00:00",
+  "id": "T-91",
+  "labels": [
+    "bug",
+    "chore",
+    "ready"
+  ],
+  "priority": 2,
+  "title": "Remove legacy 'status' field fallback in Issue.from_path",
+  "updated_at": "2026-03-31T21:52:01+00:00"
+}
