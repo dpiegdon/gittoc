@@ -1,0 +1,12 @@
+{
+  "body": "tracker.summary() calls list_issues(STATE_ORDER) which parses every issue JSON file across all states just to produce counts. For a tracker with hundreds of closed issues, this is unnecessarily expensive. Could count files per directory with a simple glob instead of full JSON parsing, and only load open issues to compute the ready count.",
+  "created_at": "2026-03-31T21:54:13+00:00",
+  "id": "T-98",
+  "labels": [
+    "perf",
+    "chore"
+  ],
+  "priority": 4,
+  "title": "summary() loads and parses all issue JSON files",
+  "updated_at": "2026-03-31T21:54:13+00:00"
+}
