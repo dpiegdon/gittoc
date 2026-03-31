@@ -1,0 +1,12 @@
+{
+  "body": "tracker.ready() calls dependency_closed() for each dep, which calls load_issue() and parses the JSON. For ready_issues() this means O(open_issues * avg_deps) file reads. Similarly, summary() has its own optimization (set of closed_ids) but ready() and ready_issues() don't share it. Consider building a state lookup cache (issue_id -> state) at the start of a command to avoid repeated loads.",
+  "created_at": "2026-03-31T21:56:56+00:00",
+  "id": "T-105",
+  "labels": [
+    "perf",
+    "chore"
+  ],
+  "priority": 4,
+  "title": "ready() loads each dependency issue from disk individually",
+  "updated_at": "2026-03-31T21:56:56+00:00"
+}
