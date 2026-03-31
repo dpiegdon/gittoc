@@ -122,6 +122,17 @@ class TestCreateAndList(GittocTestBase):
         self.assertEqual(issue1, "T-1")
         self.assertEqual(issue2, "T-2")
 
+    def test_create_with_deps(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Blocker task", "-p", "1"], self.repo)
+        issue2 = run(["new", "Dependent task", "-d", "T-1"], self.repo)
+        self.assertEqual(issue2, "T-2")
+        show = run(["show", "T-2"], self.repo)
+        self.assertIn("T-1", show)
+        # T-2 should NOT be ready (blocked by T-1)
+        ready_out = run(["ready", "--format", "compact"], self.repo)
+        self.assertNotIn("T-2", ready_out)
+
     def test_list_alias_and_compact(self) -> None:
         run(["init"], self.repo)
         run(["new", "High priority task", "-p", "1"], self.repo)

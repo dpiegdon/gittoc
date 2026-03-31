@@ -219,11 +219,13 @@ def cmd_push(args: argparse.Namespace) -> int:
 
 
 def cmd_new(args: argparse.Namespace) -> int:
-    """Create a new issue and print its ID."""
+    """Create a new issue and optionally add dependencies."""
     tracker = Tracker.open()
     issue = tracker.create_issue(
         args.title, args.body or "", parse_labels(args.label), args.priority
     )
+    if args.dep:
+        tracker.set_dependencies(issue.issue_id, args.dep)
     print(issue.issue_id)
     return 0
 

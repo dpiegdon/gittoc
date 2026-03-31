@@ -252,6 +252,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_PRIORITY,
         help=f"1 (highest) to 5 (lowest), default {DEFAULT_PRIORITY}",
     )
+    new_parser.add_argument(
+        "-d",
+        "--dep",
+        action="append",
+        metavar="ISSUE_ID",
+        help="add a blocking dependency (repeatable, e.g. -d T-1 -d T-2)",
+    )
     new_parser.set_defaults(func=cmd_new)
 
     note_parser = sub.add_parser("note", help="append a note to an issue")

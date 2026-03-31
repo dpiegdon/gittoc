@@ -120,6 +120,7 @@ When new follow-up work appears:
 
 ```bash
 gittoc new "Add feature" -p 3
+gittoc new "Blocked task" -d T-1 -d T-2  # create with dependencies
 gittoc dep T-3 T-1   # T-3 depends on T-1 (T-1 must complete first)
 ```
 

@@ -84,6 +84,7 @@ gittoc grep "pattern"               # search ticket files
 
 # working with tickets
 gittoc new "short title" -p 2 -b "longer context" -l bug
+gittoc new "blocked task" -d T-1 -d T-2   # create with deps
 gittoc claim T-42
 gittoc note T-42 "found a race during creation"
 gittoc update T-42 -p 1 -l bug,ux    # add labels
