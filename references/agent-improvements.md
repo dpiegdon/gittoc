@@ -1,17 +1,17 @@
 # Agent-Centric Improvement Draft
 
-From the agent perspective, the most valuable future improvements are the ones
-that reduce ambiguity, lower coordination cost, and preserve local working
-context without forcing the agent to load more files than necessary.
+This document originally listed five priority ideas for agent-focused
+improvements. All five have been implemented or superseded by concrete tickets:
 
-Priority ideas:
+- **concurrency protection** — optimistic locking landed in T-15, conflict
+  recovery in T-24 (both closed)
+- **per-ticket notes** — note/history commands landed in T-17 (closed)
+- **machine-oriented output** — `--field`, JSON formats, `resume` landed in
+  T-27 (closed)
+- **separation of concerns** — SOLID refactor landed in T-10 (closed)
+- **embedding layout** — documented in `references/embedding.md`
 
-- stronger concurrency protection and clearer conflict recovery
-- a more direct command for appending and reading short local working notes
-- better machine-oriented output and filtering for ready-task selection
-- cleaner separation between migration logic, storage logic, and command UX
-- a more natural embedding layout for repositories that are consuming the tool
-
-These should turn into concrete tickets rather than staying as a separate
-standing design note.
+Remaining agent-facing work is tracked in the open backlog (e.g. T-79 timeline
+querying, T-82 validation on load). This file is kept for historical context
+only.
 
