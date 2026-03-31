@@ -28,23 +28,41 @@ class Issue:
     @classmethod
     def from_path(cls, path: Path) -> "Issue":
         """Load an Issue from its JSON file, deriving state from the parent directory."""
-        with path.open("r", encoding="utf-8") as handle:
-            raw = json.load(handle)
+        try:
+            with path.open("r", encoding="utf-8") as handle:
+                raw = json.load(handle)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"malformed JSON in {path}: {exc}") from exc
+        except OSError as exc:
+            raise SystemExit(f"cannot read {path}: {exc}") from exc
+        missing = [f for f in ("id", "title", "created_at") if f not in raw]
+        if missing:
+            raise SystemExit(
+                f"missing required field(s) {', '.join(missing)} in {path}"
+            )
         state = path.parent.name if path.parent.name in STATE_SET else "open"
-        priority = int(raw.get("priority", DEFAULT_PRIORITY))
-        validate_priority(priority)
-        return cls(
-            issue_id=validate_issue_id(raw["id"]),
-            title=raw["title"],
-            body=raw.get("body", ""),
-            deps=tuple(sorted(set(raw.get("deps", [])), key=issue_number)),
-            labels=tuple(raw.get("labels", [])),
-            owner=raw.get("owner", ""),
-            priority=priority,
-            created_at=raw["created_at"],
-            updated_at=raw.get("updated_at", raw["created_at"]),
-            state=state,
-        )
+        try:
+            priority = int(raw.get("priority", DEFAULT_PRIORITY))
+            validate_priority(priority)
+        except (ValueError, SystemExit) as exc:
+            raise SystemExit(
+                f"invalid priority in {path}: {raw.get('priority')}"
+            ) from exc
+        try:
+            return cls(
+                issue_id=validate_issue_id(raw["id"]),
+                title=raw["title"],
+                body=raw.get("body", ""),
+                deps=tuple(sorted(set(raw.get("deps", [])), key=issue_number)),
+                labels=tuple(raw.get("labels", [])),
+                owner=raw.get("owner", ""),
+                priority=priority,
+                created_at=raw["created_at"],
+                updated_at=raw.get("updated_at", raw["created_at"]),
+                state=state,
+            )
+        except (TypeError, KeyError, SystemExit) as exc:
+            raise SystemExit(f"invalid issue data in {path}: {exc}") from exc
 
     def to_record(self) -> dict:
         """Serialize the issue to a dict suitable for writing as JSON.

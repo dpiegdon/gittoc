@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 from dataclasses import replace
 from pathlib import Path
 
@@ -306,11 +307,17 @@ class Tracker:
             return []
         entries: list[dict] = []
         with path.open("r", encoding="utf-8") as handle:
-            for line in handle:
+            for lineno, line in enumerate(handle, 1):
                 line = line.strip()
                 if not line:
                     continue
-                entries.append(json.loads(line))
+                try:
+                    entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    print(
+                        f"warning: skipping malformed event at {path}:{lineno}",
+                        file=sys.stderr,
+                    )
         return entries
 
     def filtered_events(
