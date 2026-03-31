@@ -1,0 +1,12 @@
+{
+  "body": "Creating a ticket and then immediately claiming it or adding deps requires 2-3 separate commands (new, claim, dep). Adding --owner and --dep to 'gittoc new' would allow: 'gittoc new \"Fix bug\" -p 1 --owner alice --dep T-5'. This is a convenience, not essential, but it reduces the most common multi-step pattern to a single atomic command.",
+  "created_at": "2026-03-31T21:55:10+00:00",
+  "id": "T-101",
+  "labels": [
+    "ux",
+    "feature"
+  ],
+  "priority": 4,
+  "title": "new command should support --owner and --dep flags",
+  "updated_at": "2026-03-31T21:55:10+00:00"
+}
