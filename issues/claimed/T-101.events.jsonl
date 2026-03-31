@@ -1,3 +1,4 @@
 {"actor": "copilot", "at": "2026-03-31T21:55:10+00:00", "kind": "created", "text": "new command should support --owner and --dep flags"}
 {"actor": "copilot", "at": "2026-03-31T22:26:45+00:00", "kind": "note", "text": "claiming while creating is a no-no, tickets need to be groomed first before they can be assigned. but adding dependencies on commandline is a good idea! we should do that"}
 {"actor": "copilot", "at": "2026-03-31T22:27:01+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "copilot", "at": "2026-03-31T22:29:52+00:00", "kind": "claimed", "text": "copilot"}
