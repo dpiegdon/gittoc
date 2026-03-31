@@ -6,7 +6,8 @@
     "docs",
     "ready"
   ],
+  "owner": "copilot",
   "priority": 5,
   "title": "log command uses --reverse by default which is unusual",
-  "updated_at": "2026-03-31T22:06:37+00:00"
+  "updated_at": "2026-03-31T22:51:12+00:00"
 }

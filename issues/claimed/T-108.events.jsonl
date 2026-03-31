@@ -2,3 +2,4 @@
 {"actor": "copilot", "at": "2026-03-31T22:06:09+00:00", "kind": "note", "text": "listing reverse is by design. don't change but add a note in the docs. this is easier for humans to use, since the oldest ones could scroll out of the terminal buffer, and usually one cares about the newest ones first."}
 {"actor": "copilot", "at": "2026-03-31T22:06:37+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "copilot", "at": "2026-03-31T22:08:30+00:00", "kind": "note", "text": "optionally add a flag, but only if you really feel its important"}
+{"actor": "copilot", "at": "2026-03-31T22:51:12+00:00", "kind": "claimed", "text": "copilot"}
