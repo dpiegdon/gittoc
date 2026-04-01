@@ -305,7 +305,7 @@ class TestNotesAndHistory(GittocTestBase):
         run(["note", issue, "Fourth note", "--actor", "tester"], self.repo)
         run(["note", issue, "Fifth note truncation", "--actor", "tester"], self.repo)
 
-        history = run(["show", issue, "--history"], self.repo)
+        history = run(["show", issue, "-a"], self.repo)
         self.assertIn("claimed tester: tester", history)
         self.assertIn("note#1 tester: First note", history)
 
@@ -361,14 +361,6 @@ class TestNotesAndHistory(GittocTestBase):
 
 
 class TestShowAndResume(GittocTestBase):
-    def test_show_field_filter(self) -> None:
-        run(["init"], self.repo)
-        run(["new", "High priority task", "-p", "1"], self.repo)
-        selected = json.loads(
-            run(["show", "T-1", "--field", "id", "--field", "title", "--field", "priority", "-f", "json"], self.repo)
-        )
-        self.assertEqual(selected, {"id": "T-1", "priority": 1, "title": "High priority task"})
-
     def test_show_alias(self) -> None:
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)
@@ -421,7 +413,7 @@ class TestUpdate(GittocTestBase):
         run(["init"], self.repo)
         run(["new", "Original", "-p", "3"], self.repo)
         run(["update", "T-1", "--title", "Updated", "--priority", "1"], self.repo)
-        updated = json.loads(run(["show", "T-1", "--history", "-f", "json"], self.repo))
+        updated = json.loads(run(["show", "T-1", "-a", "-f", "json"], self.repo))
         self.assertEqual(updated["title"], "Updated")
         self.assertEqual(updated["priority"], 1)
         self.assertTrue(any(entry["kind"] == "updated" for entry in updated["history"]))

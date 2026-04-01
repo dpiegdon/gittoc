@@ -332,9 +332,10 @@ def build_parser() -> argparse.ArgumentParser:
     show_parser = sub.add_parser("show", help="show one issue in detail")
     show_parser.add_argument("issue_id", help="ticket to show, e.g. T-42")
     show_parser.add_argument(
-        "--history",
+        "-a",
+        "--all",
         action="store_true",
-        help="include full event history (all event types)",
+        help="show everything: all notes and full event history",
     )
     show_parser.add_argument(
         "-n",
@@ -343,27 +344,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="show all notes (no limit)",
     )
     show_parser.add_argument(
-        "-a",
-        "--all",
-        action="store_true",
-        help="show all notes (lift the default limit)",
-    )
-    show_parser.add_argument(
         "-l",
         "--limit",
         type=int,
         help="maximum number of notes/events to show",
-    )
-    show_parser.add_argument(
-        "--kind",
-        action="append",
-        help="filter by event kind (repeatable)",
-    )
-    show_parser.add_argument(
-        "--field",
-        action="append",
-        metavar="FIELD",
-        help="show only this field (repeatable, JSON mode)",
     )
     add_text_format_argument(show_parser)
     show_parser.set_defaults(func=cmd_show)

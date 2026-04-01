@@ -83,13 +83,10 @@ for full argument documentation.
 
 **Inspecting tickets**
 - `show T-1` / `s T-1` — ticket fields + 3 recent notes
-- `show T-1 -a` — all notes (lift the default limit)
-- `show T-1 -n` — notes only, no limit
-- `show T-1 --history` — full event timeline
-- `show T-1 -l 5` — cap to 5 entries
-- `show T-1 --kind note` — filter by event kind
+- `show T-1 -n` — all notes
+- `show T-1 -a` — everything: all notes + full event history
+- `show T-1 -l 5` — cap entries shown
 - `show T-1 -f json` — JSON output for scripting
-- `show T-1 --field id --field title` — minimal field subset (JSON)
 - `resume` / `r` — context for the most relevant current ticket
 - `resume T-1` — context for a specific ticket
 - `log T-1` — git history for one ticket file (oldest-first)

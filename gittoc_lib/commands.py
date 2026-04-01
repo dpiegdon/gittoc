@@ -38,16 +38,6 @@ def parse_labels(values: list[str] | None) -> list[str]:
     return labels
 
 
-def select_fields(data: dict, fields: list[str] | None) -> dict:
-    """Return a subset of data containing only the requested fields, or all if none given."""
-    if not fields:
-        return data
-    selected: dict = {}
-    for field in fields:
-        if field in data:
-            selected[field] = data[field]
-    return selected
-
 
 def format_history_entry(entry: dict) -> str:
     """Format a single event log entry as a human-readable one-liner."""
@@ -335,34 +325,29 @@ def cmd_summary(args: argparse.Namespace) -> int:
 
 
 def cmd_show(args: argparse.Namespace) -> int:
-    """Print a single issue with optional history and field filtering."""
+    """Print a single issue with optional notes/history detail."""
     tracker = Tracker.open()
     issue, path = tracker.load_issue(args.issue_id)
     data = issue.to_display(
         path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id)
     )
-    # Determine what events to show and how many
-    kinds: set[str] | None = None
-    if args.kind:
-        kinds = set(args.kind)
-    if args.notes:
-        kinds = {"note"}
     limit = args.limit
-    is_history = args.history
-    # --history or --kind trigger full event display mode
-    if is_history or (kinds is not None and not args.notes):
-        entries = tracker.filtered_events(
-            args.issue_id, kinds=kinds if not is_history else None, limit=limit
-        )
-        data["history"] = entries
-        data["recent_notes"] = []
-        data["recent_notes_shown"] = 0
+    if args.all:
+        # -a: everything — all notes + full event history
+        notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=limit)
+        data["recent_notes"] = notes
+        data["recent_notes_shown"] = len(notes)
+        data["recent_notes_total"] = tracker.note_count(issue.issue_id)
+        data["history"] = tracker.filtered_events(issue.issue_id, limit=limit)
+    elif args.notes:
+        # -n: all notes, no limit (unless -l is set)
+        notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=limit)
+        data["recent_notes"] = notes
+        data["recent_notes_shown"] = len(notes)
+        data["recent_notes_total"] = tracker.note_count(issue.issue_id)
     else:
-        # Notes mode: default (3 recent), -a (all), -n (all), -l N (custom)
-        if args.all or args.notes:
-            notes_limit = limit  # None = no limit
-        else:
-            notes_limit = limit if limit is not None else SHOW_NOTES_LIMIT
+        # Default: 3 recent notes (or -l N)
+        notes_limit = limit if limit is not None else SHOW_NOTES_LIMIT
         recent_notes = tracker.filtered_events(
             issue.issue_id, kinds={"note"}, limit=notes_limit
         )
@@ -376,7 +361,6 @@ def cmd_show(args: argparse.Namespace) -> int:
                 f"use `show {args.issue_id} -n` for all"
             )
     if args.format == "json":
-        data = select_fields(data, args.field)
         print(json.dumps(data, indent=2, sort_keys=True))
     else:
         print(render_show_text(data))
