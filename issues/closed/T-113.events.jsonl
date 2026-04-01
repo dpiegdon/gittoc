@@ -3,3 +3,4 @@
 {"actor": "claude", "at": "2026-04-01T19:55:01+00:00", "kind": "claimed", "text": "claude"}
 {"actor": "claude", "at": "2026-04-01T19:55:42+00:00", "kind": "note", "text": "Implementation plan: fold history into show. show T-1 = fields + 3 recent notes (default). show -a/--all = lift limit, show all notes. show -n/--notes = sugar for --kind note -a. show --history = all event types, no limit. show -l N/--limit N = cap entries. show --kind KIND = filter by event kind. history command becomes alias for show --history. h alias keeps working."}
 {"actor": "claude", "at": "2026-04-01T20:08:02+00:00", "kind": "closed", "text": ""}
+{"actor": "claude", "at": "2026-04-01T20:16:23+00:00", "kind": "note", "text": "Simplification round 2: show has only 3 flags now. -n = all notes. -a = everything (notes + full event history). -l N = cap entries. Dropped --history (replaced by -a), --kind, --field as unnecessary complexity."}
