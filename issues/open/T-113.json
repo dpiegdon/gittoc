@@ -1,0 +1,8 @@
+{
+  "body": "consider if 'history' should be folded into 'show': they are different views into the same information. I think 'history' should be folded into 'show' as parameters: '-a' for show all, '-c' for show comments. default should stay as is: show three most recent comments.",
+  "created_at": "2026-04-01T19:42:21+00:00",
+  "id": "T-113",
+  "priority": 2,
+  "title": "'show' vs 'history'",
+  "updated_at": "2026-04-01T19:42:21+00:00"
+}
