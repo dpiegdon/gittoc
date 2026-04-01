@@ -96,12 +96,15 @@ gittoc close T-42
 gittoc reject T-42                  # mark as won't-do
 
 # inspecting tickets
-gittoc show T-42                                        # human-readable text
-gittoc show T-42 -f json                                # JSON output
-gittoc show T-42 --field id --field title --field priority  # select fields (JSON)
+gittoc show T-42                    # ticket fields + 3 recent notes
+gittoc show T-42 -a                 # all notes (lift the limit)
+gittoc show T-42 -n                 # notes only, no limit
+gittoc show T-42 --history          # full event timeline
+gittoc show T-42 --history -l 5     # last 5 events
+gittoc show T-42 -f json            # JSON output
+gittoc show T-42 --field id --field title  # select fields (JSON)
 gittoc resume                       # auto-select next ticket with context
 gittoc resume T-42                  # show context for a specific ticket
-gittoc history T-42 --notes-only --limit 3
 gittoc log T-42                     # git history for one ticket
 gittoc log                          # all recent tracker changes (oldest-first)
 gittoc log --no-reverse             # newest-first, like standard git log
@@ -117,7 +120,7 @@ gittoc push origin
 ```
 
 Command aliases: `l`=list, `s`=show, `sum`=summary, `r`=resume, `c`=claim, `n`=note,
-`h`=history, `pl`=pull, `ps`=push.
+`pl`=pull, `ps`=push.
 
 ### Ticket relationships
 

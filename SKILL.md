@@ -82,14 +82,16 @@ for full argument documentation.
 - `reject T-1` — mark as won't-do; `--actor NAME` to attribute
 
 **Inspecting tickets**
-- `show T-1` / `s T-1` — human-readable text with recent notes (default)
+- `show T-1` / `s T-1` — ticket fields + 3 recent notes
+- `show T-1 -a` — all notes (lift the default limit)
+- `show T-1 -n` — notes only, no limit
+- `show T-1 --history` — full event timeline
+- `show T-1 -l 5` — cap to 5 entries
+- `show T-1 --kind note` — filter by event kind
 - `show T-1 -f json` — JSON output for scripting
 - `show T-1 --field id --field title` — minimal field subset (JSON)
-- `show T-1 --history` — include full event history
 - `resume` / `r` — context for the most relevant current ticket
 - `resume T-1` — context for a specific ticket
-- `history T-1` / `h T-1` — full event history for a ticket
-- `history T-1 --notes-only --limit 3` — recent notes only
 - `log T-1` — git history for one ticket file (oldest-first)
 - `log` — all recent tracker changes (oldest-first)
 - `log --no-reverse` — newest-first, like standard git log

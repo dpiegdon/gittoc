@@ -107,7 +107,7 @@ def print_resume_text(data: dict) -> None:
         if data["recent_notes_total"] > data["recent_notes_shown"]:
             print(
                 f"- showing {data['recent_notes_shown']} of {data['recent_notes_total']} notes; "
-                f"use `history {data['id']} --notes-only` for more"
+                f"use `show {data['id']} -n` for all"
             )
     events = data["recent_events"]
     if events:
@@ -341,20 +341,40 @@ def cmd_show(args: argparse.Namespace) -> int:
     data = issue.to_display(
         path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id)
     )
-    recent_notes = tracker.filtered_events(
-        issue.issue_id, kinds={"note"}, limit=SHOW_NOTES_LIMIT
-    )
-    recent_notes_total = tracker.note_count(issue.issue_id)
-    data["recent_notes"] = recent_notes
-    data["recent_notes_shown"] = len(recent_notes)
-    data["recent_notes_total"] = recent_notes_total
-    if recent_notes_total > len(recent_notes):
-        data["recent_notes_hint"] = (
-            f"showing {len(recent_notes)} of {recent_notes_total} notes; "
-            f"use `history {args.issue_id} --notes-only` for more"
+    # Determine what events to show and how many
+    kinds: set[str] | None = None
+    if args.kind:
+        kinds = set(args.kind)
+    if args.notes:
+        kinds = {"note"}
+    limit = args.limit
+    is_history = args.history
+    # --history or --kind trigger full event display mode
+    if is_history or (kinds is not None and not args.notes):
+        entries = tracker.filtered_events(
+            args.issue_id, kinds=kinds if not is_history else None, limit=limit
         )
-    if args.history:
-        data["history"] = tracker.event_entries(issue.issue_id)
+        data["history"] = entries
+        data["recent_notes"] = []
+        data["recent_notes_shown"] = 0
+    else:
+        # Notes mode: default (3 recent), -a (all), -n (all), -l N (custom)
+        if args.all or args.notes:
+            notes_limit = limit  # None = no limit
+        else:
+            notes_limit = limit if limit is not None else SHOW_NOTES_LIMIT
+        recent_notes = tracker.filtered_events(
+            issue.issue_id, kinds={"note"}, limit=notes_limit
+        )
+        recent_notes_total = tracker.note_count(issue.issue_id)
+        data["recent_notes"] = recent_notes
+        data["recent_notes_shown"] = len(recent_notes)
+        data["recent_notes_total"] = recent_notes_total
+        if recent_notes_total > len(recent_notes):
+            data["recent_notes_hint"] = (
+                f"showing {len(recent_notes)} of {recent_notes_total} notes; "
+                f"use `show {args.issue_id} -n` for all"
+            )
     if args.format == "json":
         data = select_fields(data, args.field)
         print(json.dumps(data, indent=2, sort_keys=True))
@@ -489,22 +509,6 @@ def cmd_note(args: argparse.Namespace) -> int:
     print(issue.issue_id)
     return 0
 
-
-def cmd_history(args: argparse.Namespace) -> int:
-    """Print the event history for an issue, optionally filtered by kind."""
-    tracker = Tracker.open()
-    kinds = set(args.kind or [])
-    if args.notes_only:
-        kinds.add("note")
-    entries = tracker.filtered_events(
-        args.issue_id, kinds=kinds or None, limit=args.limit
-    )
-    if args.format == "json":
-        print(json.dumps(entries, indent=2, sort_keys=True))
-        return 0
-    for entry in entries:
-        print(format_history_entry(entry))
-    return 0
 
 
 def cmd_resume(args: argparse.Namespace) -> int:

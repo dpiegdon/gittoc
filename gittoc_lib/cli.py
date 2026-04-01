@@ -12,7 +12,6 @@ from .commands import (
     cmd_close,
     cmd_dep,
     cmd_grep,
-    cmd_history,
     cmd_init,
     cmd_labels,
     cmd_list,
@@ -39,7 +38,6 @@ COMMAND_ALIASES = {
     "r": "resume",
     "c": "claim",
     "n": "note",
-    "h": "history",
     "pl": "pull",
     "pul": "pull",
     "ps": "push",
@@ -155,25 +153,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     grep_parser.set_defaults(func=cmd_grep)
 
-    history_parser = sub.add_parser("history", help="show per-issue event history")
-    history_parser.add_argument("issue_id", help="ticket to inspect, e.g. T-42")
-    history_parser.add_argument(
-        "--limit",
-        type=int,
-        help="maximum number of entries to show",
-    )
-    history_parser.add_argument(
-        "--kind",
-        action="append",
-        help="filter by event kind (repeatable)",
-    )
-    history_parser.add_argument(
-        "--notes-only",
-        action="store_true",
-        help="show only note events",
-    )
-    add_text_format_argument(history_parser)
-    history_parser.set_defaults(func=cmd_history)
 
     init_parser = sub.add_parser("init", help="initialize tracker worktree")
     init_parser.set_defaults(func=cmd_init)
@@ -355,13 +334,36 @@ def build_parser() -> argparse.ArgumentParser:
     show_parser.add_argument(
         "--history",
         action="store_true",
-        help="include full event history",
+        help="include full event history (all event types)",
+    )
+    show_parser.add_argument(
+        "-n",
+        "--notes",
+        action="store_true",
+        help="show all notes (no limit)",
+    )
+    show_parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="show all notes (lift the default limit)",
+    )
+    show_parser.add_argument(
+        "-l",
+        "--limit",
+        type=int,
+        help="maximum number of notes/events to show",
+    )
+    show_parser.add_argument(
+        "--kind",
+        action="append",
+        help="filter by event kind (repeatable)",
     )
     show_parser.add_argument(
         "--field",
         action="append",
         metavar="FIELD",
-        help="show only this field (repeatable)",
+        help="show only this field (repeatable, JSON mode)",
     )
     add_text_format_argument(show_parser)
     show_parser.set_defaults(func=cmd_show)

@@ -91,10 +91,13 @@ def render_show_text(data: dict) -> str:
         lines.append("")
         lines.append("  history:")
         for entry in history:
+            note_id = entry.get("note_id")
             kind = entry.get("kind", "?")
+            label = f"{kind}#{note_id}" if note_id else kind
+            actor = entry.get("actor", "?")
             at = entry.get("at", "")
             text = entry.get("text", "")
-            lines.append(f"    [{at}] {kind}: {text}")
+            lines.append(f"    [{at}] {label} {actor}: {text}")
     return "\n".join(lines)
 
 

@@ -305,7 +305,7 @@ class TestNotesAndHistory(GittocTestBase):
         run(["note", issue, "Fourth note", "--actor", "tester"], self.repo)
         run(["note", issue, "Fifth note truncation", "--actor", "tester"], self.repo)
 
-        history = run(["history", issue], self.repo)
+        history = run(["show", issue, "--history"], self.repo)
         self.assertIn("claimed tester: tester", history)
         self.assertIn("note#1 tester: First note", history)
 
@@ -315,14 +315,15 @@ class TestNotesAndHistory(GittocTestBase):
         run(["note", issue, "Alpha", "--actor", "a"], self.repo)
         run(["note", issue, "Beta", "--actor", "b"], self.repo)
         run(["note", issue, "Gamma", "--actor", "c"], self.repo)
-        history = run(["history", issue, "--notes-only"], self.repo)
+        history = run(["show", issue, "-n"], self.repo)
         self.assertIn("note#1 a: Alpha", history)
         self.assertIn("note#2 b: Beta", history)
         self.assertIn("note#3 c: Gamma", history)
         # JSON output should include note_id field
-        entries = json.loads(
-            run(["history", issue, "--notes-only", "-f", "json"], self.repo)
+        shown = json.loads(
+            run(["show", issue, "-n", "-f", "json"], self.repo)
         )
+        entries = shown["recent_notes"]
         self.assertEqual(entries[0]["note_id"], 1)
         self.assertEqual(entries[2]["note_id"], 3)
 
@@ -332,7 +333,7 @@ class TestNotesAndHistory(GittocTestBase):
         run(["note", issue, "Note A", "--actor", "tester"], self.repo)
         run(["note", issue, "Note B", "--actor", "tester"], self.repo)
         run(["note", issue, "Note C", "--actor", "tester"], self.repo)
-        notes_only = run(["history", issue, "--notes-only", "--limit", "1"], self.repo)
+        notes_only = run(["show", issue, "-n", "-l", "1"], self.repo)
         self.assertIn("Note C", notes_only)
         self.assertNotIn("Note A", notes_only)
 
@@ -346,7 +347,7 @@ class TestNotesAndHistory(GittocTestBase):
         self.assertEqual(shown["recent_notes_total"], 5)
         self.assertEqual(shown["recent_notes_shown"], 3)
         self.assertEqual(len(shown["recent_notes"]), 3)
-        self.assertIn(f"history {issue} --notes-only", shown["recent_notes_hint"])
+        self.assertIn(f"show {issue} -n", shown["recent_notes_hint"])
 
     def test_show_text_format(self) -> None:
         run(["init"], self.repo)
@@ -357,12 +358,6 @@ class TestNotesAndHistory(GittocTestBase):
         self.assertIn("labels: bug", text)
         self.assertIn("tester: A note", text)
 
-    def test_history_alias(self) -> None:
-        run(["init"], self.repo)
-        issue = run(["new", "Task"], self.repo)
-        run(["note", issue, "A note"], self.repo)
-        history = run(["h", issue], self.repo)
-        self.assertIn("A note", history)
 
 
 class TestShowAndResume(GittocTestBase):
