@@ -1,2 +1,3 @@
 {"actor": "claude", "at": "2026-04-01T19:42:21+00:00", "kind": "created", "text": "'show' vs 'history'"}
 {"actor": "claude", "at": "2026-04-01T19:43:24+00:00", "kind": "note", "text": "Grooming recommendation: reject. The commands serve different purposes (current state vs timeline), have different output shapes, and the proposed flags (-a, -c) conflict with existing conventions. show --history already covers the overlap. See conversation for full analysis."}
+{"actor": "claude", "at": "2026-04-01T19:55:01+00:00", "kind": "claimed", "text": "claude"}
