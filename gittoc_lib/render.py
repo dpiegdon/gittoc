@@ -28,15 +28,16 @@ def render_compact(issue: Issue, _tracker) -> str:
 
 def render_normal(issue: Issue, tracker) -> str:
     """Render an issue as a single annotated line with marker, deps, owner, labels, and note count."""
-    deps = f" deps={col.deps(str(len(issue.deps)))}" if issue.deps else ""
     owner = f" owner={col.owner(issue.owner)}" if issue.owner else ""
     label_str = f" labels={col.label(','.join(issue.labels))}" if issue.labels else ""
     notes = tracker.note_count(issue.issue_id)
-    notes_text = f" notes={col.count(notes)}" if notes else ""
+    # inconsistent rendering for deps and notes_text, but this improves readability
+    notes_text = col.count(f" notes={notes}" if notes else "")
+    deps = col.deps(f" deps={str(len(issue.deps))}" if issue.deps else "")
     m = marker(issue, tracker)
     return (
         f"{col.state_marker(m)} {col.issue_id(issue.issue_id)} {col.priority(issue.priority)} "
-        f"{col.state(issue.state)} {col.title(issue.title)}{deps}{owner}{label_str}{notes_text}"
+        f"{col.state(issue.state)} {col.title(issue.title)}{owner}{label_str}{notes_text}{deps}"
     )
 
 
