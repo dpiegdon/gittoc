@@ -38,7 +38,6 @@ def parse_labels(values: list[str] | None) -> list[str]:
     return labels
 
 
-
 def format_history_entry(entry: dict) -> str:
     """Format a single event log entry as a human-readable one-liner."""
     note_id = entry.get("note_id")
@@ -381,14 +380,16 @@ def cmd_update(args: argparse.Namespace) -> int:
                 labels.append(label)
         if remove_labels:
             labels = [label for label in labels if label not in remove_labels]
-    has_changes = any([
-        args.title is not None,
-        args.body is not None,
-        state is not None,
-        args.owner is not None,
-        labels is not None,
-        args.priority is not None,
-    ])
+    has_changes = any(
+        [
+            args.title is not None,
+            args.body is not None,
+            state is not None,
+            args.owner is not None,
+            labels is not None,
+            args.priority is not None,
+        ]
+    )
     if not has_changes:
         print("no fields to update", file=sys.stderr)
         return 1
@@ -484,7 +485,6 @@ def cmd_note(args: argparse.Namespace) -> int:
     issue = tracker.add_note(args.issue_id, args.text, actor=args.actor)
     print(issue.issue_id)
     return 0
-
 
 
 def cmd_resume(args: argparse.Namespace) -> int:

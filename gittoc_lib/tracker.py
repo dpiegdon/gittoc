@@ -525,10 +525,13 @@ class Tracker:
         for state in STATE_ORDER:
             if state == "open":
                 continue
-            counts[state] = len(list(
-                p for p in self.state_dir(state).glob("T-*.json")
-                if not p.name.endswith(EVENT_SUFFIX)
-            ))
+            counts[state] = len(
+                list(
+                    p
+                    for p in self.state_dir(state).glob("T-*.json")
+                    if not p.name.endswith(EVENT_SUFFIX)
+                )
+            )
         self._build_state_cache()
         open_issues = self.list_issues(("open",))
         counts["open"] = len(open_issues)
@@ -618,9 +621,7 @@ class Tracker:
         for dep_id in dep_ids:
             validate_issue_id(dep_id)
             if dep_id not in issue.deps:
-                raise SystemExit(
-                    f"{dep_id} is not a dependency of {issue.issue_id}"
-                )
+                raise SystemExit(f"{dep_id} is not a dependency of {issue.issue_id}")
             to_remove.add(dep_id)
         new_deps = tuple(d for d in issue.deps if d not in to_remove)
         updated = replace(issue, deps=new_deps, updated_at=now_utc())

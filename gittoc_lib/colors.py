@@ -50,7 +50,12 @@ def state_marker(m: str) -> str:
 
 def state(s: str) -> str:
     label = f"[{s}]"
-    code = {"claimed": _YELLOW, "blocked": _RED, "closed": _DIM, "rejected": _DIM_INVERSE}.get(s)
+    code = {
+        "claimed": _YELLOW,
+        "blocked": _RED,
+        "closed": _DIM,
+        "rejected": _DIM_INVERSE,
+    }.get(s)
     return _c(label, code) if code else label
 
 

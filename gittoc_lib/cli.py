@@ -153,7 +153,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     grep_parser.set_defaults(func=cmd_grep)
 
-
     init_parser = sub.add_parser("init", help="initialize tracker worktree")
     init_parser.set_defaults(func=cmd_init)
 

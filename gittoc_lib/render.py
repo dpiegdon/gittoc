@@ -77,7 +77,9 @@ def render_show_text(data: dict) -> str:
     label_str = col.label(", ".join(label_list)) if label_list else "-"
     lines.append(f"  {col.field_name('labels:')} {label_str}")
     owner_val = data.get("owner")
-    lines.append(f"  {col.field_name('owner:')} {col.owner(owner_val) if owner_val else '-'}")
+    lines.append(
+        f"  {col.field_name('owner:')} {col.owner(owner_val) if owner_val else '-'}"
+    )
     lines.append(f"  {col.field_name('created:')} {data.get('created_at', '-')}")
     lines.append(f"  {col.field_name('updated:')} {data.get('updated_at', '-')}")
     notes_count = data.get("notes_count", data.get("recent_notes_total", 0))
