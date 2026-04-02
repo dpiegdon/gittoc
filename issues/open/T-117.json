@@ -1,0 +1,8 @@
+{
+  "body": "'resume' seems to be similar to the different 'show' variants, but not quite. check if it is re-implementing stuff, and normalize. maybe use the show-command with specific parameters once a ticket candidate has been selected.",
+  "created_at": "2026-04-02T17:32:00+00:00",
+  "id": "T-117",
+  "priority": 2,
+  "title": "'resume' code-deduplication",
+  "updated_at": "2026-04-02T17:32:00+00:00"
+}
