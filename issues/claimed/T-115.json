@@ -2,7 +2,8 @@
   "body": "Colors would make the output of many commands with a lot of text much more readable. E.g. 'list': show ticketname, prio, state, title, label and note-count with different colors. 'show': use same colors in the header (name, prio, state, title), and when listing the events, show date, note#, username, kind and body with different colors.",
   "created_at": "2026-04-02T17:27:37+00:00",
   "id": "T-115",
+  "owner": "claude",
   "priority": 3,
   "title": "use colors for human-designated output",
-  "updated_at": "2026-04-02T17:27:37+00:00"
+  "updated_at": "2026-04-02T17:39:43+00:00"
 }
