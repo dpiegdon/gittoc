@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+from . import colors as col
 from .models import Issue
 
 
@@ -27,14 +28,15 @@ def render_compact(issue: Issue, _tracker) -> str:
 
 def render_normal(issue: Issue, tracker) -> str:
     """Render an issue as a single annotated line with marker, deps, owner, labels, and note count."""
-    deps = f" deps={len(issue.deps)}" if issue.deps else ""
-    owner = f" owner={issue.owner}" if issue.owner else ""
-    labels = f" labels={','.join(issue.labels)}" if issue.labels else ""
+    deps = f" deps={col.deps(str(len(issue.deps)))}" if issue.deps else ""
+    owner = f" owner={col.owner(issue.owner)}" if issue.owner else ""
+    label_str = f" labels={col.label(','.join(issue.labels))}" if issue.labels else ""
     notes = tracker.note_count(issue.issue_id)
-    notes_text = f" notes={notes}" if notes else ""
+    notes_text = f" notes={col.count(notes)}" if notes else ""
+    m = marker(issue, tracker)
     return (
-        f"{marker(issue, tracker)} {issue.issue_id} p{issue.priority} "
-        f"[{issue.state}] {issue.title}{deps}{owner}{labels}{notes_text}"
+        f"{col.state_marker(m)} {col.issue_id(issue.issue_id)} {col.priority(issue.priority)} "
+        f"{col.state(issue.state)} {col.title(issue.title)}{deps}{owner}{label_str}{notes_text}"
     )
 
 
@@ -61,43 +63,50 @@ def render_verbose(issue: Issue, tracker) -> str:
 def render_show_text(data: dict) -> str:
     """Render a show-command data dict as human-readable text."""
     lines: list[str] = []
-    lines.append(f"{data.get('id', '?')} p{data.get('priority', '?')} [{data.get('state', '?')}] {data.get('title', '')}")
+    _id = col.issue_id(str(data.get("id", "?")))
+    _prio = col.priority(data.get("priority", 3))
+    _state = col.state(str(data.get("state", "?")))
+    _title = col.title(str(data.get("title", "")))
+    lines.append(f"{_id} {_prio} {_state} {_title}")
     if data.get("body"):
-        lines.append(f"  body: {data['body']}")
+        lines.append(f"  {col.field_name('body:')} {data['body']}")
     deps = data.get("deps", [])
-    lines.append(f"  deps: {', '.join(deps) if deps else '-'}")
-    labels = data.get("labels", [])
-    lines.append(f"  labels: {', '.join(labels) if labels else '-'}")
-    lines.append(f"  owner: {data.get('owner') or '-'}")
-    lines.append(f"  created: {data.get('created_at', '-')}")
-    lines.append(f"  updated: {data.get('updated_at', '-')}")
+    deps_str = col.deps(", ".join(deps)) if deps else "-"
+    lines.append(f"  {col.field_name('deps:')} {deps_str}")
+    label_list = data.get("labels", [])
+    label_str = col.label(", ".join(label_list)) if label_list else "-"
+    lines.append(f"  {col.field_name('labels:')} {label_str}")
+    owner_val = data.get("owner")
+    lines.append(f"  {col.field_name('owner:')} {col.owner(owner_val) if owner_val else '-'}")
+    lines.append(f"  {col.field_name('created:')} {data.get('created_at', '-')}")
+    lines.append(f"  {col.field_name('updated:')} {data.get('updated_at', '-')}")
     notes_count = data.get("notes_count", data.get("recent_notes_total", 0))
-    lines.append(f"  notes: {notes_count}")
+    lines.append(f"  {col.field_name('notes:')} {notes_count}")
     recent_notes = data.get("recent_notes", [])
     if recent_notes:
         lines.append("")
         for note in recent_notes:
             note_id = note.get("note_id")
-            label = f"note#{note_id}" if note_id else "note"
-            actor = note.get("actor", "?")
-            at = note.get("at", "")
+            ev_label = col.event_label(f"note#{note_id}" if note_id else "note")
+            ev_actor = col.actor(note.get("actor", "?"))
+            ev_at = col.timestamp(f"[{note.get('at', '')}]")
             text = note.get("text", "")
-            lines.append(f"  [{at}] {label} {actor}: {text}")
+            lines.append(f"  {ev_at} {ev_label} {ev_actor}: {text}")
     hint = data.get("recent_notes_hint")
     if hint:
         lines.append(f"  ({hint})")
     history = data.get("history")
     if history:
         lines.append("")
-        lines.append("  history:")
+        lines.append(f"  {col.field_name('history:')}")
         for entry in history:
             note_id = entry.get("note_id")
             kind = entry.get("kind", "?")
-            label = f"{kind}#{note_id}" if note_id else kind
-            actor = entry.get("actor", "?")
-            at = entry.get("at", "")
+            ev_label = col.event_label(f"{kind}#{note_id}" if note_id else kind)
+            ev_actor = col.actor(entry.get("actor", "?"))
+            ev_at = col.timestamp(f"[{entry.get('at', '')}]")
             text = entry.get("text", "")
-            lines.append(f"    [{at}] {label} {actor}: {text}")
+            lines.append(f"    {ev_at} {ev_label} {ev_actor}: {text}")
     return "\n".join(lines)
 
 

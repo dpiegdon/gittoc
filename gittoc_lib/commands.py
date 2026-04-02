@@ -56,14 +56,12 @@ def resume_payload(
     reason: str | None = None,
 ) -> dict:
     """Build the full resume data dict including recent notes and events."""
-    data = issue.to_display(
-        path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id)
-    )
+    note_count = tracker.note_count(issue.issue_id)
+    data = issue.to_display(path.relative_to(tracker.checkout), note_count)
     data["ready"] = tracker.ready(issue)
     if reason:
         data["selection"] = reason
     notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=notes_limit)
-    note_count = tracker.note_count(issue.issue_id)
     data["recent_notes"] = notes
     data["recent_notes_shown"] = len(notes)
     data["recent_notes_total"] = note_count
@@ -328,36 +326,30 @@ def cmd_show(args: argparse.Namespace) -> int:
     """Print a single issue with optional notes/history detail."""
     tracker = Tracker.open()
     issue, path = tracker.load_issue(args.issue_id)
-    data = issue.to_display(
-        path.relative_to(tracker.checkout), tracker.note_count(issue.issue_id)
-    )
+    note_count = tracker.note_count(issue.issue_id)
+    data = issue.to_display(path.relative_to(tracker.checkout), note_count)
     limit = args.limit
     if args.all:
-        # -a: everything — all notes + full event history
-        notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=limit)
-        data["recent_notes"] = notes
-        data["recent_notes_shown"] = len(notes)
-        data["recent_notes_total"] = tracker.note_count(issue.issue_id)
+        # -a: everything — full event history; notes are part of history, shown once
         data["history"] = tracker.filtered_events(issue.issue_id, limit=limit)
     elif args.notes:
         # -n: all notes, no limit (unless -l is set)
         notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=limit)
         data["recent_notes"] = notes
         data["recent_notes_shown"] = len(notes)
-        data["recent_notes_total"] = tracker.note_count(issue.issue_id)
+        data["recent_notes_total"] = note_count
     else:
         # Default: 3 recent notes (or -l N)
         notes_limit = limit if limit is not None else SHOW_NOTES_LIMIT
         recent_notes = tracker.filtered_events(
             issue.issue_id, kinds={"note"}, limit=notes_limit
         )
-        recent_notes_total = tracker.note_count(issue.issue_id)
         data["recent_notes"] = recent_notes
         data["recent_notes_shown"] = len(recent_notes)
-        data["recent_notes_total"] = recent_notes_total
-        if recent_notes_total > len(recent_notes):
+        data["recent_notes_total"] = note_count
+        if note_count > len(recent_notes):
             data["recent_notes_hint"] = (
-                f"showing {len(recent_notes)} of {recent_notes_total} notes; "
+                f"showing {len(recent_notes)} of {note_count} notes; "
                 f"use `show {args.issue_id} -n` for all"
             )
     if args.format == "json":
