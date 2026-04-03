@@ -172,7 +172,7 @@ class TestDependenciesAndReady(GittocTestBase):
 
         listing = run(["list"], self.repo).splitlines()
         self.assertIn(f"> {issue1} p1 [open] High priority task", listing[0])
-        self.assertIn(f"* {issue2} p4 [open] Lower priority task deps=1", listing[1])
+        self.assertIn(f"* {issue2} p4 [open] Lower priority task  deps=1", listing[1])
 
     def test_ready_after_close(self) -> None:
         run(["init"], self.repo)
@@ -249,7 +249,7 @@ class TestClaimWorkflow(GittocTestBase):
         run(["init"], self.repo)
         issue1 = run(["new", "Task", "-p", "1"], self.repo)
         claimed_out = run(["claim", issue1, "--owner", "tester"], self.repo)
-        self.assertIn(f"! {issue1} p1 [claimed] Task owner=tester", claimed_out)
+        self.assertIn(f"! {issue1} p1 [claimed] Task  owner=tester", claimed_out)
 
         claimed = json.loads(run(["show", issue1, "-f", "json"], self.repo))
         self.assertEqual(claimed["state"], "claimed")
@@ -266,7 +266,7 @@ class TestClaimWorkflow(GittocTestBase):
         run(["init"], self.repo)
         issue1 = run(["new", "Task", "-p", "1"], self.repo)
         claimed_alias = run(["c", issue1, "--owner", "tester"], self.repo)
-        self.assertIn(f"! {issue1} p1 [claimed] Task owner=tester", claimed_alias)
+        self.assertIn(f"! {issue1} p1 [claimed] Task  owner=tester", claimed_alias)
 
 
 class TestLabels(GittocTestBase):

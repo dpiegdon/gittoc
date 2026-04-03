@@ -37,7 +37,7 @@ def render_normal(issue: Issue, tracker) -> str:
     m = marker(issue, tracker)
     return (
         f"{col.state_marker(m)} {col.issue_id(issue.issue_id)} {col.priority(issue.priority)} "
-        f"{col.state(issue.state)} {col.title(issue.title)}{owner}{label_str}{notes_text}{deps}"
+        f"{col.state(issue.state)} {col.title(issue.title)} {owner}{label_str}{notes_text}{deps}"
     )
 
 
