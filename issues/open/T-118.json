@@ -1,0 +1,13 @@
+{
+  "body": "Investigate how different agents (claude, codex, copilot) expect skills in a git repository, and fix 'setup' script to do that.",
+  "created_at": "2026-04-03T23:53:23+00:00",
+  "id": "T-118",
+  "labels": [
+    "ux",
+    "feature",
+    "ready"
+  ],
+  "priority": 2,
+  "title": "Improve/validate agent-specific embedding",
+  "updated_at": "2026-04-03T23:53:23+00:00"
+}
