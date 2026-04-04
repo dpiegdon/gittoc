@@ -6,3 +6,4 @@
 {"actor": "dpiegdon", "at": "2026-04-04T00:00:34+00:00", "kind": "note", "text": "Ok lets go for label='ready' and command 'unblocked', strike 'list --ready-only' and command 'ready'."}
 {"actor": "dpiegdon", "at": "2026-04-04T00:00:42+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-04-04T00:40:57+00:00", "kind": "claimed", "text": "claude"}
+{"actor": "claude", "at": "2026-04-04T00:42:55+00:00", "kind": "closed", "text": ""}
