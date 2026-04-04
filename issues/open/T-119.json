@@ -1,5 +1,5 @@
 {
-  "body": "Release official 1.0. Only be taken on explicit command from project lead.",
+  "body": "Make official release 0.5.0. (Downgraded from 1.0.0 to allow increased testing period)",
   "created_at": "2026-04-04T00:53:39+00:00",
   "deps": [
     "T-41",
@@ -12,6 +12,6 @@
     "human"
   ],
   "priority": 1,
-  "title": "make 1.0.0 release",
-  "updated_at": "2026-04-04T00:56:41+00:00"
+  "title": "Make 0.5.0 release",
+  "updated_at": "2026-04-04T23:48:10+00:00"
 }
