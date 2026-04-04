@@ -5,3 +5,4 @@
 {"actor": "copilot", "at": "2026-03-31T23:24:11+00:00", "kind": "note", "text": "Agreed \u2014 'ready' is the natural label for 'go do it'. Rename the CLI side instead: (1) rename 'ready' subcommand to 'unblocked', add 'ready' as a deprecated alias that warns, (2) rename '--ready-only' to '--unblocked', same deprecation. The 'ready' label keeps its standard meaning. Migration path: aliases let existing muscle memory work while nudging toward the new names. Could drop the deprecated aliases after a version or two."}
 {"actor": "dpiegdon", "at": "2026-04-04T00:00:34+00:00", "kind": "note", "text": "Ok lets go for label='ready' and command 'unblocked', strike 'list --ready-only' and command 'ready'."}
 {"actor": "dpiegdon", "at": "2026-04-04T00:00:42+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "claude", "at": "2026-04-04T00:40:57+00:00", "kind": "claimed", "text": "claude"}
