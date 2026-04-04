@@ -8,7 +8,7 @@ rather than keeping state in chat.
 
 - Prefer small, traceable changes over large mixed batches.
 - Create or update a ticket before doing non-trivial work.
-- One ticket per distinct issue; one commit per ticket where possible.
+- One ticket per distinct issue; commit your changes per ticket where possible.
 - Include the ticket ID in commit messages, e.g. `Add label filtering (T-39)`.
 - Do not silently fix unrelated issues — open a new ticket instead.
 - Do not rewrite git history unless explicitly asked, and only if the history
@@ -25,6 +25,7 @@ rather than keeping state in chat.
 - Close tickets when the work is complete.
 - When multiple agents or humans are working concurrently, push both the
   `gittoc` branch and the working branch after each commit.
+- If you are tasked with solving multiple tickets, try to finish one ticket before taking another.
 
 ## Commit Discipline
 
@@ -41,8 +42,8 @@ rather than keeping state in chat.
 ## Testing
 
 ```bash
-python3 -m unittest tests.test_gittoc
-python3 -m py_compile gittoc gittoc_lib/*.py tests/test_gittoc.py
+python3 -m unittest scripts.tests.test_gittoc
+python3 -m py_compile scripts/gittoc scripts/gittoc_lib/*.py scripts/tests/test_gittoc.py
 ```
 
 - Add regression tests when fixing bugs.

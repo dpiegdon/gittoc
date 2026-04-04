@@ -124,36 +124,7 @@ def cmd_init(_args: argparse.Namespace) -> int:
         if inferred:
             tracker.configure_remote(inferred)
     print(f"initialized tracker branch {TRACKER_BRANCH} at {tracker.checkout}")
-    _print_init_checklist(tracker.repo)
     return 0
-
-
-def _print_init_checklist(repo: Path) -> None:
-    """Print a post-install checklist of optional setup steps."""
-    skill_link = repo / ".claude" / "skills" / "gittoc.md"
-    alias_proc = run_git(["config", "alias.toc"], cwd=repo, check=False)
-    has_alias = alias_proc.returncode == 0
-
-    lines = []
-    if not skill_link.exists():
-        lines.append(
-            "  [ ] Claude Code skill symlink missing — run:\n"
-            "        mkdir -p .claude/skills && ln -s ../../tools/gittoc/SKILL.md .claude/skills/gittoc.md"
-        )
-    else:
-        lines.append(f"  [x] Claude Code skill symlink: {skill_link.relative_to(repo)}")
-
-    if not has_alias:
-        lines.append(
-            "  [ ] git alias not set — run:\n"
-            "        printf '[alias]\\n    toc = !tools/gittoc/gittoc\\n' >> .git/config"
-        )
-    else:
-        lines.append(f"  [x] git alias: git toc = {alias_proc.stdout.strip()}")
-
-    if lines:
-        print("\nSetup checklist:")
-        print("\n".join(lines))
 
 
 def cmd_remote(args: argparse.Namespace) -> int:

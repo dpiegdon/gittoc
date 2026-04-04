@@ -1,6 +1,11 @@
 ---
 name: gittoc
-description: Use when work spans multiple turns or sessions and needs a repo-local issue tracker with dependencies, ready-task discovery, and git history, without external services or nonstandard dependencies.
+description: Git-repository-specific ticket system. Use when work spans multiple turns or sessions and needs a repo-local issue tracker with dependencies, ready-task discovery, and git history, without external services or nonstandard dependencies.
+license: MIT. LICENSE.txt has complete terms.
+compatibility: Requires python 3.8+ and git.
+metadata:
+  author: codeberg.org/dpiegdon/gittoc
+  version: "0.4.0"
 ---
 
 # Gittoc
@@ -51,9 +56,23 @@ Labels are free-form, but these conventions help with filtering and grooming:
 
 ## Commands
 
-Invoke as `gittoc <command>` or `tools/gittoc/gittoc <command>` or
-`git toc <command>` if the alias is configured. Use `--help` on any command
-for full argument documentation.
+Invoke as `git toc <command>`, `gittoc <command>` or `.agents/skills/gittoc/scripts/gittoc <command>`.
+Use `--help` on any command for full argument documentation.
+
+**Output format**
+— listing commands accept `-f compact|normal|verbose|json`; other commands accept `-f text|json` where applicable
+
+**Inspecting tickets**
+- `resume` / `r` — context for the most relevant current ticket
+- `resume T-1` — context for a specific ticket
+- `show T-1` / `s T-1` — ticket fields + 3 recent notes
+- `show T-1 -n` — all notes
+- `show T-1 -a` — everything: all notes + full event history
+- `show T-1 -l 5` — cap entries shown
+- `show T-1 -f json` — JSON output for scripting
+- `log T-1` — git history for one ticket file (oldest-first)
+- `log` — all recent tracker changes (oldest-first)
+- `log --no-reverse` — newest-first, like standard git log
 
 **Backlog**
 - `summary` / `sum` — ticket counts by state
@@ -77,30 +96,15 @@ for full argument documentation.
 - `dep T-2 T-1 T-3 T-4` — add multiple blockers T-1, T-3, T-4 for T-2
 - `dep T-2 T-1 --remove` / `dep T-2 T-1 -r` — remove a dependency
 - `note T-1 "context"` / `n T-1 "context"` — append a durable note
-- `close T-1` — mark done; `--actor NAME` to attribute
-- `reject T-1` — mark as won't-do; `--actor NAME` to attribute
-
-**Inspecting tickets**
-- `show T-1` / `s T-1` — ticket fields + 3 recent notes
-- `show T-1 -n` — all notes
-- `show T-1 -a` — everything: all notes + full event history
-- `show T-1 -l 5` — cap entries shown
-- `show T-1 -f json` — JSON output for scripting
-- `resume` / `r` — context for the most relevant current ticket
-- `resume T-1` — context for a specific ticket
-- `log T-1` — git history for one ticket file (oldest-first)
-- `log` — all recent tracker changes (oldest-first)
-- `log --no-reverse` — newest-first, like standard git log
-
-**Output format** — listing commands accept `-f compact|normal|verbose|json`;
-other commands accept `-f text|json` where applicable
+- `close T-1` — close as done
+- `reject T-1` — close and reject ticket as won't-do
 
 **Remote sync**
 - `remote` — inspect tracker remote wiring
 - `remote --set origin` — configure tracker remote
 - `pull` / `pull origin` — fetch and merge tracker branch (uses configured remote by default)
 - `push` / `push origin` — push tracker branch (uses configured remote by default)
-- auto-push/pull: enable with `git config gittoc.autopush true` (or `./tools/gittoc/setup --autopush`);
+- auto-push/pull: enable with `git config gittoc.autopush true` (or `.agents/skills/gittoc/scripts/setup --autopush`);
   every mutating command will then pull before and push after the local write
 
 ## Recommended workflow
@@ -108,7 +112,6 @@ other commands accept `-f text|json` where applicable
 At the start of multi-step work:
 
 ```bash
-gittoc summary
 gittoc resume
 ```
 
@@ -167,4 +170,3 @@ This keeps the schema minimal. Notes are searchable via `gittoc grep`.
 - In sandboxed environments, writes under `.git/gittoc/` may require explicit
   approval. If mutations fail with a permission error, the sandbox may be
   blocking `.git` writes rather than the tool itself.
-- For embedding guidance, see [references/embedding.md](references/embedding.md).

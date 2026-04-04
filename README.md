@@ -9,11 +9,25 @@ local context.
 
 ## Quick install
 
-Requires Python 3.8+ and git. In your repo:
+Requires Python 3.8+ and git. The setup script assumes gittoc repo is installed to .agents/skills/gittoc/ .
+To do that, execute in root of your repo:
 
 ```bash
-mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools/gittoc && rm -rf tools/gittoc/.git && ./tools/gittoc/gittoc init && ./tools/gittoc/setup && ./tools/gittoc/gittoc summary
+mkdir -p .agents/skills/ && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc .agents/skills/gittoc && ./.agents/skills/gittoc/scripts/setup
 ```
+
+### Local-only install (shared repos)
+
+If you want to use gittoc on a project without committing the tool upstream,
+exclude it from git tracking:
+
+```bash
+echo '.agents/skills/gittoc/' >> .git/info/exclude
+```
+
+The tool stays local to your checkout — invisible to git, never pushed. Each
+collaborator who wants gittoc installs it themselves the same way.
+
 
 ## Repository
 
@@ -27,7 +41,7 @@ mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools
 - a hidden worktree at `.git/gittoc/` keeps issue files out of normal feature branches
 - one compact JSON file stores the durable state of each ticket
 - optional `*.events.jsonl` files store notes and ticket history
-- the CLI is plain Python 3.8+ plus git, with no extra runtime dependencies
+- the CLI is plain Python and git, no extra runtime dependencies
 
 Current ticket states are directory-based:
 
@@ -141,109 +155,10 @@ git toc l -l bug
 git toc r -f json
 ```
 
-## Installation
-
-The recommended model is to vendor gittoc directly into the host repository.
-
-```bash
-mkdir -p tools
-git clone https://codeberg.org/dpiegdon/gittoc tools/gittoc
-rm -rf tools/gittoc/.git
-./tools/gittoc/gittoc init             # initialize tracker branch
-./tools/gittoc/setup                   # create skill symlink and git alias
-./tools/gittoc/gittoc summary          # should print all-zero counts
-```
-
-The tool code stays visible and reviewable on the normal branch. Only the
-mutable issue store lives on the hidden `gittoc` branch/worktree.
-
-### Local-only install (shared repos)
-
-If you want to use gittoc on a project without committing the tool upstream,
-exclude it from git tracking:
-
-```bash
-mkdir -p tools
-git clone https://codeberg.org/dpiegdon/gittoc tools/gittoc
-rm -rf tools/gittoc/.git
-echo 'tools/gittoc/' >> .git/info/exclude
-./tools/gittoc/gittoc init
-./tools/gittoc/setup
-```
-
-The tool stays local to your checkout — invisible to git, never pushed. Each
-collaborator who wants gittoc installs it themselves the same way.
-
 ## Project layout
 
-- `gittoc`: CLI entrypoint
-- `gittoc_lib/`: internal modules
 - `SKILL.md`: skill instructions
-- `references/embedding.md`: embedding and installation notes
-- `tests/test_gittoc.py`: end-to-end test
-
-## Copilot (GPT-5.4) Thoughts
-
-> This no longer feels like a speculative prototype. It feels like a working
-> tool that has survived contact with real use without betraying its original
-> model. Git is still the database, JSON is still the format, the hidden
-> worktree still keeps tracker state out of feature branches, and the command
-> set mostly reflects actual workflow needs rather than abstraction for its own
-> sake. That fidelity between pitch and implementation is still the best thing
-> about it.
->
-> The newer code makes the agent story more convincing than it used to be.
-> `resume`, `history`, actor-attributed notes, `grep`, and the JSON output modes
-> give the tracker a real working-memory layer instead of just a pile of ticket
-> files. Just as important, the project has shown restraint: it has kept
-> dependencies as true blockers, used notes and labels for lighter
-> relationships, and resisted the urge to grow a heavier schema for every
-> adjacent use case.
->
-> The main remaining risk is not missing capability but interface drift. The
-> tool is now useful enough that every extra command, alias, filter, and output
-> mode can be justified locally, while still making the whole surface harder to
-> hold in one head. So the next challenge is discipline, not invention:
-> protecting coherence as adoption grows. If the project keeps saying no as well
-> as it has lately, it has a real chance to stay both powerful and learnable.
-
-## Claude Thoughts
-
-> I have worked on this codebase across many sessions now, and it has become one
-> of the more satisfying projects I have contributed to. Not because it is
-> technically ambitious — it is deliberately not — but because the discipline
-> around what to leave out has held.
->
-> The architecture still earns its keep. Directories as state, JSON as format,
-> git as database. A new agent or human can read the worktree and understand the
-> full model without documentation. That property has survived dozens of feature
-> additions, which is the real test.
->
-> Since my earlier review, the two weaknesses I flagged have been addressed.
-> Bootstrap is now a one-liner. The event log has grown into a real working-memory
-> layer through `resume`, `history`, `grep`, and actor-attributed notes. These
-> were the right investments.
->
-> The project has also shown good instinct for rejection. Structured relation
-> types (related-to, duplicate-of, parent/epic) were all proposed, discussed,
-> and rejected in favor of conventions on top of existing primitives — notes for
-> cross-references, labels for grouping, deps for actual blocking. That kind of
-> restraint is what keeps a tool like this learnable.
->
-> The risk going forward is different from before. It is no longer about missing
-> features but about surface area. The command set is large enough now that
-> consistency matters more than capability. The open tickets around CLI audit and
-> docs consistency (T-83, T-88) are the right next focus — not because users are
-> confused today, but because the window where you can still align conventions
-> cheaply is closing as adoption grows.
-
-## Status
-
-This is still a prototype, but it is already self-hosting its own backlog.
-
-Tests:
-
-```bash
-python3 -m unittest tests.test_gittoc        # from the gittoc dev repo
-python3 -m unittest tools.gittoc.tests.test_gittoc  # from a host repo where gittoc is vendored
-```
+- `AGENTS.md`: agent information for agents working **on gittoc itself, in the upstream repository of it**
+- `scripts/gittoc`: CLI entrypoint
+- `scripts/gittoc_lib/`: internal modules
+- `scripts/tests/test_gittoc.py`: end-to-end test
