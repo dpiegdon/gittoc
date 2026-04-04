@@ -9,7 +9,7 @@ local context.
 
 ## Quick install
 
-Requires Python 3.9+ and git. In your repo:
+Requires Python 3.8+ and git. In your repo:
 
 ```bash
 mkdir -p tools && git clone --depth=1 https://codeberg.org/dpiegdon/gittoc tools/gittoc && rm -rf tools/gittoc/.git && ./tools/gittoc/gittoc init && ./tools/gittoc/setup && ./tools/gittoc/gittoc summary
