@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/sh -e
 
 # Idempotent installation script for gittoc system into repositories.
 # Run from the project root.
@@ -41,7 +41,7 @@ if [ "$AUTOPUSH" = "1" ]; then
 fi
 
 # create agentic-specific symlinks to skill
-for AGENT in claude github opencode; do
+for AGENT in claude github openai opencode; do
 	SKILLDIR="$GIT_ROOTDIR/.${AGENT}/skills"
 	if [ ! -e "$SKILLDIR/gittoc" ]; then
 		mkdir -p "$SKILLDIR"
