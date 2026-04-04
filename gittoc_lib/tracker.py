@@ -204,6 +204,39 @@ class Tracker:
         self.base_head = self.head()
         return {"action": "push", "remote": remote, "head": self.base_head}
 
+    def autopush_enabled(self) -> bool:
+        """Return True if gittoc.autopush is set to a truthy value in git config."""
+        val = local_config_get(self.repo, "gittoc.autopush")
+        return val.lower() in ("true", "1", "yes")
+
+    def auto_pull(self) -> None:
+        """Pull from the effective remote before a mutation.
+
+        Skipped silently if no remote is configured or the remote branch does
+        not exist yet.  Raises SystemExit on merge conflict so the mutation is
+        aborted before anything is written.
+        """
+        remote = self.effective_remote()
+        if not remote:
+            return
+        if not remote_branch_exists(self.repo, remote, TRACKER_BRANCH):
+            return
+        self.pull_remote(remote)
+
+    def auto_push(self) -> None:
+        """Push to the effective remote after a mutation.
+
+        Network failures print a warning to stderr but do not abort — the local
+        mutation has already been committed and is valid.
+        """
+        remote = self.effective_remote()
+        if not remote:
+            return
+        try:
+            self.push_remote(remote)
+        except SystemExit as exc:
+            print(f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr)
+
     def ensure_not_stale(self) -> None:
         """Raise StaleTrackerError if the tracker has been modified since it was opened."""
         current = self.head()

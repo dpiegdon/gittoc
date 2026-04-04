@@ -1,11 +1,27 @@
 #!/bin/sh
 # Set up skill symlink and git alias for a vendored gittoc install.
 # Run from the project root, or via: gittoc init --setup
+#
+# Options:
+#   --autopush    enable auto-push/pull on every mutating command
+#                 (git config gittoc.autopush true)
 set -e
 GITTOC_DIR="$(cd "$(dirname "$0")" && pwd)"
 GITTOC_REL="$(python3 -c "import os,sys; print(os.path.relpath(sys.argv[1]))" "$GITTOC_DIR")"
+
+AUTOPUSH=0
+for arg in "$@"; do
+    case "$arg" in
+        --autopush) AUTOPUSH=1 ;;
+    esac
+done
 
 mkdir -p .claude/skills
 [ -e .claude/skills/gittoc.md ] || ln -s "../../${GITTOC_REL}/SKILL.md" .claude/skills/gittoc.md
 
 git config alias.toc >/dev/null 2>&1 || printf '[alias]\n    toc = !%s/gittoc\n' "$GITTOC_REL" >> .git/config
+
+if [ "$AUTOPUSH" = "1" ]; then
+    git config gittoc.autopush true
+    echo "auto-push enabled (gittoc.autopush=true)"
+fi

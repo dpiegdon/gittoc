@@ -656,5 +656,49 @@ class TestPullAndPush(GittocTestBase):
         self.assertEqual(push_alias["action"], "push")
 
 
+class TestAutoPush(GittocTestBase):
+    def test_autopush_syncs_new_ticket(self) -> None:
+        remote_repo = self.init_with_remote()
+        subprocess.run(
+            ["git", "push", "-u", "origin", "gittoc"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "gittoc.autopush", "true"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+
+        clone = Path(self.tempdir.name) / "clone-autopush"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+        run(["summary"], clone)  # triggers init of gittoc worktree
+
+        run(["new", "Auto-pushed ticket"], self.repo)
+
+        # clone should see the ticket after pulling
+        run(["pull", "origin"], clone)
+        summary = run(["summary"], clone)
+        self.assertIn("open=1", summary)
+
+    def test_autopush_push_failure_warns_not_aborts(self) -> None:
+        run(["init"], self.repo)
+        subprocess.run(
+            ["git", "config", "gittoc.autopush", "true"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        # autopush is enabled but no remote is configured — push skipped silently
+        issue = run(["new", "Ticket without remote"], self.repo)
+        self.assertEqual(issue, "T-1")
+
+
 if __name__ == "__main__":
     unittest.main()

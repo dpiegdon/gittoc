@@ -100,6 +100,8 @@ other commands accept `-f text|json` where applicable
 - `remote --set origin` — configure tracker remote
 - `pull` / `pull origin` — fetch and merge tracker branch (uses configured remote by default)
 - `push` / `push origin` — push tracker branch (uses configured remote by default)
+- auto-push/pull: enable with `git config gittoc.autopush true` (or `./tools/gittoc/setup --autopush`);
+  every mutating command will then pull before and push after the local write
 
 ## Recommended workflow
 

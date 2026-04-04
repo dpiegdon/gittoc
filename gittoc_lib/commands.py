@@ -22,6 +22,18 @@ from .tracker import Tracker
 SHOW_NOTES_LIMIT = 3
 
 
+def _auto_pull(tracker) -> None:
+    """Pull before a mutation if autopush is enabled."""
+    if tracker.autopush_enabled():
+        tracker.auto_pull()
+
+
+def _auto_push(tracker) -> None:
+    """Push after a mutation if autopush is enabled."""
+    if tracker.autopush_enabled():
+        tracker.auto_push()
+
+
 def parse_labels(values: list[str] | None) -> list[str]:
     """Parse repeatable/comma-separated label arguments into a deduplicated list."""
     if not values:
@@ -210,12 +222,14 @@ def cmd_push(args: argparse.Namespace) -> int:
 def cmd_new(args: argparse.Namespace) -> int:
     """Create a new issue and optionally add dependencies."""
     tracker = Tracker.open()
+    _auto_pull(tracker)
     issue = tracker.create_issue(
         args.title, args.body or "", parse_labels(args.label), args.priority
     )
     if args.dep:
         tracker.set_dependencies(issue.issue_id, args.dep)
     print(issue.issue_id)
+    _auto_push(tracker)
     return 0
 
 
@@ -257,6 +271,7 @@ def cmd_unblocked(args: argparse.Namespace) -> int:
 def cmd_claim(args: argparse.Namespace) -> int:
     """Claim one or more issues, assigning them to the given or inferred owner."""
     tracker = Tracker.open()
+    _auto_pull(tracker)
     owner = args.owner or default_owner()
     issues = []
     for issue_id in args.issue_ids:
@@ -272,6 +287,7 @@ def cmd_claim(args: argparse.Namespace) -> int:
             )
         )
     print_issues(issues, tracker, args.format)
+    _auto_push(tracker)
     return 0
 
 
@@ -294,9 +310,11 @@ def cmd_labels(args: argparse.Namespace) -> int:
 def cmd_reject(args: argparse.Namespace) -> int:
     """Reject an issue (mark as won't-do / abandoned) and print confirmation."""
     tracker = Tracker.open()
+    _auto_pull(tracker)
     actor = args.actor or default_owner()
     issue = tracker.reject_issue(args.issue_id, actor=actor)
     print_issues([issue], tracker, args.format)
+    _auto_push(tracker)
     return 0
 
 
@@ -359,6 +377,7 @@ def cmd_show(args: argparse.Namespace) -> int:
 def cmd_update(args: argparse.Namespace) -> int:
     """Update one or more fields of an existing issue."""
     tracker = Tracker.open()
+    _auto_pull(tracker)
     state = parse_state(args.state)
     add_labels = parse_labels(args.label)
     replace_labels = parse_labels(args.replace_label)
@@ -402,17 +421,20 @@ def cmd_update(args: argparse.Namespace) -> int:
         event_text="fields updated",
     )
     print(issue.issue_id)
+    _auto_push(tracker)
     return 0
 
 
 def cmd_dep(args: argparse.Namespace) -> int:
     """Add or remove blocking dependencies for an issue."""
     tracker = Tracker.open()
+    _auto_pull(tracker)
     if args.remove:
         issue = tracker.remove_dependencies(args.issue_id, args.dep_ids)
     else:
         issue = tracker.set_dependencies(args.issue_id, args.dep_ids)
     print(issue.issue_id)
+    _auto_push(tracker)
     return 0
 
 
@@ -450,6 +472,7 @@ def cmd_grep(args: argparse.Namespace) -> int:
 def cmd_close(args: argparse.Namespace) -> int:
     """Mark an issue as closed (done) and print confirmation."""
     tracker = Tracker.open()
+    _auto_pull(tracker)
     actor = args.actor or default_owner()
     issue = tracker.update_issue(
         args.issue_id,
@@ -459,6 +482,7 @@ def cmd_close(args: argparse.Namespace) -> int:
         event_actor=actor,
     )
     print_issues([issue], tracker, args.format)
+    _auto_push(tracker)
     return 0
 
 
@@ -480,8 +504,10 @@ def cmd_log(args: argparse.Namespace) -> int:
 def cmd_note(args: argparse.Namespace) -> int:
     """Append a note to an issue and print its ID."""
     tracker = Tracker.open()
+    _auto_pull(tracker)
     issue = tracker.add_note(args.issue_id, args.text, actor=args.actor)
     print(issue.issue_id)
+    _auto_push(tracker)
     return 0
 
 
