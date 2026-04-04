@@ -5,3 +5,4 @@
 {"actor": "dpiegdon", "at": "2026-03-28T12:28:27+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "codex", "at": "2026-03-29T15:13:59+00:00", "kind": "note", "text": "Now that Codex, Claude, and humans are all intended first-class users, the next bootstrap trial should explicitly test all three perspectives: repo install, Claude skill exposure, git toc alias usability, and whether a cold agent can discover the workflow from README + SKILL + AGENTS without extra chat guidance."}
 {"actor": "copilot", "at": "2026-03-30T14:54:16+00:00", "kind": "note", "text": "Related bootstrap work: see T-81 for a concrete single-command bootstrap flow ticket. T-41 remains useful as the real-world validation/host-project trial for that experience."}
+{"actor": "dpiegdon", "at": "2026-04-04T23:44:38+00:00", "kind": "note", "text": "did another round of bootstrap tests with claude, codex and copilot after recent changes to setup-procedure and directory layout."}
