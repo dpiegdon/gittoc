@@ -1,0 +1,12 @@
+{
+  "body": "Release official 1.0. Only be taken on explicit command from project lead.",
+  "created_at": "2026-04-04T00:53:39+00:00",
+  "id": "T-119",
+  "labels": [
+    "release",
+    "human"
+  ],
+  "priority": 3,
+  "title": "make 1.0.0 release",
+  "updated_at": "2026-04-04T00:53:39+00:00"
+}
