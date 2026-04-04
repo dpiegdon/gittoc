@@ -3,3 +3,4 @@
 {"actor": "dpiegdon", "at": "2026-04-04T00:36:43+00:00", "kind": "note", "text": "skill setup (symlink from .claude/skills/gittoc.md -> SKILL.md) for claude code works seemlessly as is."}
 {"actor": "dpiegdon", "at": "2026-04-04T00:38:36+00:00", "kind": "note", "text": "skill setup for copilot does not work seemless. documentation is https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/create-skills => '$GITREPO/.agents/...' might be a viable way to cover *all* agents, including claude. then the .claude would not be needed."}
 {"actor": "dpiegdon", "at": "2026-04-04T02:38:42+00:00", "kind": "note", "text": "correction for claude: embedding does not seem to cleanly work on new session in an existing repo that has gittoc installed"}
+{"actor": "dpiegdon", "at": "2026-04-04T23:18:59+00:00", "kind": "closed", "text": ""}
