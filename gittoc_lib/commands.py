@@ -229,8 +229,6 @@ def cmd_list(args: argparse.Namespace) -> int:
     else:
         states = ("open",)
     issues = tracker.list_issues(states)
-    if args.ready_only:
-        issues = [issue for issue in issues if tracker.ready(issue)]
     if args.label:
         required = set(parse_labels(args.label))
         issues = [issue for issue in issues if required.issubset(issue.labels)]
@@ -248,7 +246,7 @@ def cmd_claimed(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_ready(args: argparse.Namespace) -> int:
+def cmd_unblocked(args: argparse.Namespace) -> int:
     """List all open issues that have no unresolved blocking dependencies."""
     tracker = Tracker.open()
     issues = tracker.ready_issues()

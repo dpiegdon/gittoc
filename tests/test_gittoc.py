@@ -130,7 +130,7 @@ class TestCreateAndList(GittocTestBase):
         show = run(["show", "T-2"], self.repo)
         self.assertIn("T-1", show)
         # T-2 should NOT be ready (blocked by T-1)
-        ready_out = run(["ready", "--format", "compact"], self.repo)
+        ready_out = run(["unblocked", "--format", "compact"], self.repo)
         self.assertNotIn("T-2", ready_out)
 
     def test_list_alias_and_compact(self) -> None:
@@ -180,7 +180,7 @@ class TestDependenciesAndReady(GittocTestBase):
         issue2 = run(["new", "Blocked", "-p", "2"], self.repo)
         run(["dep", issue2, issue1], self.repo)
         run(["close", issue1], self.repo)
-        ready = run(["ready"], self.repo)
+        ready = run(["unblocked"], self.repo)
         self.assertIn(issue2, ready)
 
     def test_self_dependency_rejected(self) -> None:

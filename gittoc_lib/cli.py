@@ -20,8 +20,8 @@ from .commands import (
     cmd_note,
     cmd_pull,
     cmd_push,
-    cmd_ready,
     cmd_reject,
+    cmd_unblocked,
     cmd_remote,
     cmd_resume,
     cmd_show,
@@ -190,11 +190,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="show all states",
     )
     list_parser.add_argument(
-        "--ready-only",
-        action="store_true",
-        help="show only tickets with no blocking dependencies",
-    )
-    list_parser.add_argument(
         "--sort",
         choices=["priority", "id"],
         default="priority",
@@ -270,9 +265,11 @@ def build_parser() -> argparse.ArgumentParser:
     add_text_format_argument(push_parser)
     push_parser.set_defaults(func=cmd_push)
 
-    ready_parser = sub.add_parser("ready", help="list ready open issues by priority")
-    add_format_argument(ready_parser)
-    ready_parser.set_defaults(func=cmd_ready)
+    unblocked_parser = sub.add_parser(
+        "unblocked", help="list open issues with no blocking dependencies"
+    )
+    add_format_argument(unblocked_parser)
+    unblocked_parser.set_defaults(func=cmd_unblocked)
 
     reject_parser = sub.add_parser(
         "reject", help="mark an issue as won't-do / abandoned"

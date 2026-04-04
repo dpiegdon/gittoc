@@ -79,7 +79,7 @@ gittoc list -l feature,ux           # AND of multiple labels (comma or repeated 
 gittoc list -a                      # all states
 gittoc list -s claimed -s blocked   # specific states
 gittoc labels                       # all labels in use with counts
-gittoc ready                        # only tickets with no blockers
+gittoc unblocked                    # only tickets with no blockers
 gittoc grep "pattern"               # search ticket files
 
 # working with tickets

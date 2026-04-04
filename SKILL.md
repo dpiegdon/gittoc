@@ -60,8 +60,7 @@ for full argument documentation.
 - `list` / `l` — open tickets by priority; `-a` for all states
 - `list -s claimed -s blocked` — filter by state
 - `list -l bug` / `list -l feature,ux` — filter by label (AND; comma or repeated -l)
-- `list --ready-only` — only tickets with no unmet dependencies
-- `ready` — shorthand for `list --ready-only`
+- `unblocked` — only tickets with no unmet dependencies
 - `labels` / `labels -a` — all labels in use with counts
 - `grep PATTERN [-i] [-n]` — search open ticket files; `-a` for all states, `-s closed` for specific
 - `list --sort=id` — chronological order instead of priority
