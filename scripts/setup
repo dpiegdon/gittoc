@@ -15,7 +15,7 @@
 GITTOC_DIR="$(cd "$(dirname "$0")/../" && pwd)"
 
 # remove unneeded files that may befuddle agents or users
-for F in AGENTS.md .git; do
+for F in AGENTS.md .git assets/gittoc_logo.png; do
 	if [ -e "$GITTOC_DIR/$F" ]; then
 		rm -Rf "$GITTOC_DIR/$F"
 	fi
