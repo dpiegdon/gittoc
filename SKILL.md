@@ -5,7 +5,7 @@ license: MIT. LICENSE.txt has complete terms.
 compatibility: Requires python 3.8+ and git.
 metadata:
   author: codeberg.org/dpiegdon/gittoc
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # Gittoc
