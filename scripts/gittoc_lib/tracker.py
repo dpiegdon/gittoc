@@ -790,8 +790,7 @@ class Tracker:
                                     issue_ids=issue_ids,
                                 )
                             )
-                            continue
-                        if not isinstance(entry[field], str):
+                        elif not isinstance(entry[field], str):
                             findings.append(
                                 self._finding(
                                     f"event field '{field}' must be a string",
@@ -810,12 +809,22 @@ class Tracker:
         return tuple(cycle[start:] + cycle[:start])
 
     def fsck(self, paths: list[Path] | None = None) -> IntegrityReport:
-        """Run a read-only integrity scan across tracker issues and event logs."""
+        """Run a read-only integrity scan across tracker issues and event logs.
+
+        When *paths* is ``None`` the full tracker is scanned.  When a list is
+        given, only findings related to those paths (or the issue IDs they
+        encode) are returned.  An empty list means nothing was changed, so the
+        scan is skipped and an ok report is returned immediately.
+        """
+        if paths is not None and not paths:
+            return IntegrityReport(
+                findings=(), checked_paths=(), scanned_issues=0, scanned_event_logs=0
+            )
         findings: list[IntegrityFinding] = []
         scope_paths = (
             {
                 self._relpath(path.resolve())
-                for path in paths or []
+                for path in paths
                 if path.exists() and path.is_relative_to(self.checkout)
             }
             if paths is not None

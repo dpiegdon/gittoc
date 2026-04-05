@@ -175,6 +175,8 @@ def cmd_pull(args: argparse.Namespace) -> int:
     else:
         print(f"pulled {TRACKER_BRANCH} from {status['remote']} to {status['head']}")
         if isinstance(report, IntegrityReport) and not report.ok:
+            # Findings go to stderr so the pull status line stays parseable on
+            # stdout; cmd_fsck uses stdout because the report IS the output.
             print(render_integrity_report(report), file=sys.stderr)
     if isinstance(report, IntegrityReport) and not report.ok:
         return 1
