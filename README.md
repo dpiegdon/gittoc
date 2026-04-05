@@ -1,3 +1,5 @@
+<img src="assets/gittoc_logo256.png" alt="gittoc logo" width="128" align="right">
+
 # gittoc
 
 `gittoc` is a git-backed issue tracker for humans and agents.
