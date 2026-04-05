@@ -120,6 +120,7 @@ gittoc resume T-42                  # show context for a specific ticket
 gittoc log T-42                     # git history for one ticket
 gittoc log                          # all recent tracker changes (oldest-first)
 gittoc log --no-reverse             # newest-first, like standard git log
+gittoc fsck                         # validate issue JSON, deps, cycles, and event logs
 
 # output format (-f on any command that supports it)
 gittoc list -f json
@@ -130,6 +131,9 @@ gittoc summary -f json
 gittoc pull origin
 gittoc push origin
 ```
+
+`gittoc pull` runs a read-only integrity check on changed tracker files after a
+non-trivial merge commit, and `gittoc fsck` scans the whole tracker on demand.
 
 Command aliases: `l`=list, `s`=show, `sum`=summary, `r`=resume, `c`=claim, `n`=note,
 `pl`=pull, `ps`=push.

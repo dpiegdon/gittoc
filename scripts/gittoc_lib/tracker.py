@@ -34,6 +34,12 @@ from .common import (
     validate_priority,
     worktree_path,
 )
+from .integrity import (
+    IntegrityFinding,
+    IntegrityReport,
+    issue_id_from_path,
+    render_integrity_report,
+)
 from .models import Issue
 
 
@@ -172,9 +178,37 @@ class Tracker:
         if remote not in list_remotes(self.repo):
             raise SystemExit(f"unknown remote: {remote}")
 
-    def pull_remote(self, remote: str) -> dict[str, str]:
+    def _merge_kind(self, before_head: str, after_head: str) -> str:
+        """Classify a pull result as unchanged, fast-forward, or merge."""
+        if after_head == before_head:
+            return "unchanged"
+        proc = run_git(
+            ["rev-list", "--parents", "-n", "1", after_head],
+            cwd=self.checkout,
+            check=False,
+        )
+        parent_count = max(len(proc.stdout.strip().split()) - 1, 0)
+        return "merge" if parent_count > 1 else "fast-forward"
+
+    def _pull_changed_paths(self, before_head: str, after_head: str) -> list[Path]:
+        """Return tracker files changed by a pull, relative to the pre-pull HEAD."""
+        if not before_head or after_head == before_head:
+            return []
+        proc = run_git(
+            ["diff", "--name-only", before_head, after_head, "--", "issues"],
+            cwd=self.checkout,
+            check=False,
+        )
+        return [
+            self.checkout / line.strip()
+            for line in proc.stdout.splitlines()
+            if line.strip()
+        ]
+
+    def pull_remote(self, remote: str) -> dict[str, object]:
         """Fetch and merge the tracker branch from the given remote."""
         self._validate_remote(remote)
+        before_head = self.head()
         run_git(["fetch", remote, TRACKER_BRANCH], cwd=self.repo)
         if not remote_branch_exists(self.repo, remote, TRACKER_BRANCH):
             raise SystemExit(f"remote branch not found: {remote}/{TRACKER_BRANCH}")
@@ -188,7 +222,18 @@ class Tracker:
                 f"pull failed while merging {remote}/{TRACKER_BRANCH}; resolve conflicts in {self.checkout} and re-run your command"
             )
         self.base_head = self.head()
-        return {"action": "pull", "remote": remote, "head": self.base_head}
+        merge_kind = self._merge_kind(before_head, self.base_head)
+        status: dict[str, object] = {
+            "action": "pull",
+            "remote": remote,
+            "head": self.base_head,
+            "merge_kind": merge_kind,
+        }
+        if merge_kind == "merge":
+            status["fsck"] = self.fsck(
+                self._pull_changed_paths(before_head, self.base_head)
+            )
+        return status
 
     def push_remote(self, remote: str) -> dict[str, str]:
         """Push the tracker branch to the given remote."""
@@ -221,7 +266,13 @@ class Tracker:
             return
         if not remote_branch_exists(self.repo, remote, TRACKER_BRANCH):
             return
-        self.pull_remote(remote)
+        status = self.pull_remote(remote)
+        report = status.get("fsck")
+        if isinstance(report, IntegrityReport) and not report.ok:
+            raise SystemExit(
+                "pull merged tracker changes but fsck found integrity issues:\n"
+                f"{render_integrity_report(report)}"
+            )
 
     def auto_push(self) -> None:
         """Push to the effective remote after a mutation.
@@ -235,7 +286,9 @@ class Tracker:
         try:
             self.push_remote(remote)
         except SystemExit as exc:
-            print(f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr)
+            print(
+                f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr
+            )
 
     def ensure_not_stale(self) -> None:
         """Raise StaleTrackerError if the tracker has been modified since it was opened."""
@@ -669,3 +722,330 @@ class Tracker:
         self.append_event(issue, "note", text, actor=actor)
         self.commit_if_needed(f"Add note to {issue.issue_id}", actor=actor)
         return issue
+
+    def _relpath(self, path: Path) -> str:
+        """Return a tracker-checkout-relative path string."""
+        return str(path.relative_to(self.checkout))
+
+    def _finding(
+        self,
+        message: str,
+        *,
+        path: Path | None = None,
+        line: int | None = None,
+        issue_ids: tuple[str, ...] = (),
+        severity: str = "error",
+    ) -> IntegrityFinding:
+        """Build a normalized integrity finding."""
+        return IntegrityFinding(
+            severity=severity,
+            message=message,
+            path=self._relpath(path) if path is not None else None,
+            line=line,
+            issue_ids=issue_ids,
+        )
+
+    def _validate_event_file(self, path: Path) -> list[IntegrityFinding]:
+        """Validate the JSONL structure of a single event file."""
+        findings: list[IntegrityFinding] = []
+        issue_ids = ()
+        event_id = issue_id_from_path(path)
+        if event_id is not None:
+            issue_ids = (event_id,)
+        try:
+            with path.open("r", encoding="utf-8") as handle:
+                for lineno, line in enumerate(handle, 1):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                    except json.JSONDecodeError as exc:
+                        findings.append(
+                            self._finding(
+                                f"malformed JSON: {exc}",
+                                path=path,
+                                line=lineno,
+                                issue_ids=issue_ids,
+                            )
+                        )
+                        continue
+                    if not isinstance(entry, dict):
+                        findings.append(
+                            self._finding(
+                                "event entry must be a JSON object",
+                                path=path,
+                                line=lineno,
+                                issue_ids=issue_ids,
+                            )
+                        )
+                        continue
+                    for field in ("actor", "at", "kind", "text"):
+                        if field not in entry:
+                            findings.append(
+                                self._finding(
+                                    f"missing event field '{field}'",
+                                    path=path,
+                                    line=lineno,
+                                    issue_ids=issue_ids,
+                                )
+                            )
+                            continue
+                        if not isinstance(entry[field], str):
+                            findings.append(
+                                self._finding(
+                                    f"event field '{field}' must be a string",
+                                    path=path,
+                                    line=lineno,
+                                    issue_ids=issue_ids,
+                                )
+                            )
+        except OSError as exc:
+            findings.append(self._finding(f"cannot read file: {exc}", path=path))
+        return findings
+
+    def _canonical_cycle(self, cycle: list[str]) -> tuple[str, ...]:
+        """Rotate a dependency cycle so duplicate reports collapse to one key."""
+        start = min(range(len(cycle)), key=lambda index: issue_number(cycle[index]))
+        return tuple(cycle[start:] + cycle[:start])
+
+    def fsck(self, paths: list[Path] | None = None) -> IntegrityReport:
+        """Run a read-only integrity scan across tracker issues and event logs."""
+        findings: list[IntegrityFinding] = []
+        scope_paths = (
+            {
+                self._relpath(path.resolve())
+                for path in paths or []
+                if path.exists() and path.is_relative_to(self.checkout)
+            }
+            if paths is not None
+            else None
+        )
+        checked_paths = tuple(sorted(scope_paths or ()))
+        scope_issue_ids = (
+            {
+                issue_id
+                for rel in scope_paths or set()
+                for issue_id in [issue_id_from_path(Path(rel))]
+                if issue_id is not None
+            }
+            if scope_paths is not None
+            else set()
+        )
+
+        issue_files: list[Path] = []
+        event_files: list[Path] = []
+        issue_paths_by_file_id: dict[str, list[Path]] = {}
+        event_paths_by_file_id: dict[str, list[Path]] = {}
+
+        for state in STATE_ORDER:
+            state_dir = self.state_dir(state)
+            if not state_dir.exists():
+                continue
+            for entry in sorted(state_dir.iterdir(), key=lambda value: value.name):
+                if entry.is_dir():
+                    findings.append(
+                        self._finding(
+                            "unexpected directory in tracker state", path=entry
+                        )
+                    )
+                    continue
+                if entry.name.endswith(EVENT_SUFFIX):
+                    event_id = issue_id_from_path(entry)
+                    if event_id is None:
+                        findings.append(
+                            self._finding("unexpected event filename", path=entry)
+                        )
+                        continue
+                    event_files.append(entry)
+                    event_paths_by_file_id.setdefault(event_id, []).append(entry)
+                    continue
+                if entry.suffix == ".json":
+                    issue_id = issue_id_from_path(entry)
+                    if issue_id is None:
+                        findings.append(
+                            self._finding("unexpected issue filename", path=entry)
+                        )
+                        continue
+                    issue_files.append(entry)
+                    issue_paths_by_file_id.setdefault(issue_id, []).append(entry)
+                    continue
+                findings.append(
+                    self._finding("unexpected file in tracker state", path=entry)
+                )
+
+        duplicate_file_ids = {
+            issue_id
+            for issue_id, paths_for_issue in issue_paths_by_file_id.items()
+            if len(paths_for_issue) > 1
+        }
+        for issue_id, paths_for_issue in issue_paths_by_file_id.items():
+            if len(paths_for_issue) <= 1:
+                continue
+            first = self._relpath(paths_for_issue[0])
+            for path in paths_for_issue[1:]:
+                findings.append(
+                    self._finding(
+                        f"duplicate issue file for {issue_id}; also present at {first}",
+                        path=path,
+                        issue_ids=(issue_id,),
+                    )
+                )
+
+        for issue_id, paths_for_issue in event_paths_by_file_id.items():
+            if len(paths_for_issue) <= 1:
+                continue
+            first = self._relpath(paths_for_issue[0])
+            for path in paths_for_issue[1:]:
+                findings.append(
+                    self._finding(
+                        f"duplicate event log for {issue_id}; also present at {first}",
+                        path=path,
+                        issue_ids=(issue_id,),
+                    )
+                )
+
+        issues_by_file_id: dict[str, Issue] = {}
+        issue_path_by_file_id: dict[str, Path] = {}
+        issue_paths_by_logical_id: dict[str, list[Path]] = {}
+        invalid_file_ids: set[str] = set()
+
+        for path in issue_files:
+            file_id = path.stem
+            issue, errors = Issue.validate_path(path)
+            if errors:
+                invalid_file_ids.add(file_id)
+                for error in errors:
+                    findings.append(
+                        self._finding(error, path=path, issue_ids=(file_id,))
+                    )
+                continue
+            if file_id not in duplicate_file_ids:
+                issues_by_file_id[file_id] = issue
+                issue_path_by_file_id[file_id] = path
+            if issue.issue_id != file_id:
+                findings.append(
+                    self._finding(
+                        f"filename/id mismatch: file name encodes {file_id}, record id is {issue.issue_id}",
+                        path=path,
+                        issue_ids=(file_id, issue.issue_id),
+                    )
+                )
+            issue_paths_by_logical_id.setdefault(issue.issue_id, []).append(path)
+
+        for logical_id, paths_for_issue in issue_paths_by_logical_id.items():
+            if len(paths_for_issue) <= 1:
+                continue
+            first = self._relpath(paths_for_issue[0])
+            for path in paths_for_issue[1:]:
+                findings.append(
+                    self._finding(
+                        f"duplicate issue record id {logical_id}; also present at {first}",
+                        path=path,
+                        issue_ids=(logical_id,),
+                    )
+                )
+
+        for path in event_files:
+            event_id = issue_id_from_path(path)
+            if event_id is None:
+                continue
+            if event_id not in issue_paths_by_file_id:
+                findings.append(
+                    self._finding(
+                        f"orphaned event log for missing issue {event_id}",
+                        path=path,
+                        issue_ids=(event_id,),
+                    )
+                )
+            elif event_id in duplicate_file_ids:
+                findings.append(
+                    self._finding(
+                        f"event log for {event_id} is ambiguous because the issue file exists in multiple states",
+                        path=path,
+                        issue_ids=(event_id,),
+                    )
+                )
+            else:
+                issue_path = issue_paths_by_file_id[event_id][0]
+                if path.parent != issue_path.parent:
+                    findings.append(
+                        self._finding(
+                            f"event log state mismatch for {event_id}; issue file is in {issue_path.parent.name}",
+                            path=path,
+                            issue_ids=(event_id,),
+                        )
+                    )
+            findings.extend(self._validate_event_file(path))
+
+        resolvable_ids = set(issues_by_file_id) - invalid_file_ids
+        for issue_id, issue in issues_by_file_id.items():
+            issue_path = issue_path_by_file_id[issue_id]
+            for dep_id in issue.deps:
+                if dep_id not in resolvable_ids:
+                    findings.append(
+                        self._finding(
+                            f"dangling dependency on {dep_id}",
+                            path=issue_path,
+                            issue_ids=(issue_id, dep_id),
+                        )
+                    )
+
+        seen_cycles: set[tuple[str, ...]] = set()
+        visited: set[str] = set()
+        stack: list[str] = []
+        active: set[str] = set()
+
+        def visit(issue_id: str) -> None:
+            active.add(issue_id)
+            stack.append(issue_id)
+            issue = issues_by_file_id[issue_id]
+            for dep_id in issue.deps:
+                if dep_id not in resolvable_ids:
+                    continue
+                if dep_id in active:
+                    cycle = stack[stack.index(dep_id) :]
+                    key = self._canonical_cycle(cycle)
+                    if key not in seen_cycles:
+                        seen_cycles.add(key)
+                        cycle_path = " -> ".join(list(key) + [key[0]])
+                        findings.append(
+                            self._finding(
+                                f"dependency cycle detected: {cycle_path}",
+                                path=issue_path_by_file_id[key[0]],
+                                issue_ids=key,
+                            )
+                        )
+                    continue
+                if dep_id not in visited:
+                    visit(dep_id)
+            stack.pop()
+            active.remove(issue_id)
+            visited.add(issue_id)
+
+        for issue_id in sorted(resolvable_ids, key=issue_number):
+            if issue_id not in visited:
+                visit(issue_id)
+
+        if scope_paths is not None:
+            findings = [
+                finding
+                for finding in findings
+                if finding.path in scope_paths
+                or scope_issue_ids.intersection(finding.issue_ids)
+            ]
+
+        findings.sort(
+            key=lambda finding: (
+                finding.severity,
+                finding.path or "",
+                finding.line or 0,
+                finding.message,
+            )
+        )
+        return IntegrityReport(
+            findings=tuple(findings),
+            checked_paths=checked_paths,
+            scanned_issues=len(issue_files),
+            scanned_event_logs=len(event_files),
+        )

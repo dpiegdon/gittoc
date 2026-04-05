@@ -16,6 +16,7 @@ from .common import (
     parse_state,
     run_git,
 )
+from .integrity import IntegrityReport, render_integrity_report
 from .render import print_issues, render_show_text
 from .tracker import Tracker
 
@@ -165,11 +166,30 @@ def cmd_pull(args: argparse.Namespace) -> int:
         )
         return 1
     status = tracker.pull_remote(remote)
+    report = status.get("fsck")
+    payload = dict(status)
+    if isinstance(report, IntegrityReport):
+        payload["fsck"] = report.to_record()
     if args.format == "json":
-        print(json.dumps(status, indent=2, sort_keys=True))
+        print(json.dumps(payload, indent=2, sort_keys=True))
     else:
         print(f"pulled {TRACKER_BRANCH} from {status['remote']} to {status['head']}")
+        if isinstance(report, IntegrityReport) and not report.ok:
+            print(render_integrity_report(report), file=sys.stderr)
+    if isinstance(report, IntegrityReport) and not report.ok:
+        return 1
     return 0
+
+
+def cmd_fsck(args: argparse.Namespace) -> int:
+    """Run a read-only integrity scan over tracker issues and event logs."""
+    tracker = Tracker.open()
+    report = tracker.fsck()
+    if args.format == "json":
+        print(json.dumps(report.to_record(), indent=2, sort_keys=True))
+    else:
+        print(render_integrity_report(report))
+    return 0 if report.ok else 1
 
 
 def cmd_push(args: argparse.Namespace) -> int:

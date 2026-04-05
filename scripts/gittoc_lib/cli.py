@@ -11,6 +11,7 @@ from .commands import (
     cmd_claimed,
     cmd_close,
     cmd_dep,
+    cmd_fsck,
     cmd_grep,
     cmd_init,
     cmd_labels,
@@ -21,11 +22,11 @@ from .commands import (
     cmd_pull,
     cmd_push,
     cmd_reject,
-    cmd_unblocked,
     cmd_remote,
     cmd_resume,
     cmd_show,
     cmd_summary,
+    cmd_unblocked,
     cmd_update,
 )
 from .common import DEFAULT_PRIORITY, STATE_ORDER
@@ -125,6 +126,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="remove the listed dependencies instead of adding them",
     )
     dep_parser.set_defaults(func=cmd_dep)
+
+    fsck_parser = sub.add_parser(
+        "fsck",
+        help="validate tracker files, dependencies, cycles, and event logs",
+    )
+    add_text_format_argument(fsck_parser)
+    fsck_parser.set_defaults(func=cmd_fsck)
 
     grep_parser = sub.add_parser(
         "grep",

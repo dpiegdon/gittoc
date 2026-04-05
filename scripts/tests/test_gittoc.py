@@ -117,8 +117,14 @@ class TestInitAndRemote(GittocTestBase):
 class TestCreateAndList(GittocTestBase):
     def test_create_issues(self) -> None:
         run(["init"], self.repo)
-        issue1 = run(["new", "High priority task", "-b", "finish core work", "-p", "1"], self.repo)
-        issue2 = run(["new", "Lower priority task", "-b", "depends on first", "-p", "4"], self.repo)
+        issue1 = run(
+            ["new", "High priority task", "-b", "finish core work", "-p", "1"],
+            self.repo,
+        )
+        issue2 = run(
+            ["new", "Lower priority task", "-b", "depends on first", "-p", "4"],
+            self.repo,
+        )
         self.assertEqual(issue1, "T-1")
         self.assertEqual(issue2, "T-2")
 
@@ -205,7 +211,9 @@ class TestDependenciesAndReady(GittocTestBase):
         with self.assertRaises(subprocess.CalledProcessError):
             run(["claim", issue2, "--owner", "tester"], self.repo)
         with self.assertRaises(subprocess.CalledProcessError):
-            run(["update", issue2, "--state", "claimed", "--owner", "tester"], self.repo)
+            run(
+                ["update", issue2, "--state", "claimed", "--owner", "tester"], self.repo
+            )
 
     def test_remove_dependency(self) -> None:
         run(["init"], self.repo)
@@ -224,7 +232,6 @@ class TestDependenciesAndReady(GittocTestBase):
         issue2 = run(["new", "B"], self.repo)
         with self.assertRaises(subprocess.CalledProcessError):
             run(["dep", issue1, issue2, "--remove"], self.repo)
-
 
     def test_cycle_check_with_missing_dep(self) -> None:
         """Cycle detection should not crash if a dep references a non-existent issue."""
@@ -320,9 +327,7 @@ class TestNotesAndHistory(GittocTestBase):
         self.assertIn("note#2 b: Beta", history)
         self.assertIn("note#3 c: Gamma", history)
         # JSON output should include note_id field
-        shown = json.loads(
-            run(["show", issue, "-n", "-f", "json"], self.repo)
-        )
+        shown = json.loads(run(["show", issue, "-n", "-f", "json"], self.repo))
         entries = shown["recent_notes"]
         self.assertEqual(entries[0]["note_id"], 1)
         self.assertEqual(entries[2]["note_id"], 3)
@@ -357,7 +362,6 @@ class TestNotesAndHistory(GittocTestBase):
         self.assertIn("T-1 p2 [open] My Task", text)
         self.assertIn("labels: bug", text)
         self.assertIn("tester: A note", text)
-
 
 
 class TestShowAndResume(GittocTestBase):
@@ -654,6 +658,115 @@ class TestPullAndPush(GittocTestBase):
         run(["init"], self.repo)
         push_alias = json.loads(run(["ps", "origin", "--format", "json"], self.repo))
         self.assertEqual(push_alias["action"], "push")
+
+
+class TestFsck(GittocTestBase):
+    def test_fsck_clean_tracker(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        self.assertIn("fsck ok", run(["fsck"], self.repo))
+
+    def test_fsck_reports_malformed_issue_and_orphaned_event_log(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        gittoc_dir = self.repo / ".git" / "gittoc"
+        issue_path = gittoc_dir / "issues" / "open" / "T-1.json"
+        issue_path.write_text("{not json\n", encoding="utf-8")
+        orphan_event = gittoc_dir / "issues" / "open" / "T-9.events.jsonl"
+        orphan_event.write_text('{"actor":"a","at":"b","kind":"note","text":"c"}\n')
+
+        result = run_fail(["fsck"], self.repo)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("issues/open/T-1.json", result.stdout)
+        self.assertIn("malformed JSON", result.stdout)
+        self.assertIn("issues/open/T-9.events.jsonl", result.stdout)
+        self.assertIn("orphaned event log", result.stdout)
+
+    def test_fsck_reports_dangling_dependencies_and_cycles(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "A"], self.repo)
+        run(["new", "B"], self.repo)
+        gittoc_dir = self.repo / ".git" / "gittoc"
+        t1_path = gittoc_dir / "issues" / "open" / "T-1.json"
+        t2_path = gittoc_dir / "issues" / "open" / "T-2.json"
+
+        t1_data = json.loads(t1_path.read_text(encoding="utf-8"))
+        t2_data = json.loads(t2_path.read_text(encoding="utf-8"))
+        t1_data["deps"] = ["T-2"]
+        t2_data["deps"] = ["T-1", "T-99"]
+        t1_path.write_text(json.dumps(t1_data, indent=2) + "\n", encoding="utf-8")
+        t2_path.write_text(json.dumps(t2_data, indent=2) + "\n", encoding="utf-8")
+
+        result = run_fail(["fsck"], self.repo)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("dangling dependency on T-99", result.stdout)
+        self.assertIn("dependency cycle detected: T-1 -> T-2 -> T-1", result.stdout)
+
+    def test_pull_runs_fsck_after_nontrivial_merge(self) -> None:
+        remote_repo = Path(self.tempdir.name) / "fsck-pull.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], self.repo)
+        run(["new", "Seed issue"], self.repo)
+        subprocess.run(
+            ["git", "push", "-u", "origin", current_branch(self.repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        run(["push", "origin"], self.repo)
+
+        clone_a = Path(self.tempdir.name) / "clone-a"
+        clone_b = Path(self.tempdir.name) / "clone-b"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone_a)],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone_b)],
+            check=True,
+            capture_output=True,
+        )
+        run(["summary"], clone_a)
+        run(["summary"], clone_b)
+
+        remote_event = (
+            clone_a / ".git" / "gittoc" / "issues" / "open" / "T-1.events.jsonl"
+        )
+        with remote_event.open("a", encoding="utf-8") as handle:
+            handle.write("{broken json\n")
+        subprocess.run(
+            ["git", "-C", str(clone_a / ".git" / "gittoc"), "add", "issues"],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(clone_a / ".git" / "gittoc"),
+                "commit",
+                "-m",
+                "Corrupt tracker events",
+            ],
+            check=True,
+            capture_output=True,
+        )
+        run(["push", "origin"], clone_a)
+
+        run(["new", "Local issue"], clone_b)
+        result = run_fail(["pull", "origin"], clone_b)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("malformed JSON", result.stderr)
+        self.assertIn("issues/open/T-1.events.jsonl", result.stderr)
 
 
 class TestAutoPush(GittocTestBase):

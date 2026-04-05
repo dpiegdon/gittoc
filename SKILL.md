@@ -73,6 +73,7 @@ Use `--help` on any command for full argument documentation.
 - `log T-1` — git history for one ticket file (oldest-first)
 - `log` — all recent tracker changes (oldest-first)
 - `log --no-reverse` — newest-first, like standard git log
+- `fsck` — validate issue JSON, event JSONL, dangling deps, cycles, and orphaned logs
 
 **Backlog**
 - `summary` / `sum` — ticket counts by state
@@ -106,6 +107,7 @@ Use `--help` on any command for full argument documentation.
 - `push` / `push origin` — push tracker branch (uses configured remote by default)
 - auto-push/pull: enable with `git config gittoc.autopush true` (or `.agents/skills/gittoc/scripts/setup --autopush`);
   every mutating command will then pull before and push after the local write
+  non-trivial pull merges automatically run `fsck` against the changed tracker files
 
 ## Recommended workflow
 
@@ -166,6 +168,8 @@ This keeps the schema minimal. Notes are searchable via `gittoc grep`.
   then highest-priority ready issue, then highest-priority open issue.
 - `pull` fetches and attempts a normal merge; conflicts are left for manual
   resolution in `.git/gittoc/`.
+- after a non-trivial `pull` merge commit, `gittoc` automatically runs `fsck`
+  on the changed tracker files and fails loudly if it finds integrity issues.
 - `init` auto-configures `gittoc.remote` from the repo's inferred main remote.
 - In sandboxed environments, writes under `.git/gittoc/` may require explicit
   approval. If mutations fail with a permission error, the sandbox may be
