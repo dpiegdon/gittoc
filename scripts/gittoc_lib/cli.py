@@ -6,34 +6,18 @@ import argparse
 import sys
 
 from . import __version__
-from .commands import (
-    cmd_claim,
-    cmd_claimed,
-    cmd_close,
-    cmd_dep,
-    cmd_fsck,
-    cmd_grep,
-    cmd_init,
-    cmd_labels,
-    cmd_list,
-    cmd_log,
-    cmd_new,
-    cmd_note,
-    cmd_pull,
-    cmd_push,
-    cmd_reject,
-    cmd_remote,
-    cmd_resume,
-    cmd_show,
-    cmd_summary,
-    cmd_unblocked,
-    cmd_update,
-)
+from .commands import (cmd_claim, cmd_claimed, cmd_close, cmd_dep, cmd_fsck,
+                       cmd_grep, cmd_init, cmd_labels, cmd_list, cmd_log,
+                       cmd_new, cmd_note, cmd_pull, cmd_push, cmd_reject,
+                       cmd_remote, cmd_resume, cmd_show, cmd_summary,
+                       cmd_unblocked, cmd_update)
 from .common import DEFAULT_PRIORITY, STATE_ORDER
 from .tracker import StaleTrackerError
 
 
-def add_format_argument(parser: argparse.ArgumentParser, default: str = "normal") -> None:
+def add_format_argument(
+    parser: argparse.ArgumentParser, default: str = "normal"
+) -> None:
     """Add -f/--format with compact/normal/verbose/json choices to a subcommand parser."""
     parser.add_argument(
         "-f",
@@ -239,7 +223,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     new_parser.set_defaults(func=cmd_new)
 
-    note_parser = sub.add_parser("note", aliases=["n"], help="append a note to an issue")
+    note_parser = sub.add_parser(
+        "note", aliases=["n"], help="append a note to an issue"
+    )
     note_parser.add_argument("issue_id", help="ticket to annotate, e.g. T-42")
     note_parser.add_argument("text", help="note text")
     note_parser.add_argument(
@@ -276,7 +262,9 @@ def build_parser() -> argparse.ArgumentParser:
     add_format_argument(unblocked_parser)
     unblocked_parser.set_defaults(func=cmd_unblocked)
 
-    reject_parser = sub.add_parser("reject", help="mark an issue as won't-do / abandoned")
+    reject_parser = sub.add_parser(
+        "reject", help="mark an issue as won't-do / abandoned"
+    )
     reject_parser.add_argument("issue_id", help="ticket to reject, e.g. T-42")
     reject_parser.add_argument(
         "--actor",

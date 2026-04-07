@@ -823,5 +823,604 @@ class TestAutoPush(GittocTestBase):
         self.assertEqual(issue, "T-1")
 
 
+class TestVersioning(GittocTestBase):
+    def _worktree(self) -> Path:
+        return self.repo / ".git" / "gittoc"
+
+    def _version_path(self) -> Path:
+        return self._worktree() / "VERSION"
+
+    def test_init_writes_version_file(self) -> None:
+        run(["init"], self.repo)
+        vpath = self._version_path()
+        self.assertTrue(vpath.exists())
+        data = json.loads(vpath.read_text(encoding="utf-8"))
+        self.assertEqual(data["format_version"], 1)
+        self.assertEqual(data["layout_version"], 1)
+        self.assertIn("migrated_at", data)
+        self.assertIn("migrated_by", data)
+
+    def test_v0_to_v1_migration(self) -> None:
+        """A pre-versioning tracker gets VERSION stamped on open."""
+        run(["init"], self.repo)
+        vpath = self._version_path()
+        # Simulate a pre-versioning tracker by removing VERSION
+        vpath.unlink()
+        subprocess.run(
+            ["git", "add", "-A"], cwd=self._worktree(), check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-q", "-m", "remove VERSION"],
+            cwd=self._worktree(),
+            check=True,
+            capture_output=True,
+        )
+        self.assertFalse(vpath.exists())
+        # Next command triggers open() → migration
+        run(["summary"], self.repo)
+        self.assertTrue(vpath.exists())
+        data = json.loads(vpath.read_text(encoding="utf-8"))
+        self.assertEqual(data["format_version"], 1)
+        self.assertEqual(data["layout_version"], 1)
+
+    def test_version_too_high_aborts(self) -> None:
+        """A tracker with a higher version than supported causes an error."""
+        run(["init"], self.repo)
+        vpath = self._version_path()
+        data = json.loads(vpath.read_text(encoding="utf-8"))
+        data["format_version"] = 99
+        vpath.write_text(
+            json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        subprocess.run(
+            ["git", "add", "-A"], cwd=self._worktree(), check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-q", "-m", "bump version"],
+            cwd=self._worktree(),
+            check=True,
+            capture_output=True,
+        )
+        result = run_fail(["summary"], self.repo)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("format version 99", result.stderr)
+        self.assertIn("upgrade gittoc", result.stderr)
+
+    def test_pull_rejects_version_mismatch(self) -> None:
+        """Pull aborts before merging if remote has a different version."""
+        remote_repo = Path(self.tempdir.name) / "ver-remote.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+
+        # Set up source and push a valid v1 tracker
+        source = Path(self.tempdir.name) / "ver-source"
+        shutil.copytree(self.repo, source)
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], source)
+        subprocess.run(
+            ["git", "push", "-u", "origin", current_branch(source)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        run(["push", "origin"], source)
+
+        # Clone inits while remote is still v1
+        clone = Path(self.tempdir.name) / "ver-clone"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], clone)
+
+        # Now bump source to v2 directly via git and push
+        src_wt = source / ".git" / "gittoc"
+        vpath = src_wt / "VERSION"
+        data = json.loads(vpath.read_text(encoding="utf-8"))
+        data["format_version"] = 2
+        vpath.write_text(
+            json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        subprocess.run(
+            ["git", "add", "-A"], cwd=src_wt, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-q", "-m", "bump to v2"],
+            cwd=src_wt,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "push", "origin", "gittoc"],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+
+        # Clone is at v1, remote is now v2 — pull should fail
+        result = run_fail(["pull", "origin"], clone)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("version mismatch", result.stderr)
+
+    def test_push_rejects_version_mismatch(self) -> None:
+        """Push aborts if remote has a different version."""
+        remote_repo = Path(self.tempdir.name) / "ps-ver.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+
+        # Source pushes a valid v1 tracker
+        source = Path(self.tempdir.name) / "ps-ver-src"
+        shutil.copytree(self.repo, source)
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], source)
+        subprocess.run(
+            ["git", "push", "-u", "origin", current_branch(source)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        run(["push", "origin"], source)
+
+        # Clone inits while remote is still v1, creates a local ticket
+        clone = Path(self.tempdir.name) / "ps-ver-clone"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], clone)
+        run(["new", "local ticket"], clone)
+
+        # Now bump source to v2 directly via git and push
+        src_wt = source / ".git" / "gittoc"
+        vpath = src_wt / "VERSION"
+        data = json.loads(vpath.read_text(encoding="utf-8"))
+        data["format_version"] = 2
+        vpath.write_text(
+            json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        subprocess.run(
+            ["git", "add", "-A"], cwd=src_wt, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-q", "-m", "bump to v2"],
+            cwd=src_wt,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "push", "origin", "gittoc"],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+
+        # Clone is at v1, remote is now v2 — push should fail
+        result = run_fail(["push", "origin"], clone)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("version mismatch", result.stderr)
+
+    def _commit_worktree(self, wt: Path, msg: str) -> None:
+        """Stage all changes in a worktree and commit."""
+        subprocess.run(["git", "add", "-A"], cwd=wt, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-q", "-m", msg],
+            cwd=wt,
+            check=True,
+            capture_output=True,
+        )
+
+    def _write_version_raw(self, vpath: Path, content: str) -> None:
+        """Write raw content to a VERSION file and commit it."""
+        vpath.write_text(content, encoding="utf-8")
+        self._commit_worktree(vpath.parent, "update VERSION")
+
+    def test_layout_version_too_high_aborts(self) -> None:
+        """A tracker with a higher layout version than supported causes an error."""
+        run(["init"], self.repo)
+        vpath = self._version_path()
+        data = json.loads(vpath.read_text(encoding="utf-8"))
+        data["layout_version"] = 99
+        self._write_version_raw(
+            vpath, json.dumps(data, indent=2, sort_keys=True) + "\n"
+        )
+        result = run_fail(["summary"], self.repo)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("layout version 99", result.stderr)
+        self.assertIn("upgrade gittoc", result.stderr)
+
+    def test_corrupted_version_file_aborts(self) -> None:
+        """A VERSION file with invalid JSON causes a clear error."""
+        run(["init"], self.repo)
+        self._write_version_raw(self._version_path(), "not json at all\n")
+        result = run_fail(["summary"], self.repo)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("malformed VERSION", result.stderr)
+
+    def test_missing_fields_in_version_aborts(self) -> None:
+        """A VERSION file missing required fields causes a clear error."""
+        run(["init"], self.repo)
+        self._write_version_raw(self._version_path(), "{}\n")
+        result = run_fail(["summary"], self.repo)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("malformed VERSION", result.stderr)
+
+    def test_migration_is_idempotent(self) -> None:
+        """Opening the tracker twice does not create duplicate migration commits."""
+        run(["init"], self.repo)
+        vpath = self._version_path()
+        vpath.unlink()
+        self._commit_worktree(self._worktree(), "remove VERSION")
+        # First open triggers migration
+        run(["summary"], self.repo)
+        log1 = subprocess.run(
+            ["git", "log", "--oneline"],
+            cwd=self._worktree(),
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout
+        migrate_count_1 = log1.count("migrate to format")
+        # Second open should not migrate again
+        run(["summary"], self.repo)
+        log2 = subprocess.run(
+            ["git", "log", "--oneline"],
+            cwd=self._worktree(),
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout
+        migrate_count_2 = log2.count("migrate to format")
+        self.assertEqual(migrate_count_1, 1)
+        self.assertEqual(migrate_count_2, 1)
+
+    def test_migration_creates_git_commit(self) -> None:
+        """The v0-to-v1 migration creates a commit with a descriptive message."""
+        run(["init"], self.repo)
+        vpath = self._version_path()
+        vpath.unlink()
+        self._commit_worktree(self._worktree(), "remove VERSION")
+        run(["summary"], self.repo)
+        log = subprocess.run(
+            ["git", "log", "--oneline", "-1"],
+            cwd=self._worktree(),
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout
+        self.assertIn("migrate to format v1 layout v1", log)
+
+    def test_version_file_is_git_tracked(self) -> None:
+        """After init, VERSION is committed (not untracked)."""
+        run(["init"], self.repo)
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=self._worktree(),
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout
+        self.assertEqual(status.strip(), "")
+
+    def test_push_first_time_no_remote_branch(self) -> None:
+        """First push to a remote with no gittoc branch succeeds (gate skipped)."""
+        remote_repo = Path(self.tempdir.name) / "first-push.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "push", "-u", "origin", current_branch(self.repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], self.repo)
+        push_out = json.loads(run(["push", "origin", "--format", "json"], self.repo))
+        self.assertEqual(push_out["action"], "push")
+
+    def test_push_allows_unversioned_remote(self) -> None:
+        """Push succeeds when remote has no VERSION (pre-versioning baseline)."""
+        remote_repo = Path(self.tempdir.name) / "push-unver.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+
+        # Source pushes without VERSION
+        source = Path(self.tempdir.name) / "push-unver-src"
+        shutil.copytree(self.repo, source)
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], source)
+        src_wt = source / ".git" / "gittoc"
+        (src_wt / "VERSION").unlink()
+        self._commit_worktree(src_wt, "remove VERSION")
+        subprocess.run(
+            ["git", "push", "-u", "origin", current_branch(source)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "push", "origin", "gittoc"],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+
+        # Clone (with VERSION) can push to unversioned remote
+        clone = Path(self.tempdir.name) / "push-unver-clone"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], clone)
+        run(["new", "ticket from clone"], clone)
+        push_out = json.loads(run(["push", "origin", "--format", "json"], clone))
+        self.assertEqual(push_out["action"], "push")
+
+    def test_pull_no_merge_on_version_mismatch(self) -> None:
+        """Pull with version mismatch leaves the local worktree unchanged."""
+        remote_repo = Path(self.tempdir.name) / "no-merge.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+        source = Path(self.tempdir.name) / "no-merge-src"
+        shutil.copytree(self.repo, source)
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], source)
+        subprocess.run(
+            ["git", "push", "-u", "origin", current_branch(source)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        run(["push", "origin"], source)
+
+        clone = Path(self.tempdir.name) / "no-merge-clone"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], clone)
+        clone_wt = clone / ".git" / "gittoc"
+        head_before = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=clone_wt,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+
+        # Bump source to v2 and push
+        src_wt = source / ".git" / "gittoc"
+        vpath = src_wt / "VERSION"
+        data = json.loads(vpath.read_text(encoding="utf-8"))
+        data["format_version"] = 2
+        self._write_version_raw(
+            vpath, json.dumps(data, indent=2, sort_keys=True) + "\n"
+        )
+        subprocess.run(
+            ["git", "push", "origin", "gittoc"],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+
+        # Pull should fail and HEAD should be unchanged
+        result = run_fail(["pull", "origin"], clone)
+        self.assertNotEqual(result.returncode, 0)
+        head_after = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=clone_wt,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+        self.assertEqual(head_before, head_after)
+
+    def test_auto_pull_aborts_on_version_mismatch(self) -> None:
+        """A mutation command with auto-pull aborts when remote version differs."""
+        remote_repo = Path(self.tempdir.name) / "auto-pull-ver.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "push", "-u", "origin", current_branch(self.repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], self.repo)
+        run(["push", "origin"], self.repo)
+        # Enable autopush (which also enables auto-pull before mutations)
+        subprocess.run(
+            ["git", "config", "--local", "gittoc.autopush", "true"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+
+        # Bump remote to v2 via a second repo
+        source2 = Path(self.tempdir.name) / "auto-pull-src2"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(source2)],
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], source2)
+        src2_wt = source2 / ".git" / "gittoc"
+        vpath = src2_wt / "VERSION"
+        data = json.loads(vpath.read_text(encoding="utf-8"))
+        data["format_version"] = 2
+        self._write_version_raw(
+            vpath, json.dumps(data, indent=2, sort_keys=True) + "\n"
+        )
+        subprocess.run(
+            ["git", "push", "origin", "gittoc"],
+            cwd=source2,
+            check=True,
+            capture_output=True,
+        )
+
+        # Mutation with auto-pull should abort — no ticket created
+        result = run_fail(["new", "should not exist"], self.repo)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("version mismatch", result.stderr)
+
+    def test_auto_push_catches_version_mismatch(self) -> None:
+        """auto_push catches SystemExit from version mismatch instead of crashing.
+
+        In normal flow auto_pull gates first, so this scenario only arises if
+        the remote version changes between the pull and push within a single
+        command (a race condition). We verify the code path by calling
+        push_remote directly and checking that auto_push catches the error.
+        """
+        remote_repo = Path(self.tempdir.name) / "auto-push-ver.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "push", "-u", "origin", current_branch(self.repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], self.repo)
+        run(["push", "origin"], self.repo)
+
+        # Bump remote to v2 directly
+        source2 = Path(self.tempdir.name) / "auto-push-src2"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(source2)],
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], source2)
+        src2_wt = source2 / ".git" / "gittoc"
+        vpath = src2_wt / "VERSION"
+        data = json.loads(vpath.read_text(encoding="utf-8"))
+        data["format_version"] = 2
+        self._write_version_raw(
+            vpath, json.dumps(data, indent=2, sort_keys=True) + "\n"
+        )
+        subprocess.run(
+            ["git", "push", "--force", "origin", "gittoc"],
+            cwd=source2,
+            check=True,
+            capture_output=True,
+        )
+
+        # Call push directly — should raise SystemExit
+        import sys
+
+        sys.path.insert(0, str(ROOT))
+        from gittoc_lib.tracker import Tracker
+
+        tracker = Tracker(self.repo, self._worktree())
+        with self.assertRaises(SystemExit):
+            tracker.push_remote("origin")
+
+        # But auto_push should catch it (not crash)
+        subprocess.run(
+            ["git", "config", "--local", "gittoc.autopush", "true"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        tracker2 = Tracker(self.repo, self._worktree())
+        # auto_push should warn to stderr, not raise
+        tracker2.auto_push()  # Should not raise
+
+    def test_pull_allows_unversioned_remote(self) -> None:
+        """Pull succeeds when remote has no VERSION (pre-versioning baseline)."""
+        remote_repo = Path(self.tempdir.name) / "unver.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+
+        # Source pushes with no VERSION
+        source = Path(self.tempdir.name) / "unver-src"
+        shutil.copytree(self.repo, source)
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], source)
+        src_wt = source / ".git" / "gittoc"
+        vpath = src_wt / "VERSION"
+        vpath.unlink()
+        subprocess.run(
+            ["git", "add", "-A"], cwd=src_wt, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-q", "-m", "remove VERSION"],
+            cwd=src_wt,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "push", "-u", "origin", current_branch(source)],
+            cwd=source,
+            check=True,
+            capture_output=True,
+        )
+        run(["push", "origin"], source)
+
+        # Clone pulls — should succeed (unversioned remote is compatible with anything)
+        clone = Path(self.tempdir.name) / "unver-clone"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], clone)
+        pull_out = json.loads(run(["pull", "origin", "--format", "json"], clone))
+        self.assertEqual(pull_out["action"], "pull")
+
+
 if __name__ == "__main__":
     unittest.main()

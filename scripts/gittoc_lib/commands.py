@@ -8,14 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .common import (
-    STATE_ORDER,
-    TRACKER_BRANCH,
-    default_owner,
-    issue_number,
-    parse_state,
-    run_git,
-)
+from .common import (STATE_ORDER, TRACKER_BRANCH, default_owner, issue_number,
+                     parse_state, run_git)
 from .integrity import IntegrityReport, render_integrity_report
 from .render import print_issues, render_show_text
 from .tracker import RemotePushPullError, Tracker

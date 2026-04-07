@@ -9,37 +9,16 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
-from .common import (
-    EVENT_SUFFIX,
-    ISSUES_ROOT,
-    STATE_ORDER,
-    STATE_SET,
-    TERMINAL_STATES,
-    TRACKER_BRANCH,
-    branch_exists,
-    current_branch,
-    default_owner,
-    has_legacy_hidden_clone,
-    infer_remote,
-    is_worktree,
-    issue_number,
-    list_remotes,
-    local_config_get,
-    local_config_set,
-    now_utc,
-    remote_branch_exists,
-    repo_root,
-    run_git,
-    validate_issue_id,
-    validate_priority,
-    worktree_path,
-)
-from .integrity import (
-    IntegrityFinding,
-    IntegrityReport,
-    issue_id_from_path,
-    render_integrity_report,
-)
+from . import CURRENT_FORMAT_VERSION, CURRENT_LAYOUT_VERSION, VERSION_FILE
+from .common import (EVENT_SUFFIX, ISSUES_ROOT, STATE_ORDER, STATE_SET,
+                     TERMINAL_STATES, TRACKER_BRANCH, branch_exists,
+                     current_branch, default_owner, has_legacy_hidden_clone,
+                     infer_remote, is_worktree, issue_number, list_remotes,
+                     local_config_get, local_config_set, now_utc,
+                     remote_branch_exists, repo_root, run_git,
+                     validate_issue_id, validate_priority, worktree_path)
+from .integrity import (IntegrityFinding, IntegrityReport, issue_id_from_path,
+                        render_integrity_report)
 from .models import Issue
 
 
@@ -69,6 +48,7 @@ class Tracker:
         checkout = cls._ensure_worktree(repo)
         tracker = cls(repo, checkout)
         tracker.run_pending_migrations()
+        tracker.check_version_compatible()
         tracker.base_head = tracker.head()
         return tracker
 
@@ -124,7 +104,17 @@ class Tracker:
             (checkout / ISSUES_ROOT / state).mkdir(parents=True, exist_ok=True)
         keep = checkout / ISSUES_ROOT / ".gitkeep"
         keep.write_text("", encoding="utf-8")
-        run_git(["add", "issues"], cwd=checkout)
+        version_path = checkout / VERSION_FILE
+        version_data = {
+            "format_version": CURRENT_FORMAT_VERSION,
+            "layout_version": CURRENT_LAYOUT_VERSION,
+            "migrated_at": now_utc(),
+            "migrated_by": default_owner(),
+        }
+        with version_path.open("w", encoding="utf-8") as handle:
+            json.dump(version_data, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+        run_git(["add", "issues", str(VERSION_FILE)], cwd=checkout)
         run_git(
             ["commit", "-q", "-m", "Initialize gittoc tracker"],
             cwd=checkout,
@@ -133,8 +123,103 @@ class Tracker:
 
     def head(self) -> str:
         """Return the current HEAD commit hash of the tracker branch."""
-        proc = run_git(["rev-parse", "--verify", "HEAD"], cwd=self.checkout, check=False)
+        proc = run_git(
+            ["rev-parse", "--verify", "HEAD"], cwd=self.checkout, check=False
+        )
         return proc.stdout.strip() if proc.returncode == 0 else ""
+
+    def read_version(self) -> tuple[int, int]:
+        """Read the VERSION file and return (format_version, layout_version).
+
+        Returns (0, 0) if the file does not exist (pre-versioning baseline).
+        Raises SystemExit on malformed or unreadable VERSION files.
+        """
+        path = self.checkout / VERSION_FILE
+        if not path.exists():
+            return (0, 0)
+        try:
+            with path.open("r", encoding="utf-8") as handle:
+                data = json.load(handle)
+            return (data["format_version"], data["layout_version"])
+        except (json.JSONDecodeError, KeyError, TypeError) as exc:
+            raise SystemExit(f"malformed VERSION file ({path}): {exc}") from exc
+
+    def _write_version(
+        self, format_version: int, layout_version: int, *, commit: bool = True
+    ) -> None:
+        """Write the VERSION file and optionally commit it."""
+        path = self.checkout / VERSION_FILE
+        data = {
+            "format_version": format_version,
+            "layout_version": layout_version,
+            "migrated_at": now_utc(),
+            "migrated_by": default_owner(),
+        }
+        with path.open("w", encoding="utf-8") as handle:
+            json.dump(data, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+        if commit:
+            run_git(["add", str(VERSION_FILE)], cwd=self.checkout)
+            run_git(
+                [
+                    "commit",
+                    "-q",
+                    "-m",
+                    f"gittoc: migrate to format v{format_version} layout v{layout_version}",
+                ],
+                cwd=self.checkout,
+            )
+
+    def check_version_compatible(self) -> None:
+        """Abort if the local tracker version is newer than this client supports."""
+        fmt, layout = self.read_version()
+        if fmt > CURRENT_FORMAT_VERSION:
+            raise SystemExit(
+                f"tracker requires format version {fmt}, "
+                f"but this gittoc only supports up to {CURRENT_FORMAT_VERSION} — "
+                f"please upgrade gittoc"
+            )
+        if layout > CURRENT_LAYOUT_VERSION:
+            raise SystemExit(
+                f"tracker requires layout version {layout}, "
+                f"but this gittoc only supports up to {CURRENT_LAYOUT_VERSION} — "
+                f"please upgrade gittoc"
+            )
+
+    @staticmethod
+    def read_remote_version(repo: Path, remote: str) -> tuple[int, int]:
+        """Read the VERSION file from a remote tracking ref.
+
+        Returns (0, 0) if the file does not exist on the remote.
+        """
+        proc = run_git(
+            ["show", f"{remote}/{TRACKER_BRANCH}:{VERSION_FILE}"],
+            cwd=repo,
+            check=False,
+        )
+        if proc.returncode != 0:
+            return (0, 0)
+        try:
+            data = json.loads(proc.stdout)
+            return (data["format_version"], data["layout_version"])
+        except (json.JSONDecodeError, KeyError, TypeError) as exc:
+            raise SystemExit(
+                f"malformed VERSION on {remote}/{TRACKER_BRANCH}: {exc}"
+            ) from exc
+
+    @staticmethod
+    def check_versions_match(
+        local: tuple[int, int], remote: tuple[int, int], remote_name: str
+    ) -> None:
+        """Abort if local and remote versions differ (unless either is unset)."""
+        if local == (0, 0) or remote == (0, 0):
+            return
+        if local != remote:
+            raise SystemExit(
+                f"version mismatch: local format v{local[0]} layout v{local[1]}, "
+                f"but {remote_name} has format v{remote[0]} layout v{remote[1]} — "
+                f"ensure all users are on the same gittoc version before syncing"
+            )
 
     def configured_remote(self) -> str:
         """Return the explicitly configured tracker remote, or empty string."""
@@ -220,6 +305,11 @@ class Tracker:
             ) from exc
         if not remote_branch_exists(self.repo, remote, TRACKER_BRANCH):
             raise SystemExit(f"remote branch not found: {remote}/{TRACKER_BRANCH}")
+        self.check_versions_match(
+            self.read_version(),
+            self.read_remote_version(self.repo, remote),
+            f"{remote}/{TRACKER_BRANCH}",
+        )
         proc = run_git(
             ["merge", "--no-edit", f"{remote}/{TRACKER_BRANCH}"],
             cwd=self.checkout,
@@ -247,8 +337,21 @@ class Tracker:
     def push_remote(self, remote: str) -> dict[str, str]:
         """Push the tracker branch to the given remote."""
         self._validate_remote(remote)
+        # Fetch first so the version check sees the current remote state.
         try:
-            run_git(["push", remote, f"{TRACKER_BRANCH}:{TRACKER_BRANCH}"], cwd=self.repo)
+            run_git(["fetch", remote, TRACKER_BRANCH], cwd=self.repo)
+        except subprocess.CalledProcessError:
+            pass  # Remote branch may not exist yet; that's fine.
+        if remote_branch_exists(self.repo, remote, TRACKER_BRANCH):
+            self.check_versions_match(
+                self.read_version(),
+                self.read_remote_version(self.repo, remote),
+                f"{remote}/{TRACKER_BRANCH}",
+            )
+        try:
+            run_git(
+                ["push", remote, f"{TRACKER_BRANCH}:{TRACKER_BRANCH}"], cwd=self.repo
+            )
         except subprocess.CalledProcessError as exc:
             raise RemotePushPullError(
                 f"push failed for {remote}/{TRACKER_BRANCH}: "
@@ -278,7 +381,10 @@ class Tracker:
         try:
             status = self.pull_remote(remote)
         except RemotePushPullError as exc:
-            print(f"warning: auto-pull fetch failed: {exc}; continuing with local state", file=sys.stderr)
+            print(
+                f"warning: auto-pull fetch failed: {exc}; continuing with local state",
+                file=sys.stderr,
+            )
             return
         report = status.get("fsck")
         if isinstance(report, IntegrityReport) and not report.ok:
@@ -299,7 +405,13 @@ class Tracker:
         try:
             self.push_remote(remote)
         except RemotePushPullError as exc:
-            print(f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr)
+            print(
+                f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr
+            )
+        except SystemExit as exc:
+            print(
+                f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr
+            )
 
     def ensure_not_stale(self) -> None:
         """Raise StaleTrackerError if the tracker has been modified since it was opened."""
@@ -353,7 +465,9 @@ class Tracker:
         self.ensure_not_stale()
         run_git(["add", "issues"], cwd=self.checkout)
         commit_actor = actor or default_owner()
-        run_git(["commit", "-q", "-m", f"{message} ({commit_actor})"], cwd=self.checkout)
+        run_git(
+            ["commit", "-q", "-m", f"{message} ({commit_actor})"], cwd=self.checkout
+        )
         self.base_head = self.head()
 
     def write_issue(self, issue: Issue, previous_path: Path | None = None) -> Path:
@@ -451,15 +565,25 @@ class Tracker:
 
     def note_count(self, issue_id: str) -> int:
         """Return the number of note events recorded for an issue."""
-        return sum(1 for entry in self.event_entries(issue_id) if entry["kind"] == "note")
+        return sum(
+            1 for entry in self.event_entries(issue_id) if entry["kind"] == "note"
+        )
 
     def run_pending_migrations(self) -> None:
-        """Hook for future tracker migrations.
+        """Run any pending tracker migrations sequentially.
 
-        The current on-disk layout is the baseline, so normal tracker startup
-        should not rewrite issue state. Add explicit migration steps here only
-        when a future storage change requires them.
+        Each migration is guarded by a version check and commits its own
+        VERSION bump.  Migrations must be idempotent — safe to re-run.
+
+        NOTE for future format changes (v2+): when designing a new format
+        version, consider adding or renaming a required field so that older
+        parsers fail loudly on the new data rather than silently
+        misinterpreting it.  This turns an unprotected old-client pull into
+        a parse error instead of silent corruption.
         """
+        fmt, layout = self.read_version()
+        if fmt == 0 and layout == 0:
+            self._write_version(CURRENT_FORMAT_VERSION, CURRENT_LAYOUT_VERSION)
 
     def next_issue_id(self) -> str:
         """Scan existing issue files and return the next unused T-<n> identifier."""
@@ -595,7 +719,9 @@ class Tracker:
 
     def resume_issue(self, owner: str) -> tuple[Issue | None, str | None]:
         """Select the best issue to resume: owner's claimed > ready > open."""
-        mine = [issue for issue in self.list_issues(("claimed",)) if issue.owner == owner]
+        mine = [
+            issue for issue in self.list_issues(("claimed",)) if issue.owner == owner
+        ]
         if mine:
             return mine[0], "claimed-by-owner"
         ready = self.ready_issues()
@@ -859,7 +985,9 @@ class Tracker:
             for entry in sorted(state_dir.iterdir(), key=lambda value: value.name):
                 if entry.is_dir():
                     findings.append(
-                        self._finding("unexpected directory in tracker state", path=entry)
+                        self._finding(
+                            "unexpected directory in tracker state", path=entry
+                        )
                     )
                     continue
                 if entry.name.endswith(EVENT_SUFFIX):
@@ -928,7 +1056,9 @@ class Tracker:
             if errors:
                 invalid_file_ids.add(file_id)
                 for error in errors:
-                    findings.append(self._finding(error, path=path, issue_ids=(file_id,)))
+                    findings.append(
+                        self._finding(error, path=path, issue_ids=(file_id,))
+                    )
                 continue
             if file_id not in duplicate_file_ids:
                 issues_by_file_id[file_id] = issue
