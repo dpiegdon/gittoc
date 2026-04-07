@@ -1531,5 +1531,96 @@ class TestErrorMessages(GittocTestBase):
         self.assertIn("pattern", proc.stderr)
 
 
+class TestCommaArguments(GittocTestBase):
+    """Verify that multi-value arguments accept comma-separated values."""
+
+    def test_list_states_comma(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "open ticket"], self.repo)
+        run(["new", "claimed ticket"], self.repo)
+        run(["claim", "T-2"], self.repo)
+        out = run(["list", "-s", "open,claimed", "-f", "compact"], self.repo)
+        self.assertIn("T-1", out)
+        self.assertIn("T-2", out)
+
+    def test_list_states_comma_and_repeated(self) -> None:
+        """Comma and repeated -s can be combined."""
+        run(["init"], self.repo)
+        run(["new", "open ticket"], self.repo)
+        run(["new", "done ticket"], self.repo)
+        run(["close", "T-2"], self.repo)
+        run(["new", "rejected ticket"], self.repo)
+        run(["reject", "T-3"], self.repo)
+        out = run(
+            ["list", "-s", "open,closed", "-s", "rejected", "-f", "compact"], self.repo
+        )
+        self.assertIn("T-1", out)
+        self.assertIn("T-2", out)
+        self.assertIn("T-3", out)
+
+    def test_list_states_invalid_comma(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["list", "-s", "open,bogus"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("invalid state", proc.stderr)
+
+    def test_grep_states_comma(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "needle ticket"], self.repo)
+        run(["new", "claimed needle"], self.repo)
+        run(["claim", "T-2"], self.repo)
+        out = run(["grep", "-s", "open,claimed", "needle"], self.repo)
+        self.assertIn("needle", out)
+
+    def test_new_deps_comma(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "first"], self.repo)
+        run(["new", "second"], self.repo)
+        run(["new", "depends on both", "-d", "T-1,T-2"], self.repo)
+        show = run(["show", "T-3"], self.repo)
+        self.assertIn("T-1", show)
+        self.assertIn("T-2", show)
+
+    def test_dep_positional_comma(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "a"], self.repo)
+        run(["new", "b"], self.repo)
+        run(["new", "c"], self.repo)
+        run(["dep", "T-3", "T-1,T-2"], self.repo)
+        show = run(["show", "T-3"], self.repo)
+        self.assertIn("T-1", show)
+        self.assertIn("T-2", show)
+
+    def test_dep_remove_comma(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "a"], self.repo)
+        run(["new", "b"], self.repo)
+        run(["new", "c", "-d", "T-1,T-2"], self.repo)
+        run(["dep", "-r", "T-3", "T-1,T-2"], self.repo)
+        show = run(["show", "T-3"], self.repo)
+        self.assertNotIn("T-1", show.split("deps:")[1].split("\n")[0])
+
+    def test_claim_comma(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "a"], self.repo)
+        run(["new", "b"], self.repo)
+        run(["claim", "T-1,T-2"], self.repo)
+        out = run(["claimed", "-f", "compact"], self.repo)
+        self.assertIn("T-1", out)
+        self.assertIn("T-2", out)
+
+    def test_claim_comma_and_space(self) -> None:
+        """Comma and space-separated can be mixed."""
+        run(["init"], self.repo)
+        run(["new", "a"], self.repo)
+        run(["new", "b"], self.repo)
+        run(["new", "c"], self.repo)
+        run(["claim", "T-1,T-2", "T-3"], self.repo)
+        out = run(["claimed", "-f", "compact"], self.repo)
+        self.assertIn("T-1", out)
+        self.assertIn("T-2", out)
+        self.assertIn("T-3", out)
+
+
 if __name__ == "__main__":
     unittest.main()

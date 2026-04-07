@@ -7,11 +7,29 @@ import subprocess
 import sys
 
 from . import __version__
-from .commands import (cmd_claim, cmd_claimed, cmd_close, cmd_dep, cmd_fsck,
-                       cmd_grep, cmd_init, cmd_labels, cmd_list, cmd_log,
-                       cmd_new, cmd_note, cmd_pull, cmd_push, cmd_reject,
-                       cmd_remote, cmd_resume, cmd_show, cmd_summary,
-                       cmd_unblocked, cmd_update)
+from .commands import (
+    cmd_claim,
+    cmd_claimed,
+    cmd_close,
+    cmd_dep,
+    cmd_fsck,
+    cmd_grep,
+    cmd_init,
+    cmd_labels,
+    cmd_list,
+    cmd_log,
+    cmd_new,
+    cmd_note,
+    cmd_pull,
+    cmd_push,
+    cmd_reject,
+    cmd_remote,
+    cmd_resume,
+    cmd_show,
+    cmd_summary,
+    cmd_unblocked,
+    cmd_update,
+)
 from .common import DEFAULT_PRIORITY, STATE_ORDER
 from .tracker import StaleTrackerError
 
@@ -119,8 +137,8 @@ def build_parser() -> argparse.ArgumentParser:
         "-s",
         "--state",
         action="append",
-        choices=STATE_ORDER,
-        help="search this state (repeatable; default: open)",
+        metavar="STATE",
+        help="search this state (repeatable, comma-separated; default: open)",
     )
     grep_parser.add_argument(
         "-a",
@@ -157,15 +175,15 @@ def build_parser() -> argparse.ArgumentParser:
         "-s",
         "--state",
         action="append",
-        choices=STATE_ORDER,
-        help="include this state (repeatable; default: open)",
+        metavar="STATE",
+        help="include this state (repeatable, comma-separated; default: open)",
     )
     list_parser.add_argument(
         "-l",
         "--label",
         action="append",
         metavar="LABEL",
-        help="filter to tickets carrying this label (repeatable, AND)",
+        help="filter to tickets carrying this label (repeatable, comma-separated, AND)",
     )
     list_parser.add_argument(
         "-a",
@@ -206,7 +224,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--label",
         action="append",
         metavar="LABEL",
-        help="tag for this issue (repeatable)",
+        help="tag for this issue (repeatable, comma-separated)",
     )
     new_parser.add_argument(
         "-p",
@@ -220,7 +238,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--dep",
         action="append",
         metavar="ISSUE_ID",
-        help="add a blocking dependency (repeatable, e.g. -d T-1 -d T-2)",
+        help="add a blocking dependency (repeatable, comma-separated, e.g. -d T-1,T-2)",
     )
     new_parser.set_defaults(func=cmd_new)
 

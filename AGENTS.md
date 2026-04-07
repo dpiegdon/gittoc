@@ -36,7 +36,8 @@ rather than keeping state in chat.
 
 ## Style
 
-- Format with `black` and `isort` before committing.
+- Format with `isort` first, then `black` before committing (black wins on
+  import formatting conflicts).
 - Check `pyflakes3` and `pylint` output; `pyflakes3` is usually more signal.
 
 ## Testing

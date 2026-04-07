@@ -91,16 +91,16 @@ Use `--help` on any command for full argument documentation.
 gittoc summary
 gittoc list
 gittoc list -l bug                  # filter by label
-gittoc list -l feature,ux           # AND of multiple labels (comma or repeated -l)
+gittoc list -l feature,ux           # AND of multiple labels (comma-separated)
 gittoc list -a                      # all states
-gittoc list -s claimed -s blocked   # specific states
+gittoc list -s claimed,blocked      # specific states (comma-separated)
 gittoc labels                       # all labels in use with counts
 gittoc unblocked                    # only tickets with no blockers
 gittoc grep "pattern"               # search ticket files
 
 # working with tickets
 gittoc new "short title" -p 2 -b "longer context" -l bug
-gittoc new "blocked task" -d T-1 -d T-2   # create with deps
+gittoc new "blocked task" -d T-1,T-2      # create with deps (comma-separated)
 gittoc claim T-42
 gittoc note T-42 "found a race during creation"
 gittoc update T-42 -p 1 -l bug,ux    # add labels

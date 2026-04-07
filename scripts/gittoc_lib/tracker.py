@@ -10,15 +10,37 @@ from dataclasses import replace
 from pathlib import Path
 
 from . import CURRENT_FORMAT_VERSION, CURRENT_LAYOUT_VERSION, VERSION_FILE
-from .common import (EVENT_SUFFIX, ISSUES_ROOT, STATE_ORDER, STATE_SET,
-                     TERMINAL_STATES, TRACKER_BRANCH, branch_exists,
-                     current_branch, default_owner, has_legacy_hidden_clone,
-                     infer_remote, is_worktree, issue_number, list_remotes,
-                     local_config_get, local_config_set, now_utc,
-                     remote_branch_exists, repo_root, run_git,
-                     validate_issue_id, validate_priority, worktree_path)
-from .integrity import (IntegrityFinding, IntegrityReport, issue_id_from_path,
-                        render_integrity_report)
+from .common import (
+    EVENT_SUFFIX,
+    ISSUES_ROOT,
+    STATE_ORDER,
+    STATE_SET,
+    TERMINAL_STATES,
+    TRACKER_BRANCH,
+    branch_exists,
+    current_branch,
+    default_owner,
+    has_legacy_hidden_clone,
+    infer_remote,
+    is_worktree,
+    issue_number,
+    list_remotes,
+    local_config_get,
+    local_config_set,
+    now_utc,
+    remote_branch_exists,
+    repo_root,
+    run_git,
+    validate_issue_id,
+    validate_priority,
+    worktree_path,
+)
+from .integrity import (
+    IntegrityFinding,
+    IntegrityReport,
+    issue_id_from_path,
+    render_integrity_report,
+)
 from .models import Issue
 
 

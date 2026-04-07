@@ -8,8 +8,16 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .common import (STATE_ORDER, TRACKER_BRANCH, default_owner, issue_number,
-                     parse_state, run_git)
+from .common import (
+    STATE_ORDER,
+    STATE_SET,
+    TRACKER_BRANCH,
+    default_owner,
+    issue_number,
+    parse_state,
+    run_git,
+    validate_issue_id,
+)
 from .integrity import IntegrityReport, render_integrity_report
 from .render import print_issues, render_show_text
 from .tracker import RemotePushPullError, Tracker
@@ -43,6 +51,43 @@ def parse_labels(values: list[str] | None) -> list[str]:
             seen.add(label)
             labels.append(label)
     return labels
+
+
+def parse_states(values: list[str] | None) -> tuple[str, ...]:
+    """Parse repeatable/comma-separated state arguments into a validated tuple."""
+    if not values:
+        return ()
+    states: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        for state in value.split(","):
+            state = state.strip()
+            if not state or state in seen:
+                continue
+            if state not in STATE_SET:
+                raise SystemExit(
+                    f"invalid state: {state} (valid: {', '.join(STATE_ORDER)})"
+                )
+            seen.add(state)
+            states.append(state)
+    return tuple(states)
+
+
+def parse_issue_ids(values: list[str] | None) -> list[str]:
+    """Parse repeatable/comma-separated issue ID arguments into a validated list."""
+    if not values:
+        return []
+    ids: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        for issue_id in value.split(","):
+            issue_id = issue_id.strip()
+            if not issue_id or issue_id in seen:
+                continue
+            validate_issue_id(issue_id)
+            seen.add(issue_id)
+            ids.append(issue_id)
+    return ids
 
 
 def format_history_entry(entry: dict) -> str:
@@ -221,8 +266,9 @@ def cmd_new(args: argparse.Namespace) -> int:
     issue = tracker.create_issue(
         args.title, args.body or "", parse_labels(args.label), args.priority
     )
-    if args.dep:
-        tracker.set_dependencies(issue.issue_id, args.dep)
+    deps = parse_issue_ids(args.dep)
+    if deps:
+        tracker.set_dependencies(issue.issue_id, deps)
     print(issue.issue_id)
     _auto_push(tracker)
     return 0
@@ -233,10 +279,8 @@ def cmd_list(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     if args.all:
         states = STATE_ORDER
-    elif args.state:
-        states = tuple(args.state)
     else:
-        states = ("open",)
+        states = parse_states(args.state) or ("open",)
     issues = tracker.list_issues(states)
     if args.label:
         required = set(parse_labels(args.label))
@@ -268,8 +312,9 @@ def cmd_claim(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     _auto_pull(tracker)
     owner = args.owner or default_owner()
+    issue_ids = parse_issue_ids(args.issue_ids)
     issues = []
-    for issue_id in args.issue_ids:
+    for issue_id in issue_ids:
         issues.append(
             tracker.update_issue(
                 issue_id,
@@ -424,10 +469,11 @@ def cmd_dep(args: argparse.Namespace) -> int:
     """Add or remove blocking dependencies for an issue."""
     tracker = Tracker.open()
     _auto_pull(tracker)
+    dep_ids = parse_issue_ids(args.dep_ids)
     if args.remove:
-        issue = tracker.remove_dependencies(args.issue_id, args.dep_ids)
+        issue = tracker.remove_dependencies(args.issue_id, dep_ids)
     else:
-        issue = tracker.set_dependencies(args.issue_id, args.dep_ids)
+        issue = tracker.set_dependencies(args.issue_id, dep_ids)
     print(issue.issue_id)
     _auto_push(tracker)
     return 0
@@ -444,10 +490,8 @@ def cmd_grep(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     if args.all:
         states = STATE_ORDER
-    elif args.state:
-        states = tuple(args.state)
     else:
-        states = ("open",)
+        states = parse_states(args.state) or ("open",)
     files: list[str] = []
     for state in states:
         state_path = tracker.state_dir(state)

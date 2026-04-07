@@ -78,11 +78,11 @@ Use `--help` on any command for full argument documentation.
 **Backlog**
 - `summary` / `sum` — ticket counts by state
 - `list` / `l` — open tickets by priority; `-a` for all states
-- `list -s claimed -s blocked` — filter by state
-- `list -l bug` / `list -l feature,ux` — filter by label (AND; comma or repeated -l)
+- `list -s claimed,blocked` — filter by state (comma-separated)
+- `list -l bug` / `list -l feature,ux` — filter by label (AND; comma-separated)
 - `unblocked` — only tickets with no unmet dependencies
 - `labels` / `labels -a` — all labels in use with counts
-- `grep PATTERN [-i] [-n]` — search open ticket files; `-a` for all states, `-s closed` for specific
+- `grep PATTERN [-i] [-n]` — search open ticket files; `-a` for all states, `-s closed,rejected` for specific
 - `list --sort=id` — chronological order instead of priority
 
 **Working with tickets**
@@ -94,7 +94,7 @@ Use `--help` on any command for full argument documentation.
 - `update T-1 -x ux` — remove labels
 - `update T-1 -L task,docs` — replace all labels
 - `dep T-2 T-1` — make T-2 depend on T-1 (T-1 must complete first)
-- `dep T-2 T-1 T-3 T-4` — add multiple blockers T-1, T-3, T-4 for T-2
+- `dep T-2 T-1,T-3,T-4` — add multiple blockers (comma-separated)
 - `dep T-2 T-1 --remove` / `dep T-2 T-1 -r` — remove a dependency
 - `note T-1 "context"` / `n T-1 "context"` — append a durable note
 - `close T-1` — close as done
@@ -127,7 +127,7 @@ When new follow-up work appears:
 
 ```bash
 gittoc new "Add feature" -p 3
-gittoc new "Blocked task" -d T-1 -d T-2  # create with dependencies
+gittoc new "Blocked task" -d T-1,T-2     # create with dependencies
 gittoc dep T-3 T-1   # T-3 depends on T-1 (T-1 must complete first)
 ```
 
