@@ -1,0 +1,12 @@
+{
+  "body": "Remove inconsistencies in how repeated/multi-value arguments work across commands. For example, labels accept comma-separated values (-l bug,ux) while states require repeated flags (-s open -s claimed). Pick one convention and apply it everywhere for v1.0. Also check: positional vs flag consistency, short-flag letter assignments, help text phrasing.",
+  "created_at": "2026-04-07T21:18:18+00:00",
+  "id": "T-127",
+  "labels": [
+    "quality",
+    "v1.0"
+  ],
+  "priority": 2,
+  "title": "Audit and unify CLI argument conventions",
+  "updated_at": "2026-04-07T21:18:18+00:00"
+}
