@@ -1,2 +1,3 @@
 {"actor": "claude", "at": "2026-04-07T18:20:36+00:00", "kind": "created", "text": "Audit error messages and edge cases across all commands"}
 {"actor": "claude", "at": "2026-04-07T18:20:44+00:00", "kind": "note", "text": "Review all run_git(check=True) call sites and SystemExit raises. Ensure every failure path produces a clear, actionable message \u2014 no raw tracebacks, no swallowed errors, no cryptic git output. Pay attention to offline/permission/auth edge cases."}
+{"actor": "claude", "at": "2026-04-07T21:07:41+00:00", "kind": "claimed", "text": "claude"}
