@@ -87,8 +87,8 @@ Use `--help` on any command for full argument documentation.
 
 **Working with tickets**
 - `new "Title" -p 2 -b "context" -l feature` — create a ticket
-- `claim T-1` / `c T-1` — claim a ticket (defaults owner to `$GITTOC_OWNER` / `$USER`)
-- `claimed` — list all currently claimed issues
+- `claim T-1` — claim a ticket (defaults owner to `$GITTOC_OWNER` / `$USER`)
+- `claimed` / `c` — list all currently claimed issues
 - `update T-1 --state blocked -p 4` — update fields
 - `update T-1 -l bug,ux` — add labels
 - `update T-1 -x ux` — remove labels

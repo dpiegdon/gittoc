@@ -32,23 +32,8 @@ from .commands import (
 from .common import DEFAULT_PRIORITY, STATE_ORDER
 from .tracker import StaleTrackerError
 
-COMMAND_ALIASES = {
-    "l": "list",
-    "s": "show",
-    "sum": "summary",
-    "r": "resume",
-    "c": "claim",
-    "n": "note",
-    "pl": "pull",
-    "pul": "pull",
-    "ps": "push",
-    "pus": "push",
-}
 
-
-def add_format_argument(
-    parser: argparse.ArgumentParser, default: str = "normal"
-) -> None:
+def add_format_argument(parser: argparse.ArgumentParser, default: str = "normal") -> None:
     """Add -f/--format with compact/normal/verbose/json choices to a subcommand parser."""
     parser.add_argument(
         "-f",
@@ -92,7 +77,9 @@ def build_parser() -> argparse.ArgumentParser:
     add_format_argument(claim_parser)
     claim_parser.set_defaults(func=cmd_claim)
 
-    claimed_parser = sub.add_parser("claimed", help="list all currently claimed issues")
+    claimed_parser = sub.add_parser(
+        "claimed", aliases=["c"], help="list all currently claimed issues"
+    )
     add_format_argument(claimed_parser)
     claimed_parser.set_defaults(func=cmd_claimed)
 
@@ -106,7 +93,8 @@ def build_parser() -> argparse.ArgumentParser:
     close_parser.set_defaults(func=cmd_close)
 
     dep_parser = sub.add_parser(
-        "dep",
+        "depends",
+        aliases=["dep"],
         help="add or remove blocking dependencies",
         description="dep ISSUE_ID DEP_ID [DEP_ID ...] — ISSUE_ID depends on all listed DEP_IDs (DEP_IDs must complete first). Use -r to remove.",
     )
@@ -136,6 +124,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     grep_parser = sub.add_parser(
         "grep",
+        aliases=["g"],
         help="search ticket files for a pattern",
         description="Search ticket JSON and event files with grep. "
         "Use -s to select states, -a for all. "
@@ -176,7 +165,9 @@ def build_parser() -> argparse.ArgumentParser:
     add_text_format_argument(labels_parser)
     labels_parser.set_defaults(func=cmd_labels)
 
-    list_parser = sub.add_parser("list", help="list issues ordered by priority")
+    list_parser = sub.add_parser(
+        "list", aliases=["l"], help="list issues ordered by priority"
+    )
     list_parser.add_argument(
         "-s",
         "--state",
@@ -248,7 +239,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     new_parser.set_defaults(func=cmd_new)
 
-    note_parser = sub.add_parser("note", help="append a note to an issue")
+    note_parser = sub.add_parser("note", aliases=["n"], help="append a note to an issue")
     note_parser.add_argument("issue_id", help="ticket to annotate, e.g. T-42")
     note_parser.add_argument("text", help="note text")
     note_parser.add_argument(
@@ -258,7 +249,9 @@ def build_parser() -> argparse.ArgumentParser:
     note_parser.set_defaults(func=cmd_note)
 
     pull_parser = sub.add_parser(
-        "pull", help="fetch and merge the tracker branch from a remote"
+        "pull",
+        aliases=["pl", "pul"],
+        help="fetch and merge the tracker branch from a remote",
     )
     pull_parser.add_argument(
         "remote", nargs="?", help="remote name (default: configured gittoc remote)"
@@ -266,7 +259,9 @@ def build_parser() -> argparse.ArgumentParser:
     add_text_format_argument(pull_parser)
     pull_parser.set_defaults(func=cmd_pull)
 
-    push_parser = sub.add_parser("push", help="push the tracker branch to a remote")
+    push_parser = sub.add_parser(
+        "push", aliases=["ps", "pus"], help="push the tracker branch to a remote"
+    )
     push_parser.add_argument(
         "remote", nargs="?", help="remote name (default: configured gittoc remote)"
     )
@@ -274,14 +269,14 @@ def build_parser() -> argparse.ArgumentParser:
     push_parser.set_defaults(func=cmd_push)
 
     unblocked_parser = sub.add_parser(
-        "unblocked", help="list open issues with no blocking dependencies"
+        "unblocked",
+        aliases=["ubl"],
+        help="list open issues with no blocking dependencies",
     )
     add_format_argument(unblocked_parser)
     unblocked_parser.set_defaults(func=cmd_unblocked)
 
-    reject_parser = sub.add_parser(
-        "reject", help="mark an issue as won't-do / abandoned"
-    )
+    reject_parser = sub.add_parser("reject", help="mark an issue as won't-do / abandoned")
     reject_parser.add_argument("issue_id", help="ticket to reject, e.g. T-42")
     reject_parser.add_argument(
         "--actor",
@@ -307,7 +302,9 @@ def build_parser() -> argparse.ArgumentParser:
     remote_parser.set_defaults(func=cmd_remote)
 
     resume_parser = sub.add_parser(
-        "resume", help="show recovery context for a specific or auto-selected issue"
+        "resume",
+        aliases=["r"],
+        help="show recovery context for a specific or auto-selected issue",
     )
     resume_parser.add_argument(
         "issue_id",
@@ -333,7 +330,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_text_format_argument(resume_parser)
     resume_parser.set_defaults(func=cmd_resume)
 
-    show_parser = sub.add_parser("show", help="show one issue in detail")
+    show_parser = sub.add_parser("show", aliases=["s"], help="show one issue in detail")
     show_parser.add_argument("issue_id", help="ticket to show, e.g. T-42")
     show_parser.add_argument(
         "-a",
@@ -356,11 +353,13 @@ def build_parser() -> argparse.ArgumentParser:
     add_text_format_argument(show_parser)
     show_parser.set_defaults(func=cmd_show)
 
-    summary_parser = sub.add_parser("summary", help="print ticket counts by state")
+    summary_parser = sub.add_parser(
+        "summary", aliases=["sum"], help="print ticket counts by state"
+    )
     add_text_format_argument(summary_parser)
     summary_parser.set_defaults(func=cmd_summary)
 
-    update_parser = sub.add_parser("update", help="update issue fields")
+    update_parser = sub.add_parser("update", aliases=["up"], help="update issue fields")
     update_parser.add_argument("issue_id", help="ticket to update, e.g. T-42")
     update_parser.add_argument("-t", "--title", help="new title")
     update_parser.add_argument("-b", "--body", help="new body text")
@@ -407,8 +406,6 @@ def main(argv: list[str] | None = None) -> int:
         argv = sys.argv[1:]
     else:
         argv = list(argv)
-    if argv:
-        argv[0] = COMMAND_ALIASES.get(argv[0], argv[0])
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
