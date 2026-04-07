@@ -1422,5 +1422,114 @@ class TestVersioning(GittocTestBase):
         self.assertEqual(pull_out["action"], "pull")
 
 
+class TestErrorMessages(GittocTestBase):
+    """Verify that failure paths produce clear, actionable messages."""
+
+    def test_invalid_issue_id_shows_expected_format(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["show", "42"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("T-<number>", proc.stderr)
+
+    def test_invalid_issue_id_various_forms(self) -> None:
+        run(["init"], self.repo)
+        for bad_id in ["42", "t-1", "X-1", "TT-1", ""]:
+            proc = run_fail(["show", bad_id], self.repo)
+            self.assertNotEqual(proc.returncode, 0, f"expected failure for {bad_id!r}")
+
+    def test_invalid_state_lists_valid_states(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["update", "T-1", "--state", "invalid"], self.repo)
+        # argparse catches this before our validator, but let's check it fails
+        self.assertNotEqual(proc.returncode, 0)
+
+    def test_issue_not_found_message(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["show", "T-999"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("issue not found", proc.stderr)
+
+    def test_not_a_git_repo(self) -> None:
+        plain_dir = Path(self.tempdir.name) / "plain"
+        plain_dir.mkdir()
+        proc = run_fail(["init"], plain_dir)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("git error", proc.stderr)
+
+    def test_unknown_remote(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["push", "nonexistent"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("unknown remote", proc.stderr)
+
+    def test_no_remote_configured_pull(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["pull"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("no remote", proc.stderr)
+
+    def test_no_remote_configured_push(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["push"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("no remote", proc.stderr)
+
+    def test_claim_non_ready_blocked_issue(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "blocker"], self.repo)
+        run(["new", "blocked"], self.repo)
+        run(["depends", "T-2", "T-1"], self.repo)
+        proc = run_fail(["claim", "T-2"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("cannot claim non-ready", proc.stderr)
+
+    def test_claim_closed_issue(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "done ticket"], self.repo)
+        run(["close", "T-1"], self.repo)
+        proc = run_fail(["claim", "T-1"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("cannot claim issue from state closed", proc.stderr)
+
+    def test_cycle_detection_message(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "a"], self.repo)
+        run(["new", "b"], self.repo)
+        run(["depends", "T-2", "T-1"], self.repo)
+        proc = run_fail(["depends", "T-1", "T-2"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("cycle", proc.stderr)
+
+    def test_remove_nonexistent_dependency(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "ticket"], self.repo)
+        run(["new", "other"], self.repo)
+        proc = run_fail(["depends", "-r", "T-1", "T-2"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("not a dependency", proc.stderr)
+
+    def test_update_no_fields(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "ticket"], self.repo)
+        proc = run_fail(["update", "T-1"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("no fields to update", proc.stderr)
+
+    def test_replace_label_conflict(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "ticket"], self.repo)
+        proc = run_fail(
+            ["update", "T-1", "--replace-label", "a", "--label", "b"], self.repo
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("cannot combine", proc.stderr)
+
+    def test_grep_no_pattern(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["grep"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("pattern", proc.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

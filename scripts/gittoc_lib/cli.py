@@ -406,3 +406,6 @@ def main(argv: list[str] | None = None) -> int:
         msg = exc.stderr.strip() or exc.stdout.strip() or str(exc)
         print(f"git error: {msg}", file=sys.stderr)
         return 1
+    except OSError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1

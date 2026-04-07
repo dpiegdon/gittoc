@@ -62,7 +62,9 @@ def validate_issue_id(issue_id: str) -> str:
     """Raise SystemExit if issue_id does not match T-<n> format, otherwise return it."""
     match = ISSUE_RE.match(issue_id)
     if not match:
-        raise SystemExit(f"invalid issue id: {issue_id}")
+        raise SystemExit(
+            f"invalid issue id: {issue_id} (expected T-<number>, e.g. T-42)"
+        )
     return issue_id
 
 
@@ -85,7 +87,7 @@ def parse_state(value: str | None) -> str | None:
     if value is None:
         return None
     if value not in STATE_SET:
-        raise SystemExit(f"invalid state: {value}")
+        raise SystemExit(f"invalid state: {value} (valid: {', '.join(STATE_ORDER)})")
     return value
 
 

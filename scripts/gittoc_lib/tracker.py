@@ -428,7 +428,9 @@ class Tracker:
     def state_dir(self, state: str) -> Path:
         """Return the directory path for a given issue state, raising on invalid state."""
         if state not in STATE_SET:
-            raise SystemExit(f"invalid state: {state}")
+            raise SystemExit(
+                f"invalid state: {state} (valid: {', '.join(STATE_ORDER)})"
+            )
         return self.issues_root() / state
 
     def issue_path(self, issue_id: str, state: str) -> Path:
