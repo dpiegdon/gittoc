@@ -129,9 +129,7 @@ class Tracker:
 
     def head(self) -> str:
         """Return the current HEAD commit hash of the tracker branch."""
-        proc = run_git(
-            ["rev-parse", "--verify", "HEAD"], cwd=self.checkout, check=False
-        )
+        proc = run_git(["rev-parse", "--verify", "HEAD"], cwd=self.checkout, check=False)
         return proc.stdout.strip() if proc.returncode == 0 else ""
 
     def configured_remote(self) -> str:
@@ -209,7 +207,13 @@ class Tracker:
         """Fetch and merge the tracker branch from the given remote."""
         self._validate_remote(remote)
         before_head = self.head()
-        run_git(["fetch", remote, TRACKER_BRANCH], cwd=self.repo)
+        try:
+            run_git(["fetch", remote, TRACKER_BRANCH], cwd=self.repo)
+        except subprocess.CalledProcessError as exc:
+            raise SystemExit(
+                f"pull failed for {remote}/{TRACKER_BRANCH}: "
+                f"{exc.stderr.strip() or exc.stdout.strip()}"
+            ) from exc
         if not remote_branch_exists(self.repo, remote, TRACKER_BRANCH):
             raise SystemExit(f"remote branch not found: {remote}/{TRACKER_BRANCH}")
         proc = run_git(
@@ -219,7 +223,8 @@ class Tracker:
         )
         if proc.returncode != 0:
             raise SystemExit(
-                f"pull failed while merging {remote}/{TRACKER_BRANCH}; resolve conflicts in {self.checkout} and re-run your command"
+                f"pull failed while merging {remote}/{TRACKER_BRANCH}; "
+                f"resolve conflicts in {self.checkout} and re-run your command"
             )
         self.base_head = self.head()
         merge_kind = self._merge_kind(before_head, self.base_head)
@@ -239,12 +244,11 @@ class Tracker:
         """Push the tracker branch to the given remote."""
         self._validate_remote(remote)
         try:
-            run_git(
-                ["push", remote, f"{TRACKER_BRANCH}:{TRACKER_BRANCH}"], cwd=self.repo
-            )
+            run_git(["push", remote, f"{TRACKER_BRANCH}:{TRACKER_BRANCH}"], cwd=self.repo)
         except subprocess.CalledProcessError as exc:
             raise SystemExit(
-                f"push failed for {remote}/{TRACKER_BRANCH}: {exc.stderr.strip() or exc.stdout.strip()}"
+                f"push failed for {remote}/{TRACKER_BRANCH}: "
+                f"{exc.stderr.strip() or exc.stdout.strip()}"
             ) from exc
         self.base_head = self.head()
         return {"action": "push", "remote": remote, "head": self.base_head}
@@ -266,13 +270,18 @@ class Tracker:
             return
         if not remote_branch_exists(self.repo, remote, TRACKER_BRANCH):
             return
-        status = self.pull_remote(remote)
-        report = status.get("fsck")
-        if isinstance(report, IntegrityReport) and not report.ok:
-            raise SystemExit(
-                "pull merged tracker changes but fsck found integrity issues:\n"
-                f"{render_integrity_report(report)}"
-            )
+        try:
+            status = self.pull_remote(remote)
+            report = status.get("fsck")
+        except SystemExit as exc:
+            print("pull failed for {remote}/{TRACKER_BRANCH}: {exc}", file=sys.stderr)
+            print("Trying to ignore above failure!", file=sys.stderr)
+        else:
+            if isinstance(report, IntegrityReport) and not report.ok:
+                raise SystemExit(
+                    "pull merged tracker changes but fsck found integrity issues:\n"
+                    f"{render_integrity_report(report)}"
+                )
 
     def auto_push(self) -> None:
         """Push to the effective remote after a mutation.
@@ -286,9 +295,7 @@ class Tracker:
         try:
             self.push_remote(remote)
         except SystemExit as exc:
-            print(
-                f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr
-            )
+            print(f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr)
 
     def ensure_not_stale(self) -> None:
         """Raise StaleTrackerError if the tracker has been modified since it was opened."""
@@ -342,9 +349,7 @@ class Tracker:
         self.ensure_not_stale()
         run_git(["add", "issues"], cwd=self.checkout)
         commit_actor = actor or default_owner()
-        run_git(
-            ["commit", "-q", "-m", f"{message} ({commit_actor})"], cwd=self.checkout
-        )
+        run_git(["commit", "-q", "-m", f"{message} ({commit_actor})"], cwd=self.checkout)
         self.base_head = self.head()
 
     def write_issue(self, issue: Issue, previous_path: Path | None = None) -> Path:
@@ -442,9 +447,7 @@ class Tracker:
 
     def note_count(self, issue_id: str) -> int:
         """Return the number of note events recorded for an issue."""
-        return sum(
-            1 for entry in self.event_entries(issue_id) if entry["kind"] == "note"
-        )
+        return sum(1 for entry in self.event_entries(issue_id) if entry["kind"] == "note")
 
     def run_pending_migrations(self) -> None:
         """Hook for future tracker migrations.
@@ -588,9 +591,7 @@ class Tracker:
 
     def resume_issue(self, owner: str) -> tuple[Issue | None, str | None]:
         """Select the best issue to resume: owner's claimed > ready > open."""
-        mine = [
-            issue for issue in self.list_issues(("claimed",)) if issue.owner == owner
-        ]
+        mine = [issue for issue in self.list_issues(("claimed",)) if issue.owner == owner]
         if mine:
             return mine[0], "claimed-by-owner"
         ready = self.ready_issues()
@@ -854,9 +855,7 @@ class Tracker:
             for entry in sorted(state_dir.iterdir(), key=lambda value: value.name):
                 if entry.is_dir():
                     findings.append(
-                        self._finding(
-                            "unexpected directory in tracker state", path=entry
-                        )
+                        self._finding("unexpected directory in tracker state", path=entry)
                     )
                     continue
                 if entry.name.endswith(EVENT_SUFFIX):
@@ -925,9 +924,7 @@ class Tracker:
             if errors:
                 invalid_file_ids.add(file_id)
                 for error in errors:
-                    findings.append(
-                        self._finding(error, path=path, issue_ids=(file_id,))
-                    )
+                    findings.append(self._finding(error, path=path, issue_ids=(file_id,)))
                 continue
             if file_id not in duplicate_file_ids:
                 issues_by_file_id[file_id] = issue
