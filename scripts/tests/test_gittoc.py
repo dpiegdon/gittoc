@@ -269,11 +269,13 @@ class TestClaimWorkflow(GittocTestBase):
         with self.assertRaises(subprocess.CalledProcessError):
             run(["claim", issue1, "--owner", "tester"], self.repo)
 
-    def test_claim_alias(self) -> None:
+    def test_claimed_alias(self) -> None:
+        """The 'c' alias maps to the 'claimed' list filter."""
         run(["init"], self.repo)
         issue1 = run(["new", "Task", "-p", "1"], self.repo)
-        claimed_alias = run(["c", issue1, "--owner", "tester"], self.repo)
-        self.assertIn(f"! {issue1} p1 [claimed] Task  owner=tester", claimed_alias)
+        run(["claim", issue1, "--owner", "tester"], self.repo)
+        claimed_list = run(["c"], self.repo)
+        self.assertIn(issue1, claimed_list)
 
 
 class TestLabels(GittocTestBase):
