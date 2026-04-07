@@ -1,0 +1,11 @@
+{
+  "body": "there is no way to list available short aliases, should be part of '--help'. also I'd like a short alias for the update command ('up'?).",
+  "created_at": "2026-04-07T15:04:43+00:00",
+  "id": "T-122",
+  "labels": [
+    "ux"
+  ],
+  "priority": 3,
+  "title": "improve/expand short aliases and handling",
+  "updated_at": "2026-04-07T15:04:43+00:00"
+}
