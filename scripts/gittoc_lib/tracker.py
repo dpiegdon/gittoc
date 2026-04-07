@@ -43,6 +43,10 @@ from .integrity import (
 from .models import Issue
 
 
+class RemoteFetchError(Exception):
+    """Raised when fetching from a remote fails (e.g. network error)."""
+
+
 class StaleTrackerError(Exception):
     """Raised when the tracker has been modified since it was opened."""
 
@@ -210,7 +214,7 @@ class Tracker:
         try:
             run_git(["fetch", remote, TRACKER_BRANCH], cwd=self.repo)
         except subprocess.CalledProcessError as exc:
-            raise SystemExit(
+            raise RemoteFetchError(
                 f"pull failed for {remote}/{TRACKER_BRANCH}: "
                 f"{exc.stderr.strip() or exc.stdout.strip()}"
             ) from exc
@@ -262,8 +266,9 @@ class Tracker:
         """Pull from the effective remote before a mutation.
 
         Skipped silently if no remote is configured or the remote branch does
-        not exist yet.  Raises SystemExit on merge conflict so the mutation is
-        aborted before anything is written.
+        not exist yet.  Fetch/connection failures are logged and ignored so
+        offline work is possible.  Raises SystemExit on merge conflict so the
+        mutation is aborted before anything is written.
         """
         remote = self.effective_remote()
         if not remote:
@@ -272,16 +277,15 @@ class Tracker:
             return
         try:
             status = self.pull_remote(remote)
-            report = status.get("fsck")
-        except SystemExit as exc:
-            print("pull failed for {remote}/{TRACKER_BRANCH}: {exc}", file=sys.stderr)
-            print("Trying to ignore above failure!", file=sys.stderr)
-        else:
-            if isinstance(report, IntegrityReport) and not report.ok:
-                raise SystemExit(
-                    "pull merged tracker changes but fsck found integrity issues:\n"
-                    f"{render_integrity_report(report)}"
-                )
+        except RemoteFetchError as exc:
+            print(f"warning: auto-pull fetch failed: {exc}; continuing with local state", file=sys.stderr)
+            return
+        report = status.get("fsck")
+        if isinstance(report, IntegrityReport) and not report.ok:
+            raise SystemExit(
+                "pull merged tracker changes but fsck found integrity issues:\n"
+                f"{render_integrity_report(report)}"
+            )
 
     def auto_push(self) -> None:
         """Push to the effective remote after a mutation.

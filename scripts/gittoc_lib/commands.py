@@ -18,7 +18,7 @@ from .common import (
 )
 from .integrity import IntegrityReport, render_integrity_report
 from .render import print_issues, render_show_text
-from .tracker import Tracker
+from .tracker import RemoteFetchError, Tracker
 
 SHOW_NOTES_LIMIT = 3
 
@@ -165,7 +165,11 @@ def cmd_pull(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 1
-    status = tracker.pull_remote(remote)
+    try:
+        status = tracker.pull_remote(remote)
+    except RemoteFetchError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     report = status.get("fsck")
     payload = dict(status)
     if isinstance(report, IntegrityReport):
