@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 
 from . import __version__
@@ -401,3 +402,7 @@ def main(argv: list[str] | None = None) -> int:
     except StaleTrackerError as exc:
         print(str(exc), file=sys.stderr)
         return 2
+    except subprocess.CalledProcessError as exc:
+        msg = exc.stderr.strip() or exc.stdout.strip() or str(exc)
+        print(f"git error: {msg}", file=sys.stderr)
+        return 1
