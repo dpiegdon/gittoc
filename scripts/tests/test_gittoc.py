@@ -431,6 +431,14 @@ class TestUpdate(GittocTestBase):
         summary = run(["summary"], self.repo)
         self.assertIn("blocked=1", summary)
 
+    def test_update_alias(self) -> None:
+        """The 'up' alias maps to the 'update' command."""
+        run(["init"], self.repo)
+        run(["new", "Original"], self.repo)
+        run(["up", "T-1", "--title", "Aliased"], self.repo)
+        updated = json.loads(run(["show", "T-1", "-f", "json"], self.repo))
+        self.assertEqual(updated["title"], "Aliased")
+
     def test_update_no_fields_is_noop(self) -> None:
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)
