@@ -1,1 +1,2 @@
 {"actor": "claude", "at": "2026-04-07T21:18:18+00:00", "kind": "created", "text": "Audit and unify CLI argument conventions"}
+{"actor": "claude", "at": "2026-04-07T21:18:50+00:00", "kind": "note", "text": "Convention decision: all multi-value arguments should accept comma-separated values (like labels do today). States (-s), deps (-d), and any other repeated flags should follow the same pattern."}
