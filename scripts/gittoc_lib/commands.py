@@ -18,7 +18,7 @@ from .common import (
 )
 from .integrity import IntegrityReport, render_integrity_report
 from .render import print_issues, render_show_text
-from .tracker import RemoteFetchError, Tracker
+from .tracker import RemotePushPullError, Tracker
 
 SHOW_NOTES_LIMIT = 3
 
@@ -167,7 +167,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
         return 1
     try:
         status = tracker.pull_remote(remote)
-    except RemoteFetchError as exc:
+    except RemotePushPullError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     report = status.get("fsck")
@@ -208,7 +208,11 @@ def cmd_push(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 1
-    status = tracker.push_remote(remote)
+    try:
+        status = tracker.push_remote(remote)
+    except RemotePushPullError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     if args.format == "json":
         print(json.dumps(status, indent=2, sort_keys=True))
     else:

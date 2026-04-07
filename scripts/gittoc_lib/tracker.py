@@ -43,8 +43,8 @@ from .integrity import (
 from .models import Issue
 
 
-class RemoteFetchError(Exception):
-    """Raised when fetching from a remote fails (e.g. network error)."""
+class RemotePushPullError(Exception):
+    """Raised when a push or pull fails due to a remote/network error."""
 
 
 class StaleTrackerError(Exception):
@@ -214,7 +214,7 @@ class Tracker:
         try:
             run_git(["fetch", remote, TRACKER_BRANCH], cwd=self.repo)
         except subprocess.CalledProcessError as exc:
-            raise RemoteFetchError(
+            raise RemotePushPullError(
                 f"pull failed for {remote}/{TRACKER_BRANCH}: "
                 f"{exc.stderr.strip() or exc.stdout.strip()}"
             ) from exc
@@ -250,7 +250,7 @@ class Tracker:
         try:
             run_git(["push", remote, f"{TRACKER_BRANCH}:{TRACKER_BRANCH}"], cwd=self.repo)
         except subprocess.CalledProcessError as exc:
-            raise SystemExit(
+            raise RemotePushPullError(
                 f"push failed for {remote}/{TRACKER_BRANCH}: "
                 f"{exc.stderr.strip() or exc.stdout.strip()}"
             ) from exc
@@ -277,7 +277,7 @@ class Tracker:
             return
         try:
             status = self.pull_remote(remote)
-        except RemoteFetchError as exc:
+        except RemotePushPullError as exc:
             print(f"warning: auto-pull fetch failed: {exc}; continuing with local state", file=sys.stderr)
             return
         report = status.get("fsck")
@@ -298,7 +298,7 @@ class Tracker:
             return
         try:
             self.push_remote(remote)
-        except SystemExit as exc:
+        except RemotePushPullError as exc:
             print(f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr)
 
     def ensure_not_stale(self) -> None:
