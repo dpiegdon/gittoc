@@ -66,12 +66,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    claim_parser = sub.add_parser("claim", help="claim one or more issues")
+    claim_parser = sub.add_parser(
+        "claim",
+        help="claim one or more issues",
+        description="Assign one or more tickets to yourself (or --owner). "
+        "Only open, unblocked tickets can be claimed.",
+    )
     claim_parser.add_argument(
         "issue_ids",
         nargs="+",
         metavar="issue_id",
-        help="ticket(s) to claim, e.g. T-42 T-43",
+        help="ticket(s) to claim, e.g. T-42,T-43 or T-42 T-43",
     )
     claim_parser.add_argument(
         "--owner",
@@ -81,12 +86,20 @@ def build_parser() -> argparse.ArgumentParser:
     claim_parser.set_defaults(func=cmd_claim)
 
     claimed_parser = sub.add_parser(
-        "claimed", aliases=["c"], help="list all currently claimed issues"
+        "claimed",
+        aliases=["c"],
+        help="list all currently claimed issues",
+        description="List all tickets currently in the claimed state, across all owners.",
     )
     add_format_argument(claimed_parser)
     claimed_parser.set_defaults(func=cmd_claimed)
 
-    close_parser = sub.add_parser("close", help="mark an issue as done")
+    close_parser = sub.add_parser(
+        "close",
+        help="mark an issue as done",
+        description="Mark a ticket as closed (work complete). "
+        "Use reject instead for tickets that won't be done.",
+    )
     close_parser.add_argument("issue_id", help="ticket to close, e.g. T-42")
     close_parser.add_argument(
         "--actor",
@@ -99,7 +112,8 @@ def build_parser() -> argparse.ArgumentParser:
         "depends",
         aliases=["dep"],
         help="add or remove blocking dependencies",
-        description="dep ISSUE_ID DEP_ID [DEP_ID ...] — ISSUE_ID depends on all listed DEP_IDs (DEP_IDs must complete first). Use -r to remove.",
+        description="Make ISSUE_ID depend on one or more DEP_IDs — the dependencies "
+        "must be closed before ISSUE_ID can be claimed. Use -r to remove dependencies.",
     )
     dep_parser.add_argument(
         "issue_id", help="ticket that depends on the others, e.g. T-4"
@@ -108,7 +122,7 @@ def build_parser() -> argparse.ArgumentParser:
         "dep_ids",
         nargs="+",
         metavar="dep_id",
-        help="one or more dependency tickets, e.g. T-1 T-2 T-3",
+        help="one or more blocking tickets, e.g. T-1,T-2 or T-1 T-2",
     )
     dep_parser.add_argument(
         "-r",
@@ -121,6 +135,9 @@ def build_parser() -> argparse.ArgumentParser:
     fsck_parser = sub.add_parser(
         "fsck",
         help="validate tracker files, dependencies, cycles, and event logs",
+        description="Scan all tracker files for integrity issues: malformed JSON, "
+        "missing or dangling dependencies, dependency cycles, and orphaned event logs. "
+        "Exits non-zero if any problems are found.",
     )
     add_text_format_argument(fsck_parser)
     fsck_parser.set_defaults(func=cmd_fsck)
@@ -153,11 +170,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     grep_parser.set_defaults(func=cmd_grep)
 
-    init_parser = sub.add_parser("init", help="initialize tracker worktree")
+    init_parser = sub.add_parser(
+        "init",
+        help="initialize tracker worktree",
+        description="Set up the gittoc tracker in this repository. "
+        "Creates the gittoc branch and a hidden worktree at .git/gittoc/. "
+        "Run once per repository clone. Also auto-configures the remote if one can be inferred.",
+    )
     init_parser.set_defaults(func=cmd_init)
 
     labels_parser = sub.add_parser(
-        "labels", help="list all labels in use across tickets with counts"
+        "labels",
+        help="list all labels in use across tickets with counts",
+        description="List every label currently applied to tickets, with how many "
+        "tickets carry each one. Useful for backlog grooming and finding label typos.",
     )
     labels_parser.add_argument(
         "-a",
@@ -169,7 +195,11 @@ def build_parser() -> argparse.ArgumentParser:
     labels_parser.set_defaults(func=cmd_labels)
 
     list_parser = sub.add_parser(
-        "list", aliases=["l"], help="list issues ordered by priority"
+        "list",
+        aliases=["l"],
+        help="list issues ordered by priority",
+        description="List tickets sorted by priority (1=highest). "
+        "Defaults to open tickets only; use -s or -a to include other states.",
     )
     list_parser.add_argument(
         "-s",
@@ -277,12 +307,17 @@ def build_parser() -> argparse.ArgumentParser:
         "unblocked",
         aliases=["ubl"],
         help="list open issues with no blocking dependencies",
+        description="List open tickets that have no unresolved dependencies — "
+        "these are safe to claim and start working on right now.",
     )
     add_format_argument(unblocked_parser)
     unblocked_parser.set_defaults(func=cmd_unblocked)
 
     reject_parser = sub.add_parser(
-        "reject", help="mark an issue as won't-do / abandoned"
+        "reject",
+        help="mark an issue as won't-do / abandoned",
+        description="Mark a ticket as rejected (won't fix, out of scope, abandoned). "
+        "Use close instead when work is actually complete.",
     )
     reject_parser.add_argument("issue_id", help="ticket to reject, e.g. T-42")
     reject_parser.add_argument(
@@ -293,7 +328,11 @@ def build_parser() -> argparse.ArgumentParser:
     reject_parser.set_defaults(func=cmd_reject)
 
     remote_parser = sub.add_parser(
-        "remote", help="show or configure tracker remote wiring"
+        "remote",
+        help="show or configure tracker remote wiring",
+        description="Show which remote the tracker branch is configured to sync with, "
+        "or configure it. Use --set to pin a specific remote, --auto to infer it. "
+        "Once configured, push/pull work without specifying a remote each time.",
     )
     remote_parser.add_argument(
         "--set",
@@ -311,7 +350,10 @@ def build_parser() -> argparse.ArgumentParser:
     resume_parser = sub.add_parser(
         "resume",
         aliases=["r"],
-        help="show recovery context for a specific or auto-selected issue",
+        help="show context for your next ticket",
+        description="Show work context for a ticket to help you pick up where you left off. "
+        "Without an ID, auto-selects the best next ticket: your claimed work first, "
+        "then highest-priority ready ticket, then highest-priority open ticket.",
     )
     resume_parser.add_argument(
         "issue_id",
@@ -361,7 +403,11 @@ def build_parser() -> argparse.ArgumentParser:
     show_parser.set_defaults(func=cmd_show)
 
     summary_parser = sub.add_parser(
-        "summary", aliases=["sum"], help="print ticket counts by state"
+        "summary",
+        aliases=["sum"],
+        help="print ticket counts by state",
+        description="Print a one-line summary of how many tickets are in each state, "
+        "plus how many open tickets are unblocked and ready to claim.",
     )
     add_text_format_argument(summary_parser)
     summary_parser.set_defaults(func=cmd_summary)
