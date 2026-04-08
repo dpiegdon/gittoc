@@ -822,6 +822,213 @@ class TestAutoPush(GittocTestBase):
         issue = run(["new", "Ticket without remote"], self.repo)
         self.assertEqual(issue, "T-1")
 
+    def test_auto_pull_fetch_failure_warns_and_continues(self) -> None:
+        """Fetch failure during auto-pull should warn to stderr but not abort."""
+        remote_repo = self.init_with_remote()
+        run(["new", "first ticket"], self.repo)
+        run(["push", "origin"], self.repo)
+        subprocess.run(
+            ["git", "config", "gittoc.autopush", "true"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        # Break the remote URL to simulate a network failure
+        subprocess.run(
+            ["git", "remote", "set-url", "origin", "/nonexistent/path"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        # Mutation should succeed locally; auto-pull and auto-push both warn
+        proc = run_fail(["new", "offline ticket"], self.repo)
+        self.assertEqual(proc.returncode, 0)
+        self.assertIn("warning", proc.stderr)
+        self.assertIn("T-2", proc.stdout)
+
+    def test_auto_pull_merge_conflict_aborts_mutation(self) -> None:
+        """A merge conflict during auto-pull must abort before any local write."""
+        remote_repo = self.init_with_remote()
+        run(["new", "original title"], self.repo)
+        run(["push", "origin"], self.repo)
+
+        # Clone: update T-1 and push to create divergent history
+        clone = Path(self.tempdir.name) / "clone-conflict"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "Test User"],
+            cwd=clone,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.email", "test@example.com"],
+            cwd=clone,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], clone)
+        run(["update", "T-1", "-t", "clone title"], clone)
+        run(["push", "origin"], clone)
+
+        # Repo A: also update T-1 differently — now divergent, not pushed
+        run(["update", "T-1", "-t", "repo title"], self.repo)
+
+        # Enable autopush so auto-pull fires before the next mutation
+        subprocess.run(
+            ["git", "config", "gittoc.autopush", "true"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+
+        # Creating T-2 triggers auto-pull → merge conflict → mutation aborted
+        proc = run_fail(["new", "T-2 title"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("resolve conflicts", proc.stderr)
+
+    def test_autopush_disabled_does_not_push(self) -> None:
+        """Without autopush enabled, mutations stay local and don't reach the remote."""
+        remote_repo = self.init_with_remote()
+        run(["push", "origin"], self.repo)
+
+        # Clone starts with an empty tracker
+        clone = Path(self.tempdir.name) / "clone-no-autopush"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "Test User"],
+            cwd=clone,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.email", "test@example.com"],
+            cwd=clone,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], clone)
+
+        # autopush NOT enabled — create a ticket locally in repo A
+        run(["new", "local only ticket"], self.repo)
+
+        # Clone pulls — should NOT see the new ticket
+        run(["pull", "origin"], clone)
+        summary = run(["summary"], clone)
+        self.assertIn("open=0", summary)
+
+
+class TestMiscCoverage(GittocTestBase):
+    """Coverage for commands and options not exercised elsewhere."""
+
+    def test_labels_command(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "bug one", "-l", "bug,p1"], self.repo)
+        run(["new", "bug two", "-l", "bug"], self.repo)
+        run(["new", "feature", "-l", "feature"], self.repo)
+        out = run(["labels"], self.repo)
+        # bug appears on 2 tickets
+        lines = {line.split()[0]: line.split()[-1] for line in out.splitlines() if line}
+        self.assertEqual(lines.get("bug"), "2")
+        self.assertEqual(lines.get("feature"), "1")
+        self.assertEqual(lines.get("p1"), "1")
+
+    def test_labels_all_flag(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "task", "-l", "chore"], self.repo)
+        run(["close", "T-1"], self.repo)
+        # Without -a, closed ticket labels don't appear
+        out_open = run(["labels"], self.repo)
+        self.assertEqual(out_open.strip(), "")
+        # With -a, closed ticket labels appear
+        out_all = run(["labels", "-a"], self.repo)
+        self.assertIn("chore", out_all)
+
+    def test_grep_content_search(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "task", "-b", "contains needle here"], self.repo)
+        run(["new", "other task"], self.repo)
+        out = run(["grep", "needle"], self.repo)
+        self.assertIn("needle", out)
+        self.assertNotIn("other task", out)
+
+    def test_grep_all_states(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "open needle"], self.repo)
+        run(["new", "closed needle"], self.repo)
+        run(["close", "T-2"], self.repo)
+        out_open = run(["grep", "needle"], self.repo)
+        self.assertIn("T-1", out_open)
+        self.assertNotIn("closed", out_open)
+        out_all = run(["grep", "-a", "needle"], self.repo)
+        self.assertIn("T-1", out_all)
+        self.assertIn("T-2", out_all)
+
+    def test_remote_set_command(self) -> None:
+        remote_repo = self.init_with_remote()
+        run(["remote", "--set", "origin"], self.repo)
+        out = run(["remote"], self.repo)
+        self.assertIn("configured=origin", out)
+
+    def test_remote_status_output(self) -> None:
+        remote_repo = self.init_with_remote()
+        out = run(["remote"], self.repo)
+        self.assertIn("remotes=origin", out)
+        self.assertIn("effective=origin", out)
+
+    def test_log_no_reverse(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "first"], self.repo)
+        run(["new", "second"], self.repo)
+        forward = run(["log"], self.repo).splitlines()
+        backward = run(["log", "--no-reverse"], self.repo).splitlines()
+        self.assertEqual(forward, list(reversed(backward)))
+
+    def test_unblocked_command(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "blocker"], self.repo)
+        run(["new", "blocked", "-d", "T-1"], self.repo)
+        run(["new", "free"], self.repo)
+        out = run(["unblocked", "-f", "compact"], self.repo)
+        self.assertIn("T-1", out)
+        self.assertIn("T-3", out)
+        self.assertNotIn("T-2", out)
+
+    def test_update_owner_and_body(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "task"], self.repo)
+        run(["update", "T-1", "--owner", "alice", "-b", "new body"], self.repo)
+        data = json.loads(run(["show", "T-1", "-f", "json"], self.repo))
+        self.assertEqual(data["owner"], "alice")
+        self.assertEqual(data["body"], "new body")
+
+    def test_show_all_history(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "task"], self.repo)
+        run(["note", "T-1", "first note"], self.repo)
+        run(["note", "T-1", "second note"], self.repo)
+        data = json.loads(run(["show", "T-1", "-a", "-f", "json"], self.repo))
+        self.assertIn("history", data)
+        kinds = [e["kind"] for e in data["history"]]
+        self.assertIn("created", kinds)
+        self.assertIn("note", kinds)
+
+    def test_summary_json_format(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "task"], self.repo)
+        data = json.loads(run(["summary", "-f", "json"], self.repo))
+        self.assertEqual(data["open"], 1)
+        self.assertEqual(data["ready"], 1)
+        self.assertIn("claimed", data)
+
 
 class TestVersioning(GittocTestBase):
     def _worktree(self) -> Path:
