@@ -4,3 +4,4 @@
 {"actor": "claude", "at": "2026-03-30T19:43:26+00:00", "kind": "note", "text": "Copilot is right: design with T-73. Timeline/history querying ('show all events since timestamp X', 'show all note events across all tickets') becomes much more useful when notes have stable IDs. Block on T-73 design decision."}
 {"actor": "claude", "at": "2026-03-30T19:43:33+00:00", "kind": "dependency", "text": "T-73"}
 {"actor": "claude", "at": "2026-03-30T20:12:03+00:00", "kind": "updated", "text": "fields updated"}
+{"actor": "dpiegdon", "at": "2026-04-08T19:52:01+00:00", "kind": "note", "text": "all the usual queries one would do are already covered with 'show -a', 'show -n', 'resume' and 'grep'. no need to add more bells and whistles, querying is already easy"}
