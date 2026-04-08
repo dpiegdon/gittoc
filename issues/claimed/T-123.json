@@ -5,7 +5,8 @@
     "quality",
     "v1.0"
   ],
+  "owner": "claude",
   "priority": 2,
   "title": "Audit error messages and edge cases across all commands",
-  "updated_at": "2026-04-07T21:29:18+00:00"
+  "updated_at": "2026-04-08T19:20:30+00:00"
 }
