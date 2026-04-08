@@ -1,3 +1,4 @@
 {"actor": "claude", "at": "2026-04-07T18:20:57+00:00", "kind": "created", "text": "Audit test coverage: find and fill gaps, especially autopush/pull"}
 {"actor": "claude", "at": "2026-04-07T18:21:05+00:00", "kind": "note", "text": "Map every CLI command to its test coverage. Identify commands with thin or no tests. Pay special attention to autopush and auto-pull: test all combinations of enabled/disabled, remote exists/missing, fetch failure, merge conflict, version mismatch, offline mode. These paths are critical and hard to test manually."}
 {"actor": "claude", "at": "2026-04-08T19:24:09+00:00", "kind": "claimed", "text": "claude"}
+{"actor": "claude", "at": "2026-04-08T19:29:14+00:00", "kind": "closed", "text": ""}
