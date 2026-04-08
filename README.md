@@ -130,15 +130,24 @@ gittoc resume -f json
 gittoc summary -f json
 
 # syncing with a remote
+gittoc remote                       # show remote wiring status
+gittoc remote --set origin          # configure which remote to use
 gittoc pull origin
 gittoc push origin
+
+# auto-push/pull on every mutating command
+git config gittoc.autopush true
 ```
 
 `gittoc pull` runs a read-only integrity check on changed tracker files after a
 non-trivial merge commit, and `gittoc fsck` scans the whole tracker on demand.
 
+Push and pull are version-gated: if collaborators are on different gittoc versions
+with incompatible tracker formats, the sync is rejected before any data is written,
+with a clear message explaining what to upgrade.
+
 Command aliases: `l`=list, `s`=show, `sum`=summary, `r`=resume, `c`=claim, `n`=note,
-`pl`=pull, `ps`=push.
+`dep`=depends, `g`=grep, `ubl`=unblocked, `up`=update, `pl`=pull, `ps`=push.
 
 ### Ticket relationships
 

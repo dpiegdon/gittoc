@@ -38,12 +38,12 @@ rather than keeping state in chat.
 
 - Format with `isort` first, then `black` before committing (black wins on
   import formatting conflicts).
-- Check `pyflakes3` and `pylint` output; `pyflakes3` is usually more signal.
+- Check `python3 -m pyflakes` output before committing.
 
 ## Testing
 
 ```bash
-python3 -m unittest scripts.tests.test_gittoc
+python3 -m pytest scripts/tests/test_gittoc.py
 python3 -m py_compile scripts/gittoc scripts/gittoc_lib/*.py scripts/tests/test_gittoc.py
 ```
 
