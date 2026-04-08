@@ -5,7 +5,8 @@
     "testing",
     "v1.0"
   ],
+  "owner": "claude",
   "priority": 2,
   "title": "Audit test coverage: find and fill gaps, especially autopush/pull",
-  "updated_at": "2026-04-07T18:20:57+00:00"
+  "updated_at": "2026-04-08T19:24:09+00:00"
 }
