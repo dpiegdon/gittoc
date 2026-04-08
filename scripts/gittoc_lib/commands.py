@@ -175,7 +175,9 @@ def cmd_remote(args: argparse.Namespace) -> int:
     elif args.auto:
         remote = tracker.effective_remote()
         if not remote:
-            raise SystemExit("no remote could be inferred")
+            raise SystemExit(
+                "no remote could be inferred (use: gittoc remote --set <name>)"
+            )
         status = tracker.configure_remote(remote)
     else:
         status = tracker.remote_status()

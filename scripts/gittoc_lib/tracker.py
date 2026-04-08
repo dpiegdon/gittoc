@@ -804,7 +804,10 @@ class Tracker:
                     f"cannot claim issue from state {issue.state}: {issue.issue_id}"
                 )
             if not self.ready(issue):
-                raise SystemExit(f"cannot claim non-ready issue: {issue.issue_id}")
+                raise SystemExit(
+                    f"cannot claim non-ready issue: {issue.issue_id}"
+                    f" (has unresolved dependencies)"
+                )
         updated = replace(
             issue,
             title=issue.title if title is None else title,

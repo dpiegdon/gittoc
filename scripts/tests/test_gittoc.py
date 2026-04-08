@@ -1530,6 +1530,56 @@ class TestErrorMessages(GittocTestBase):
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("pattern", proc.stderr)
 
+    def test_claim_non_ready_mentions_dependencies(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "blocker"], self.repo)
+        run(["new", "blocked"], self.repo)
+        run(["depends", "T-2", "T-1"], self.repo)
+        proc = run_fail(["claim", "T-2"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("unresolved dependencies", proc.stderr)
+
+    def test_remote_auto_no_remotes_hints_set(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["remote", "--auto"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("--set", proc.stderr)
+
+    def test_new_dep_not_found(self) -> None:
+        run(["init"], self.repo)
+        proc = run_fail(["new", "task", "-d", "T-999"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("issue not found", proc.stderr)
+
+    def test_malformed_issue_json(self) -> None:
+        run(["init"], self.repo)
+        # Write a corrupt JSON file directly into the tracker worktree
+        worktree = self.repo / ".git" / "gittoc"
+        bad_file = worktree / "issues" / "open" / "T-1.json"
+        bad_file.write_text("not valid json{", encoding="utf-8")
+        subprocess.run(
+            ["git", "add", "issues/open/T-1.json"],
+            cwd=str(worktree),
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-q", "-m", "inject bad ticket"],
+            cwd=str(worktree),
+            check=True,
+            capture_output=True,
+        )
+        proc = run_fail(["show", "T-1"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("malformed", proc.stderr.lower())
+
+    def test_dep_on_missing_ticket(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "ticket"], self.repo)
+        proc = run_fail(["dep", "T-1", "T-999"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("issue not found", proc.stderr)
+
 
 class TestCommaArguments(GittocTestBase):
     """Verify that multi-value arguments accept comma-separated values."""
