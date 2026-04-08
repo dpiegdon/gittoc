@@ -1,3 +1,4 @@
 {"actor": "claude", "at": "2026-04-07T18:20:48+00:00", "kind": "created", "text": "Review and improve CLI help text for first-time users"}
 {"actor": "claude", "at": "2026-04-07T18:20:54+00:00", "kind": "note", "text": "Check --help output for all commands and subcommands. Ensure descriptions are clear, examples are useful, and terminology is consistent. This is the first thing a new user sees \u2014 it should make gittoc self-explanatory."}
 {"actor": "claude", "at": "2026-04-08T19:16:40+00:00", "kind": "claimed", "text": "claude"}
+{"actor": "claude", "at": "2026-04-08T19:18:41+00:00", "kind": "closed", "text": ""}
