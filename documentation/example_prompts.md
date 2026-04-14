@@ -16,19 +16,18 @@ Do NOT make any changes to the codebase itself. You are to only create tickets.
 
 This includes but is not limited to tickets for:
 - chores (minor code cleanup, minimal refactoring) ("chore")
-- larger refactoring ("refactor")
-- issues with the structure, improvements under SOLID and communication issues between subsystems ("structure")
+- internal code cleanup that preserves existing behaviour ("refactor")
+- file/module reorganisation without logic changes, SOLID and subsystem boundaries ("structure")
 - security issues ("security")
 - usability improvement ("ux")
-- tooling ("tooling")
+- build, test, deployment, or infrastructure tooling ("ops")
 - outright bugs ("bug")
 - performance improvements ("perf")
 - documentation ("docs")
-- operational/infrastructure concern ("ops")
 - etc.
 
 Add subset of labels accordingly:
-- chore, refactor, structure, security, ux, tooling, bug, perf, docs, ops, ...
+- chore, refactor, structure, security, ux, ops, bug, perf, docs, ...
 
 And one label per subsystem, container and/or service affected in the codebase: <<<<<<<<<<<<<< *FIXME*
 
@@ -47,15 +46,14 @@ Do NOT make any changes to the codebase itself.
 
 Labels exist for the following contexts:
 - chores (minor code cleanup, minimal refactoring) ("chore")
-- larger refactoring ("refactor")
-- issues with the structure, improvements under SOLID and communication issues between subsystems ("structure")
+- internal code cleanup that preserves existing behaviour ("refactor")
+- file/module reorganisation without logic changes, SOLID and subsystem boundaries ("structure")
 - security issues ("security")
 - usability improvement ("ux")
-- tooling ("tooling")
+- build, test, deployment, or infrastructure tooling ("ops")
 - outright bugs ("bug")
 - performance improvements ("perf")
 - documentation ("docs")
-- operational/infrastructure concern ("ops")
 - tickets that need to be checked by a human ("human") -- you may set this one, and also remove it if you are sure this ticket doesn't need a review by a human.
 - tickets that have a clear problem statement, concrete acceptance criteria, clear scope boundaries, identified dependencies (if any), a clearly defined or very easy solution and are estimable in effort and are thus ready to be implemented ("ready")
 - one label per subsystem, container and/or service affected in the codebase: <<<<<<<<<<<<<< *FIXME*
