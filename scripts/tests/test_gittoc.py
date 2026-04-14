@@ -779,6 +779,33 @@ class TestFsck(GittocTestBase):
         self.assertIn("issues/open/T-1.events.jsonl", result.stderr)
 
 
+    def test_fsck_tolerates_events_without_ref(self) -> None:
+        """Events written before the ref field was introduced must still pass fsck."""
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        gittoc_dir = self.repo / ".git" / "gittoc"
+        event_path = gittoc_dir / "issues" / "open" / "T-1.events.jsonl"
+        # Overwrite with a legacy event that has no 'ref' field
+        event_path.write_text(
+            '{"actor":"alice","at":"2024-01-01T00:00:00+00:00","kind":"created","text":"Task"}\n',
+            encoding="utf-8",
+        )
+        self.assertIn("fsck ok", run(["fsck"], self.repo))
+
+    def test_fsck_tolerates_events_with_unknown_fields(self) -> None:
+        """Events with extra unknown fields (e.g. 'ref') must not fail fsck."""
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        gittoc_dir = self.repo / ".git" / "gittoc"
+        event_path = gittoc_dir / "issues" / "open" / "T-1.events.jsonl"
+        event_path.write_text(
+            '{"actor":"alice","at":"2024-01-01T00:00:00+00:00","kind":"created",'
+            '"ref":"main@abc1234","text":"Task","future_field":"ignored"}\n',
+            encoding="utf-8",
+        )
+        self.assertIn("fsck ok", run(["fsck"], self.repo))
+
+
 class TestAutoPush(GittocTestBase):
     def test_autopush_syncs_new_ticket(self) -> None:
         remote_repo = self.init_with_remote()
