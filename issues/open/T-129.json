@@ -1,0 +1,11 @@
+{
+  "body": "ticket systems can suffer from unmaintained list of labels. it is a good habit to provide a standard set of common labels with a description. such a set of labels depends on the codebase and should be shared across it. a good solution would be to allow a standard set of labelds within the gittoc branch, including a short description of each. 'git toc labels [-a?]' should also list that set, including description. other labels should still be allowed, but this improves standarization of labels for a codebase. configuration as simple json file in gittoc branch root. should also be optional. would then NOT require an increase in format/layout version.",
+  "created_at": "2026-04-14T18:19:55+00:00",
+  "id": "T-129",
+  "labels": [
+    "feature"
+  ],
+  "priority": 3,
+  "title": "add common label list to gittoc branch",
+  "updated_at": "2026-04-14T18:19:55+00:00"
+}
