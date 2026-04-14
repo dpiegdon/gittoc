@@ -935,8 +935,8 @@ class TestMiscCoverage(GittocTestBase):
         run(["new", "bug two", "-l", "bug"], self.repo)
         run(["new", "feature", "-l", "feature"], self.repo)
         out = run(["labels"], self.repo)
-        # bug appears on 2 tickets
-        lines = {line.split()[0]: line.split()[-1] for line in out.splitlines() if line}
+        # bug appears on 2 tickets; count is the second token on each line
+        lines = {line.split()[0]: line.split()[1] for line in out.splitlines() if line}
         self.assertEqual(lines.get("bug"), "2")
         self.assertEqual(lines.get("feature"), "1")
         self.assertEqual(lines.get("p1"), "1")
@@ -951,6 +951,44 @@ class TestMiscCoverage(GittocTestBase):
         # With -a, closed ticket labels appear
         out_all = run(["labels", "-a"], self.repo)
         self.assertIn("chore", out_all)
+
+    def test_labels_defined_labels_file(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "a task", "-l", "bug"], self.repo)
+        # Write a labels.json to the tracker branch
+        labels_json = self.repo / ".git/gittoc/labels.json"
+        labels_json.write_text(
+            '{"bug": "Something is broken", "ready": "Ready to implement"}',
+            encoding="utf-8",
+        )
+        out = run(["labels"], self.repo)
+        lines = {line.split()[0]: line.split()[1] for line in out.splitlines() if line}
+        # bug is in use and defined
+        self.assertEqual(lines.get("bug"), "1")
+        self.assertIn("Something is broken", out)
+        # ready is defined but not in use — still shown with count 0
+        self.assertIn("ready", out)
+        self.assertEqual(lines.get("ready"), "0")
+        self.assertIn("Ready to implement", out)
+
+    def test_labels_defined_labels_json_format(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "a task", "-l", "bug"], self.repo)
+        labels_json = self.repo / ".git/gittoc/labels.json"
+        labels_json.write_text('{"bug": "Something is broken"}', encoding="utf-8")
+        out = run(["labels", "-f", "json"], self.repo)
+        rows = json.loads(out)
+        bug_row = next(r for r in rows if r["label"] == "bug")
+        self.assertEqual(bug_row["count"], 1)
+        self.assertEqual(bug_row["description"], "Something is broken")
+
+    def test_labels_no_defined_file(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "a task", "-l", "custom"], self.repo)
+        # No labels.json — output should still work, count as second token
+        out = run(["labels"], self.repo)
+        lines = {line.split()[0]: line.split()[1] for line in out.splitlines() if line}
+        self.assertEqual(lines.get("custom"), "1")
 
     def test_grep_content_search(self) -> None:
         run(["init"], self.repo)

@@ -596,6 +596,23 @@ class Tracker:
             1 for entry in self.event_entries(issue_id) if entry["kind"] == "note"
         )
 
+    def load_defined_labels(self) -> dict[str, str]:
+        """Return the defined label set from labels.json on the tracker branch.
+
+        Returns a mapping of label name to description.  If labels.json does
+        not exist or cannot be parsed, returns an empty dict.
+        """
+        path = self.checkout / "labels.json"
+        if not path.exists():
+            return {}
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                return {k: str(v) for k, v in data.items()}
+        except Exception:
+            pass
+        return {}
+
     def run_pending_migrations(self) -> None:
         """Run any pending tracker migrations sequentially.
 

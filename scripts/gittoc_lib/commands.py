@@ -341,11 +341,26 @@ def cmd_labels(args: argparse.Namespace) -> int:
     for issue in tracker.list_issues(states):
         for label in issue.labels:
             counts[label] = counts.get(label, 0) + 1
+    defined = tracker.load_defined_labels()
+    all_labels = sorted(set(counts) | set(defined))
     if args.format == "json":
-        print(json.dumps(counts, indent=2, sort_keys=True))
+        rows = [
+            {
+                "label": label,
+                "count": counts.get(label, 0),
+                "description": defined.get(label, ""),
+            }
+            for label in all_labels
+        ]
+        print(json.dumps(rows, indent=2))
     else:
-        for label in sorted(counts):
-            print(f"{label:<20} {counts[label]}")
+        for label in all_labels:
+            count = counts.get(label, 0)
+            desc = defined.get(label, "")
+            if desc:
+                print(f"{label:<20} {count:>4}  {desc}")
+            else:
+                print(f"{label:<20} {count:>4}")
     return 0
 
 

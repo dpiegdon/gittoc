@@ -1,0 +1,15 @@
+{
+  "bug":      "Something is broken or behaves incorrectly",
+  "chore":    "Maintenance tasks, dependency updates, housekeeping",
+  "docs":     "Documentation improvements",
+  "feature":  "New functionality",
+  "human":    "Requires human review or decision before proceeding",
+  "ops":      "Infrastructure, deployment, or operational concerns",
+  "perf":     "Performance improvements",
+  "ready":    "Well-defined, clearly scoped, and ready to implement",
+  "refactor": "Code restructuring without behaviour change",
+  "security": "Security-related fix or improvement",
+  "structure":"Project or file structure and organisation changes",
+  "tooling":  "Build, test, or development tooling",
+  "ux":       "User experience improvements"
+}
