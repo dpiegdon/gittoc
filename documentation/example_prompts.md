@@ -24,10 +24,14 @@ This includes but is not limited to tickets for:
 - outright bugs ("bug")
 - performance improvements ("perf")
 - documentation ("docs")
+- error handling, resilience, and robustness ("reliability")
 - etc.
 
 Add subset of labels accordingly:
-- chore, refactor, structure, security, ux, ops, bug, perf, docs, ...
+- chore, refactor, structure, security, ux, ops, bug, perf, docs, reliability, ...
+
+If a ticket is safe for autonomous agent implementation without human supervision, also add 'agent'.
+If a ticket requires human review or a decision before it can proceed, add 'human'.
 
 And one label per subsystem, container and/or service affected in the codebase: <<<<<<<<<<<<<< *FIXME*
 
@@ -54,7 +58,9 @@ Labels exist for the following contexts:
 - outright bugs ("bug")
 - performance improvements ("perf")
 - documentation ("docs")
+- error handling, resilience, and robustness ("reliability")
 - tickets that need to be checked by a human ("human") -- you may set this one, and also remove it if you are sure this ticket doesn't need a review by a human.
+- tickets safe for autonomous agent implementation without human supervision ("agent") -- set when a ticket is clearly scoped and does not require human judgment.
 - tickets that have a clear problem statement, concrete acceptance criteria, clear scope boundaries, identified dependencies (if any), a clearly defined or very easy solution and are estimable in effort and are thus ready to be implemented ("ready")
 - one label per subsystem, container and/or service affected in the codebase: <<<<<<<<<<<<<< *FIXME*
 

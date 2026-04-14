@@ -170,6 +170,25 @@ git toc l -l bug
 git toc r -f json
 ```
 
+### Label configuration
+
+A standard label set with descriptions can be stored as `labels.json` on the
+`gittoc` branch. When present, `git toc labels` merges it with in-use counts:
+defined labels appear even at count zero (useful for backlog grooming), and
+each label's description is shown alongside the count.
+
+To set up a label set, copy the example file into your tracker branch:
+
+```bash
+cp .agents/skills/gittoc/documentation/labels.json.example .git/gittoc/labels.json
+git -C .git/gittoc add labels.json
+git -C .git/gittoc commit -m "add standard label set"
+```
+
+Then edit `.git/gittoc/labels.json` to match your project's conventions.
+The file is optional — if absent, `git toc labels` lists only labels currently
+in use.
+
 ## Project layout
 
 - `SKILL.md`: skill instructions
