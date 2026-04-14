@@ -156,6 +156,20 @@ def current_branch(root: Path) -> str:
     return run_git(["branch", "--show-current"], cwd=root).stdout.strip()
 
 
+def current_ref(root: Path) -> str:
+    """Return a short identifier for the current checkout as 'branch@shortsha'.
+
+    Falls back to just the short SHA in detached-HEAD state.
+    Returns an empty string if the ref cannot be determined (e.g. no commits).
+    """
+    sha_proc = run_git(["rev-parse", "--short", "HEAD"], cwd=root, check=False)
+    if sha_proc.returncode != 0:
+        return ""
+    sha = sha_proc.stdout.strip()
+    branch = run_git(["branch", "--show-current"], cwd=root, check=False).stdout.strip()
+    return f"{branch}@{sha}" if branch else sha
+
+
 def worktree_path(root: Path) -> Path:
     """Return the expected path of the hidden gittoc worktree."""
     return root / TRACKER_WORKTREE_PATH

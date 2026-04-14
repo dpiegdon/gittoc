@@ -19,6 +19,7 @@ from .common import (
     TRACKER_BRANCH,
     branch_exists,
     current_branch,
+    current_ref,
     default_owner,
     has_legacy_hidden_clone,
     infer_remote,
@@ -527,10 +528,12 @@ class Tracker:
         """Append a timestamped event entry to the issue's event log."""
         path = self.event_path(issue.issue_id, issue.state)
         path.parent.mkdir(parents=True, exist_ok=True)
+        ref = current_ref(self.repo)
         entry = {
             "actor": actor or default_owner(),
             "at": now_utc(),
             "kind": kind,
+            "ref": ref,
             "text": text,
         }
         with path.open("a", encoding="utf-8") as handle:
