@@ -4,12 +4,11 @@
   "docs":     "Documentation improvements",
   "feature":  "New functionality",
   "human":    "Requires human review or decision before proceeding",
-  "ops":      "Infrastructure, deployment, or operational concerns",
+  "ops":      "Build, test, deployment, or infrastructure tooling",
   "perf":     "Performance improvements",
   "ready":    "Well-defined, clearly scoped, and ready to implement",
-  "refactor": "Code restructuring without behaviour change",
+  "refactor": "Internal code cleanup that preserves existing behaviour",
   "security": "Security-related fix or improvement",
-  "structure":"Project or file structure and organisation changes",
-  "tooling":  "Build, test, or development tooling",
+  "structure":"Reorganise files, modules, or repo layout without logic changes",
   "ux":       "User experience improvements"
 }
