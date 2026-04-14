@@ -1,2 +1,3 @@
 {"actor": "dpiegdon", "at": "2026-04-14T18:15:42+00:00", "kind": "created", "text": "audit trail should contain branch/commit identifier of current checkout"}
 {"actor": "claude", "at": "2026-04-14T19:38:58+00:00", "kind": "claimed", "text": "claude"}
+{"actor": "claude", "at": "2026-04-14T19:40:57+00:00", "kind": "note", "ref": "main@233ba51", "text": "implementation: added current_ref() to common.py; appended ref field to all events in append_event()"}
