@@ -1,0 +1,12 @@
+{
+  "body": "check if gittoc works from external worktrees that reside somewhere else, and potentially implement support to find the .git/gittoc branch for those..",
+  "created_at": "2026-04-15T19:51:10+00:00",
+  "id": "T-131",
+  "labels": [
+    "bug",
+    "ready"
+  ],
+  "priority": 2,
+  "title": "check/fix external worktrees",
+  "updated_at": "2026-04-15T19:51:10+00:00"
+}
