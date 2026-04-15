@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 TRACKER_BRANCH = "gittoc"
-TRACKER_WORKTREE_PATH = Path(".git/gittoc")
+TRACKER_WORKTREE_DIRNAME = "gittoc"
 ISSUES_ROOT = Path("issues")
 STATE_ORDER = ("open", "claimed", "blocked", "closed", "rejected")
 STATE_SET = set(STATE_ORDER)
@@ -38,13 +38,25 @@ def default_owner() -> str:
 def run_git(
     args: list[str], cwd: Path | None = None, check: bool = True
 ) -> subprocess.CompletedProcess[str]:
-    """Run a git subprocess and return the completed process."""
+    """Run a git subprocess and return the completed process.
+
+    Strips inherited ``GIT_DIR`` / ``GIT_WORK_TREE`` / ``GIT_INDEX_FILE``
+    environment variables so that git always rediscovers the repository
+    from ``cwd``.  Without this, when gittoc is invoked via the ``git toc``
+    alias from a linked worktree, git sets these variables to point at the
+    invoking worktree and our subprocess calls would operate on the wrong
+    repository.
+    """
+    env = {k: v for k, v in os.environ.items()
+           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE",
+                        "GIT_COMMON_DIR", "GIT_PREFIX")}
     proc = subprocess.run(
         ["git", *args],
         cwd=str(cwd) if cwd else None,
         text=True,
         capture_output=True,
         check=False,
+        env=env,
     )
     if check and proc.returncode != 0:
         raise subprocess.CalledProcessError(
@@ -170,9 +182,28 @@ def current_ref(root: Path) -> str:
     return f"{branch}@{sha}" if branch else sha
 
 
+def git_common_dir(root: Path) -> Path:
+    """Return the absolute path to the shared git directory.
+
+    In a linked worktree, the regular ``.git`` entry is a file pointing to
+    ``<main-repo>/.git/worktrees/<name>``; ``--git-common-dir`` resolves to
+    the shared ``.git`` directory so the tracker worktree can be located
+    from any linked worktree.
+    """
+    proc = run_git(["rev-parse", "--git-common-dir"], cwd=root)
+    path = Path(proc.stdout.strip())
+    if not path.is_absolute():
+        path = (root / path)
+    return path.resolve()
+
+
 def worktree_path(root: Path) -> Path:
-    """Return the expected path of the hidden gittoc worktree."""
-    return root / TRACKER_WORKTREE_PATH
+    """Return the expected path of the hidden gittoc worktree.
+
+    Placed under the shared git directory so the same absolute path is
+    used when invoked from the main checkout or from any linked worktree.
+    """
+    return git_common_dir(root) / TRACKER_WORKTREE_DIRNAME
 
 
 def is_worktree(path: Path) -> bool:

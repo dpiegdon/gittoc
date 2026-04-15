@@ -514,6 +514,80 @@ class TestWorktreeIntegrity(GittocTestBase):
         self.assertIn(str(self.repo), worktree_entry)
 
 
+class TestExternalWorktree(GittocTestBase):
+    """Verify gittoc works from git linked worktrees (created with `git worktree add`)."""
+
+    def _add_external_worktree(self, branch: str = "feature") -> Path:
+        """Create a feature branch and a linked worktree outside the main repo."""
+        subprocess.run(
+            ["git", "checkout", "-b", branch], cwd=self.repo, check=True, capture_output=True
+        )
+        (self.repo / "work.txt").write_text("work\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "add", "work.txt"], cwd=self.repo, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "work"], cwd=self.repo, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "checkout", "-"], cwd=self.repo, check=True, capture_output=True
+        )
+        wt = Path(self.tempdir.name) / "external-wt"
+        subprocess.run(
+            ["git", "worktree", "add", str(wt), branch],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        return wt
+
+    def test_commands_work_from_external_worktree(self) -> None:
+        """Tracker operations invoked from a linked worktree hit the shared tracker."""
+        run(["init"], self.repo)
+        run(["new", "from main"], self.repo)
+        wt = self._add_external_worktree()
+        # gittoc must find the existing tracker from the external worktree
+        out = run(["list"], wt)
+        self.assertIn("from main", out)
+        # Create a ticket from the external worktree; it must persist in the shared tracker
+        run(["new", "from external"], wt)
+        out_main = run(["list"], self.repo)
+        self.assertIn("from external", out_main)
+
+    def test_init_from_external_worktree(self) -> None:
+        """Initial gittoc init invoked from an external worktree places the tracker in the main repo."""
+        wt = self._add_external_worktree()
+        init_out = run(["init"], wt)
+        self.assertIn("initialized tracker branch", init_out)
+        # Tracker worktree must live under the shared .git directory, not the linked worktree
+        shared_tracker = self.repo / ".git" / "gittoc"
+        self.assertTrue(shared_tracker.exists(), f"tracker not at {shared_tracker}")
+        self.assertFalse(
+            (wt / ".git" / "gittoc").is_dir(),
+            "tracker should not be placed inside the linked worktree's gitdir",
+        )
+
+    def test_commands_tolerate_git_dir_env(self) -> None:
+        """GIT_DIR set by the `git toc` alias in linked worktrees must not confuse tracker resolution."""
+        run(["init"], self.repo)
+        run(["new", "seed"], self.repo)
+        wt = self._add_external_worktree()
+        # Simulate what `git` sets when dispatching an alias from a linked worktree
+        env = {
+            **__import__("os").environ,
+            "GIT_DIR": str(self.repo / ".git" / "worktrees" / "external-wt"),
+        }
+        proc = subprocess.run(
+            [str(CLI), "list"],
+            cwd=str(wt),
+            text=True,
+            capture_output=True,
+            check=True,
+            env=env,
+        )
+        self.assertIn("seed", proc.stdout)
+
+
 class TestRemoteTracking(GittocTestBase):
     def test_init_tracks_remote_gittoc_branch(self) -> None:
         source = Path(self.tempdir.name) / "source"
