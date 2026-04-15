@@ -6,7 +6,8 @@
     "bug",
     "ready"
   ],
+  "owner": "claude",
   "priority": 2,
   "title": "check/fix external worktrees",
-  "updated_at": "2026-04-15T19:51:10+00:00"
+  "updated_at": "2026-04-15T19:55:43+00:00"
 }
