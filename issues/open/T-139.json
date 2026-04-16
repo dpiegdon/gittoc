@@ -1,0 +1,11 @@
+{
+  "body": "'gittoc update T-42 --state open' on a ticket currently in state=claimed preserves the owner field (tracker.update_issue keeps owner unless --owner is explicitly passed). A ticket that is open but still carries a previous owner is misleading for 'unblocked' and 'resume' selection, and 'gittoc list' still reports 'owner=...' on an unclaimed ticket. When a transition goes claimed \u2192 open (or claimed \u2192 blocked without explicit owner), the owner should auto-clear unless --owner is explicitly provided. A corresponding event kind ('unclaimed' or a 'claimed' event with empty text) keeps the audit trail visible.",
+  "created_at": "2026-04-16T16:16:28+00:00",
+  "id": "T-139",
+  "labels": [
+    "ux"
+  ],
+  "priority": 4,
+  "title": "unclaiming (state->open) should clear owner",
+  "updated_at": "2026-04-16T16:16:28+00:00"
+}
