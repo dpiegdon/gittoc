@@ -18,7 +18,18 @@ from .common import (
     run_git,
     validate_issue_id,
 )
-from .integrity import IntegrityReport, render_integrity_report
+from .integrity import IntegrityReport, fsck, render_integrity_report
+from .remote import (
+    auto_pull,
+    auto_push,
+    autopush_enabled,
+    configure_remote,
+    configured_remote,
+    effective_remote,
+    pull_remote,
+    push_remote,
+    remote_status,
+)
 from .render import print_issues, render_show_text
 from .tracker import RemotePushPullError, Tracker
 
@@ -27,14 +38,14 @@ SHOW_NOTES_LIMIT = 3
 
 def _auto_pull(tracker) -> None:
     """Pull before a mutation if autopush is enabled."""
-    if tracker.autopush_enabled():
-        tracker.auto_pull()
+    if autopush_enabled(tracker):
+        auto_pull(tracker)
 
 
 def _auto_push(tracker) -> None:
     """Push after a mutation if autopush is enabled."""
-    if tracker.autopush_enabled():
-        tracker.auto_push()
+    if autopush_enabled(tracker):
+        auto_push(tracker)
 
 
 def parse_labels(values: list[str] | None) -> list[str]:
@@ -159,10 +170,10 @@ def print_resume_text(data: dict) -> None:
 def cmd_init(_args: argparse.Namespace) -> int:
     """Initialize the tracker worktree and auto-configure the remote if possible."""
     tracker = Tracker.open()
-    if not tracker.configured_remote():
-        inferred = tracker.effective_remote()
+    if not configured_remote(tracker):
+        inferred = effective_remote(tracker)
         if inferred:
-            tracker.configure_remote(inferred)
+            configure_remote(tracker, inferred)
     print(f"initialized tracker branch {TRACKER_BRANCH} at {tracker.checkout}")
     return 0
 
@@ -171,16 +182,16 @@ def cmd_remote(args: argparse.Namespace) -> int:
     """Show or configure the remote wiring for the tracker branch."""
     tracker = Tracker.open()
     if args.set:
-        status = tracker.configure_remote(args.set)
+        status = configure_remote(tracker, args.set)
     elif args.auto:
-        remote = tracker.effective_remote()
+        remote = effective_remote(tracker)
         if not remote:
             raise SystemExit(
                 "no remote could be inferred (use: gittoc remote --set <name>)"
             )
-        status = tracker.configure_remote(remote)
+        status = configure_remote(tracker, remote)
     else:
-        status = tracker.remote_status()
+        status = remote_status(tracker)
     if args.format == "json":
         print(json.dumps(status, indent=2, sort_keys=True))
     else:
@@ -199,7 +210,7 @@ def cmd_remote(args: argparse.Namespace) -> int:
 def cmd_pull(args: argparse.Namespace) -> int:
     """Fetch and merge the tracker branch from a remote."""
     tracker = Tracker.open()
-    remote = args.remote or tracker.effective_remote()
+    remote = args.remote or effective_remote(tracker)
     if not remote:
         print(
             "error: no remote specified and none configured (run: gittoc remote --set <name>)",
@@ -207,7 +218,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
         )
         return 1
     try:
-        status = tracker.pull_remote(remote)
+        status = pull_remote(tracker, remote)
     except RemotePushPullError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -231,7 +242,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
 def cmd_fsck(args: argparse.Namespace) -> int:
     """Run a read-only integrity scan over tracker issues and event logs."""
     tracker = Tracker.open()
-    report = tracker.fsck()
+    report = fsck(tracker)
     if args.format == "json":
         print(json.dumps(report.to_record(), indent=2, sort_keys=True))
     else:
@@ -242,7 +253,7 @@ def cmd_fsck(args: argparse.Namespace) -> int:
 def cmd_push(args: argparse.Namespace) -> int:
     """Push the tracker branch to a remote."""
     tracker = Tracker.open()
-    remote = args.remote or tracker.effective_remote()
+    remote = args.remote or effective_remote(tracker)
     if not remote:
         print(
             "error: no remote specified and none configured (run: gittoc remote --set <name>)",
@@ -250,7 +261,7 @@ def cmd_push(args: argparse.Namespace) -> int:
         )
         return 1
     try:
-        status = tracker.push_remote(remote)
+        status = push_remote(tracker, remote)
     except RemotePushPullError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
