@@ -6,7 +6,8 @@
     "chore",
     "ready"
   ],
+  "owner": "claude",
   "priority": 5,
   "title": "remove unused remote_repo locals in test_gittoc.py",
-  "updated_at": "2026-04-16T18:16:59+00:00"
+  "updated_at": "2026-04-16T20:21:24+00:00"
 }
