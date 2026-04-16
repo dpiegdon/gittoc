@@ -1,1 +1,2 @@
 {"actor": "claude", "at": "2026-04-16T16:15:59+00:00", "kind": "created", "ref": "main@675b8fe", "text": "tracker.py exceeds pylint too-many-lines threshold (1238 lines)"}
+{"actor": "claude", "at": "2026-04-16T18:15:28+00:00", "kind": "note", "ref": "main@893a041", "text": "split off fsck into integrity. we don't need to preserve public API, we're a self-contained project, so no compat layers please. also see if something else can be cleanly split off into a separate file, e.g. the remote logic implementation."}
