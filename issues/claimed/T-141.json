@@ -5,7 +5,8 @@
   "labels": [
     "ux"
   ],
+  "owner": "claude",
   "priority": 5,
   "title": "'-l' flag is overloaded: label in list/new/update, limit in show",
-  "updated_at": "2026-04-16T16:16:42+00:00"
+  "updated_at": "2026-04-16T16:34:29+00:00"
 }
