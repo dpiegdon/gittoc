@@ -47,9 +47,18 @@ def run_git(
     invoking worktree and our subprocess calls would operate on the wrong
     repository.
     """
-    env = {k: v for k, v in os.environ.items()
-           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE",
-                        "GIT_COMMON_DIR", "GIT_PREFIX")}
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k
+        not in (
+            "GIT_DIR",
+            "GIT_WORK_TREE",
+            "GIT_INDEX_FILE",
+            "GIT_COMMON_DIR",
+            "GIT_PREFIX",
+        )
+    }
     proc = subprocess.run(
         ["git", *args],
         cwd=str(cwd) if cwd else None,
@@ -193,7 +202,7 @@ def git_common_dir(root: Path) -> Path:
     proc = run_git(["rev-parse", "--git-common-dir"], cwd=root)
     path = Path(proc.stdout.strip())
     if not path.is_absolute():
-        path = (root / path)
+        path = root / path
     return path.resolve()
 
 

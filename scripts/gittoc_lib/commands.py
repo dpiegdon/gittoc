@@ -19,33 +19,23 @@ from .common import (
     validate_issue_id,
 )
 from .integrity import IntegrityReport, fsck, render_integrity_report
-from .remote import (
-    auto_pull,
-    auto_push,
-    autopush_enabled,
-    configure_remote,
-    configured_remote,
-    effective_remote,
-    pull_remote,
-    push_remote,
-    remote_status,
-)
+from .remote_sync import RemotePushPullError
 from .render import print_issues, render_show_text
-from .tracker import RemotePushPullError, Tracker
+from .tracker import Tracker
 
 SHOW_NOTES_LIMIT = 3
 
 
-def _auto_pull(tracker) -> None:
+def _auto_pull(tracker: Tracker) -> None:
     """Pull before a mutation if autopush is enabled."""
-    if autopush_enabled(tracker):
-        auto_pull(tracker)
+    if tracker.remote.autopush_enabled():
+        tracker.remote.auto_pull()
 
 
-def _auto_push(tracker) -> None:
+def _auto_push(tracker: Tracker) -> None:
     """Push after a mutation if autopush is enabled."""
-    if autopush_enabled(tracker):
-        auto_push(tracker)
+    if tracker.remote.autopush_enabled():
+        tracker.remote.auto_push()
 
 
 def parse_labels(values: list[str] | None) -> list[str]:
@@ -170,10 +160,10 @@ def print_resume_text(data: dict) -> None:
 def cmd_init(_args: argparse.Namespace) -> int:
     """Initialize the tracker worktree and auto-configure the remote if possible."""
     tracker = Tracker.open()
-    if not configured_remote(tracker):
-        inferred = effective_remote(tracker)
+    if not tracker.remote.configured():
+        inferred = tracker.remote.effective()
         if inferred:
-            configure_remote(tracker, inferred)
+            tracker.remote.configure(inferred)
     print(f"initialized tracker branch {TRACKER_BRANCH} at {tracker.checkout}")
     return 0
 
@@ -182,16 +172,16 @@ def cmd_remote(args: argparse.Namespace) -> int:
     """Show or configure the remote wiring for the tracker branch."""
     tracker = Tracker.open()
     if args.set:
-        status = configure_remote(tracker, args.set)
+        status = tracker.remote.configure(args.set)
     elif args.auto:
-        remote = effective_remote(tracker)
+        remote = tracker.remote.effective()
         if not remote:
             raise SystemExit(
                 "no remote could be inferred (use: gittoc remote --set <name>)"
             )
-        status = configure_remote(tracker, remote)
+        status = tracker.remote.configure(remote)
     else:
-        status = remote_status(tracker)
+        status = tracker.remote.status()
     if args.format == "json":
         print(json.dumps(status, indent=2, sort_keys=True))
     else:
@@ -210,7 +200,7 @@ def cmd_remote(args: argparse.Namespace) -> int:
 def cmd_pull(args: argparse.Namespace) -> int:
     """Fetch and merge the tracker branch from a remote."""
     tracker = Tracker.open()
-    remote = args.remote or effective_remote(tracker)
+    remote = args.remote or tracker.remote.effective()
     if not remote:
         print(
             "error: no remote specified and none configured (run: gittoc remote --set <name>)",
@@ -218,7 +208,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
         )
         return 1
     try:
-        status = pull_remote(tracker, remote)
+        status = tracker.remote.pull(remote)
     except RemotePushPullError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -253,7 +243,7 @@ def cmd_fsck(args: argparse.Namespace) -> int:
 def cmd_push(args: argparse.Namespace) -> int:
     """Push the tracker branch to a remote."""
     tracker = Tracker.open()
-    remote = args.remote or effective_remote(tracker)
+    remote = args.remote or tracker.remote.effective()
     if not remote:
         print(
             "error: no remote specified and none configured (run: gittoc remote --set <name>)",
@@ -261,7 +251,7 @@ def cmd_push(args: argparse.Namespace) -> int:
         )
         return 1
     try:
-        status = push_remote(tracker, remote)
+        status = tracker.remote.push(remote)
     except RemotePushPullError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

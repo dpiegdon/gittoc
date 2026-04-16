@@ -1790,12 +1790,11 @@ class TestVersioning(GittocTestBase):
         import sys
 
         sys.path.insert(0, str(ROOT))
-        from gittoc_lib.remote import auto_push, push_remote
         from gittoc_lib.tracker import Tracker
 
         tracker = Tracker(self.repo, self._worktree())
         with self.assertRaises(SystemExit):
-            push_remote(tracker, "origin")
+            tracker.remote.push("origin")
 
         # But auto_push should catch it (not crash)
         subprocess.run(
@@ -1806,7 +1805,7 @@ class TestVersioning(GittocTestBase):
         )
         tracker2 = Tracker(self.repo, self._worktree())
         # auto_push should warn to stderr, not raise
-        auto_push(tracker2)  # Should not raise
+        tracker2.remote.auto_push()  # Should not raise
 
     def test_pull_allows_unversioned_remote(self) -> None:
         """Pull succeeds when remote has no VERSION (pre-versioning baseline)."""

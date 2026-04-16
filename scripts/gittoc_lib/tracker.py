@@ -33,10 +33,7 @@ from .common import (
     worktree_path,
 )
 from .models import Issue
-
-
-class RemotePushPullError(Exception):
-    """Raised when a push or pull fails due to a remote/network error."""
+from .remote_sync import RemoteSync
 
 
 class StaleTrackerError(Exception):
@@ -53,6 +50,7 @@ class Tracker:
         self.base_head = self.head()
         self._event_cache: dict[str, list[dict]] = {}
         self._state_cache: dict[str, str] = {}
+        self.remote = RemoteSync(self)
 
     @classmethod
     def open(cls) -> "Tracker":
