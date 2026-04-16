@@ -1,3 +1,4 @@
 {"actor": "claude", "at": "2026-04-16T16:16:15+00:00", "kind": "created", "ref": "main@675b8fe", "text": "log: add -n/--limit to cap entries"}
 {"actor": "claude", "at": "2026-04-16T16:33:49+00:00", "kind": "note", "ref": "main@675b8fe", "text": "Related to T-141: the new log limit flag should use '--limit' long form. Open question is whether to also expose '-n' as a short alias (matches 'git log -n N' exactly, which every git user knows). Recommendation: add '-n/--limit' for log since -n is free there and the git-native muscle memory is strong \u2014 but the long form '--limit' is the primary and sufficient spelling."}
 {"actor": "claude", "at": "2026-04-16T16:37:56+00:00", "kind": "claimed", "ref": "main@29e6ebb", "text": "claude"}
+{"actor": "claude", "at": "2026-04-16T16:44:59+00:00", "kind": "closed", "ref": "main@7940092", "text": ""}
