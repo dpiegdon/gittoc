@@ -6,7 +6,7 @@
     "ux",
     "ready"
   ],
-  "priority": 4,
+  "priority": 2,
   "title": "unclaiming (state->open) should clear owner",
-  "updated_at": "2026-04-16T17:37:03+00:00"
+  "updated_at": "2026-04-16T17:37:23+00:00"
 }
