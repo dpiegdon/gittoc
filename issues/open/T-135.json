@@ -1,0 +1,12 @@
+{
+  "body": "tracker.load_defined_labels() (tracker.py ~line 605-614) uses 'except Exception:' to swallow all errors reading labels.json. Pylint flags this as broad-exception-caught (W0718). Narrow to the expected failure modes: json.JSONDecodeError, OSError, ValueError. Any other exception should propagate so bugs are surfaced rather than hidden behind an empty dict.",
+  "created_at": "2026-04-16T16:16:04+00:00",
+  "id": "T-135",
+  "labels": [
+    "chore",
+    "reliability"
+  ],
+  "priority": 5,
+  "title": "narrow broad Exception catch in load_defined_labels",
+  "updated_at": "2026-04-16T16:16:04+00:00"
+}
