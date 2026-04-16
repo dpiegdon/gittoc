@@ -1142,13 +1142,13 @@ class TestMiscCoverage(GittocTestBase):
         run(["new", "second"], self.repo)
         run(["new", "third"], self.repo)
         # Newest 2 commits, shown newest-first
-        lines = run(["log", "--no-reverse", "-n", "2"], self.repo).splitlines()
+        lines = run(["log", "--no-reverse", "--limit", "2"], self.repo).splitlines()
         self.assertEqual(len(lines), 2)
         self.assertIn("third", lines[0])
         self.assertIn("second", lines[1])
-        # --limit long form behaves the same
-        long_form = run(["log", "--no-reverse", "--limit", "2"], self.repo).splitlines()
-        self.assertEqual(lines, long_form)
+        # Default --reverse: newest 2, then oldest-first
+        reversed_lines = run(["log", "--limit", "2"], self.repo).splitlines()
+        self.assertEqual(reversed_lines, list(reversed(lines)))
 
     def test_log_limit_per_issue(self) -> None:
         run(["init"], self.repo)
@@ -1157,9 +1157,11 @@ class TestMiscCoverage(GittocTestBase):
         run(["note", "T-1", "second note"], self.repo)
         # Default --reverse on per-issue path exercises the --follow codepath
         # where git's --max-count+--reverse+--follow combination is buggy
-        lines = run(["log", "T-1", "-n", "1"], self.repo).splitlines()
+        lines = run(["log", "T-1", "--limit", "1"], self.repo).splitlines()
         self.assertEqual(len(lines), 1)
-        lines = run(["log", "T-1", "--no-reverse", "-n", "1"], self.repo).splitlines()
+        lines = run(
+            ["log", "T-1", "--no-reverse", "--limit", "1"], self.repo
+        ).splitlines()
         self.assertEqual(len(lines), 1)
 
     def test_unblocked_command(self) -> None:

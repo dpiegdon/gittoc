@@ -245,11 +245,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="show oldest-first (default: --reverse); pass --no-reverse for newest-first",
     )
     log_parser.add_argument(
-        "-n",
         "--limit",
         type=int,
         metavar="N",
-        help="show at most N commits (like git log -n N)",
+        help="show at most N commits",
     )
     log_parser.set_defaults(func=cmd_log)
 
