@@ -5,7 +5,8 @@
   "labels": [
     "ux"
   ],
+  "owner": "claude",
   "priority": 4,
   "title": "log: add -n/--limit to cap entries",
-  "updated_at": "2026-04-16T16:16:15+00:00"
+  "updated_at": "2026-04-16T16:37:56+00:00"
 }
