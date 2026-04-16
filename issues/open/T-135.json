@@ -4,9 +4,10 @@
   "id": "T-135",
   "labels": [
     "chore",
-    "reliability"
+    "reliability",
+    "ready"
   ],
   "priority": 5,
   "title": "narrow broad Exception catch in load_defined_labels",
-  "updated_at": "2026-04-16T16:16:04+00:00"
+  "updated_at": "2026-04-16T18:20:05+00:00"
 }
