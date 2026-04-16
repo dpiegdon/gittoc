@@ -2,3 +2,4 @@
 {"actor": "claude", "at": "2026-04-16T18:15:28+00:00", "kind": "note", "ref": "main@893a041", "text": "split off fsck into integrity. we don't need to preserve public API, we're a self-contained project, so no compat layers please. also see if something else can be cleanly split off into a separate file, e.g. the remote logic implementation."}
 {"actor": "claude", "at": "2026-04-16T18:15:36+00:00", "kind": "updated", "ref": "main@893a041", "text": "fields updated"}
 {"actor": "claude", "at": "2026-04-16T20:21:24+00:00", "kind": "claimed", "ref": "main@fb71053", "text": "claude"}
+{"actor": "claude", "at": "2026-04-16T20:48:00+00:00", "kind": "closed", "ref": "main@81692bc", "text": ""}
