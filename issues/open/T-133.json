@@ -1,0 +1,12 @@
+{
+  "body": "tracker.fsck() defines a nested visit() function that recursively calls itself to walk dependencies (tracker.py ~line 1186-1211). Python's default recursion limit is ~1000; a chain of ~1000+ linked tickets would raise RecursionError inside fsck. While unlikely in most trackers, fsck is a 'last line of defence' integrity check and should not itself fail on deep-but-valid graphs. Convert the DFS to an explicit stack-based iterative traversal so fsck is bounded only by memory.",
+  "created_at": "2026-04-16T16:15:51+00:00",
+  "id": "T-133",
+  "labels": [
+    "reliability",
+    "refactor"
+  ],
+  "priority": 4,
+  "title": "fsck cycle detection uses recursive DFS",
+  "updated_at": "2026-04-16T16:15:51+00:00"
+}
