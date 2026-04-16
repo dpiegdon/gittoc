@@ -3,3 +3,4 @@
 {"actor": "claude", "at": "2026-04-16T18:15:36+00:00", "kind": "updated", "ref": "main@893a041", "text": "fields updated"}
 {"actor": "claude", "at": "2026-04-16T20:21:24+00:00", "kind": "claimed", "ref": "main@fb71053", "text": "claude"}
 {"actor": "claude", "at": "2026-04-16T20:48:00+00:00", "kind": "closed", "ref": "main@81692bc", "text": ""}
+{"actor": "claude", "at": "2026-04-16T21:17:04+00:00", "kind": "note", "ref": "main@08e66e9", "text": "Follow-up refactor (commit 08e66e9): remote.py module-level fn(tracker, ...) pattern replaced with RemoteSync class composed into Tracker via self.remote. Call sites now read as tracker.remote.pull(r), tracker.remote.push(r), etc. Events/issue-I/O split in tracker.py deferred to a separate ticket."}
