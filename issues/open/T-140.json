@@ -1,0 +1,11 @@
+{
+  "body": "pyflakes reports three 'local variable remote_repo is assigned to but never used' warnings in scripts/tests/test_gittoc.py (lines 928, 1115, 1121). Each is a call to self.init_with_remote() whose return value is no longer needed by the test body. Fix: discard with a bare 'self.init_with_remote()' (no assignment) or rename to '_remote_repo' to signal intent. Keeps pyflakes output clean so real issues stand out.",
+  "created_at": "2026-04-16T16:16:34+00:00",
+  "id": "T-140",
+  "labels": [
+    "chore"
+  ],
+  "priority": 5,
+  "title": "remove unused remote_repo locals in test_gittoc.py",
+  "updated_at": "2026-04-16T16:16:34+00:00"
+}
