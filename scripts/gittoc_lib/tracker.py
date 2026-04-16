@@ -609,7 +609,7 @@ class Tracker:
             data = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(data, dict):
                 return {k: str(v) for k, v in data.items()}
-        except Exception:
+        except (OSError, json.JSONDecodeError, ValueError):
             pass
         return {}
 
@@ -828,12 +828,38 @@ class Tracker:
                     f"cannot claim non-ready issue: {issue.issue_id}"
                     f" (has unresolved dependencies)"
                 )
+        if (
+            target_state == "claimed"
+            and issue.state == "claimed"
+            and owner is not None
+            and issue.owner is not None
+            and owner != issue.owner
+        ):
+            print(
+                f"warning: {issue.issue_id} was already claimed by {issue.owner};"
+                f" ownership transferred to {owner}",
+                file=sys.stderr,
+            )
+        resolved_owner: str | None
+        if (
+            target_state in ("open", "blocked")
+            and issue.state == "claimed"
+            and owner is None
+        ):
+            resolved_owner = None
+            print(
+                f"note: cleared owner ({issue.owner}) on {issue.issue_id}"
+                f" because state changed to {target_state}",
+                file=sys.stderr,
+            )
+        else:
+            resolved_owner = issue.owner if owner is None else owner
         updated = replace(
             issue,
             title=issue.title if title is None else title,
             body=issue.body if body is None else body,
             state=target_state,
-            owner=issue.owner if owner is None else owner,
+            owner=resolved_owner,
             labels=issue.labels if labels is None else tuple(labels),
             priority=(
                 issue.priority if priority is None else validate_priority(priority)

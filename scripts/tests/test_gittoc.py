@@ -277,6 +277,42 @@ class TestClaimWorkflow(GittocTestBase):
         claimed_list = run(["c"], self.repo)
         self.assertIn(issue1, claimed_list)
 
+    def test_reclaim_by_different_owner_warns(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task"], self.repo)
+        run(["claim", issue1, "--owner", "alice"], self.repo)
+        proc = run_fail(["claim", issue1, "--owner", "bob"], self.repo)
+        self.assertIn("warning", proc.stderr)
+        self.assertIn("alice", proc.stderr)
+        shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
+        self.assertEqual(shown["owner"], "bob")
+
+    def test_reclaim_by_same_owner_no_warning(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task"], self.repo)
+        run(["claim", issue1, "--owner", "alice"], self.repo)
+        proc = run_fail(["claim", issue1, "--owner", "alice"], self.repo)
+        self.assertNotIn("warning", proc.stderr)
+
+    def test_unclaim_clears_owner(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task"], self.repo)
+        run(["claim", issue1, "--owner", "alice"], self.repo)
+        proc = run_fail(["update", issue1, "--state", "open"], self.repo)
+        self.assertIn("note", proc.stderr)
+        self.assertIn("alice", proc.stderr)
+        shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
+        self.assertEqual(shown["state"], "open")
+        self.assertNotIn("owner", shown)
+
+    def test_unclaim_with_explicit_owner_preserves_owner(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task"], self.repo)
+        run(["claim", issue1, "--owner", "alice"], self.repo)
+        run(["update", issue1, "--state", "open", "--owner", "alice"], self.repo)
+        shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
+        self.assertEqual(shown["owner"], "alice")
+
 
 class TestLabels(GittocTestBase):
     def test_add_and_remove_labels(self) -> None:
@@ -949,7 +985,7 @@ class TestAutoPush(GittocTestBase):
 
     def test_auto_pull_fetch_failure_warns_and_continues(self) -> None:
         """Fetch failure during auto-pull should warn to stderr but not abort."""
-        remote_repo = self.init_with_remote()
+        self.init_with_remote()
         run(["new", "first ticket"], self.repo)
         run(["push", "origin"], self.repo)
         subprocess.run(
@@ -1136,13 +1172,13 @@ class TestMiscCoverage(GittocTestBase):
         self.assertIn("T-2", out_all)
 
     def test_remote_set_command(self) -> None:
-        remote_repo = self.init_with_remote()
+        self.init_with_remote()
         run(["remote", "--set", "origin"], self.repo)
         out = run(["remote"], self.repo)
         self.assertIn("configured=origin", out)
 
     def test_remote_status_output(self) -> None:
-        remote_repo = self.init_with_remote()
+        self.init_with_remote()
         out = run(["remote"], self.repo)
         self.assertIn("remotes=origin", out)
         self.assertIn("effective=origin", out)
