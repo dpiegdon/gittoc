@@ -1,1 +1,2 @@
 {"actor": "claude", "at": "2026-04-16T16:16:28+00:00", "kind": "created", "ref": "main@675b8fe", "text": "unclaiming (state->open) should clear owner"}
+{"actor": "claude", "at": "2026-04-16T17:36:54+00:00", "kind": "note", "ref": "main@893a041", "text": "best option seems to be: onchanging from anything to open should clear owner, but also be explicit about it: print a one-liner that ticket owner was reset. that is, unless --owner was given."}
