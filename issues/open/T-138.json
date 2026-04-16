@@ -1,0 +1,11 @@
+{
+  "body": "'gittoc reject T-42' currently has no way to record why the ticket was rejected. Today users must run 'gittoc note T-42 \"reason\"' then 'gittoc reject T-42' \u2014 two commits, easy to skip the note. Add an optional reason argument wired into the rejected event's text field:\\n\\n  gittoc reject T-42 -m \"out of scope\"\\n  gittoc reject T-42 --reason \"duplicate of T-3\"\\n\\nThe reason becomes the event_text for the 'rejected' event, visible in history/log without a separate note.",
+  "created_at": "2026-04-16T16:16:21+00:00",
+  "id": "T-138",
+  "labels": [
+    "ux"
+  ],
+  "priority": 4,
+  "title": "reject: accept a reason/message",
+  "updated_at": "2026-04-16T16:16:21+00:00"
+}
