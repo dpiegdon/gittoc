@@ -1,0 +1,12 @@
+{
+  "body": "scripts/gittoc_lib/tracker.py is 1238 lines and triggers pylint's too-many-lines warning (C0302, default threshold 1000). The module already mixes: worktree bootstrap, version/migration logic, remote sync, event-log handling, CRUD, readiness, and the ~250-line fsck scanner. The fsck logic is the most self-contained piece and has a natural home alongside the existing integrity.py (which already defines IntegrityFinding/IntegrityReport). Move Tracker.fsck plus its private helpers (_validate_event_file, _canonical_cycle, _finding) into integrity.py or a new fsck.py, keeping Tracker.fsck as a thin wrapper. Preserves the public API while dropping tracker.py below the threshold.",
+  "created_at": "2026-04-16T16:15:59+00:00",
+  "id": "T-134",
+  "labels": [
+    "refactor",
+    "structure"
+  ],
+  "priority": 4,
+  "title": "tracker.py exceeds pylint too-many-lines threshold (1238 lines)",
+  "updated_at": "2026-04-16T16:15:59+00:00"
+}
