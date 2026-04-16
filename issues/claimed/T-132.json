@@ -7,7 +7,8 @@
     "ux",
     "ready"
   ],
+  "owner": "claude",
   "priority": 2,
   "title": "re-claim of already-claimed ticket silently steals ownership",
-  "updated_at": "2026-04-16T17:37:18+00:00"
+  "updated_at": "2026-04-16T20:21:24+00:00"
 }
