@@ -1,0 +1,12 @@
+{
+  "body": "'gittoc list' currently supports filtering by state (-s) and label (-l) but not by owner or priority. Common agent/team queries include 'what is alice working on?' and 'show me p1 open bugs'. Add:\\n\\n  --owner NAME      keep tickets with owner=NAME (repeatable for OR)\\n  -p/--priority N   keep tickets with priority=N (repeatable for OR)\\n\\nBoth combine as AND with existing -s/-l filters, mirroring the current label-AND semantics only within each filter dimension.",
+  "created_at": "2026-04-16T16:16:09+00:00",
+  "id": "T-136",
+  "labels": [
+    "feature",
+    "ux"
+  ],
+  "priority": 4,
+  "title": "list: add --owner and --priority filters",
+  "updated_at": "2026-04-16T16:16:09+00:00"
+}
