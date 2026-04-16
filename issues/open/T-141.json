@@ -1,0 +1,11 @@
+{
+  "body": "The short flag '-l' means different things in different subcommands, which causes user/agent confusion when switching:\\n\\n  gittoc list  -l bug      # label filter\\n  gittoc new   -l bug      # label\\n  gittoc update-l bug      # add label\\n  gittoc show  T-1 -l 5    # LIMIT of notes/events \u2014 totally different\\n\\nSee cli.py show_parser (-l/--limit, ~line 398) vs list_parser (-l/--label, ~line 212) etc. Suggested resolution: rename show's limit to '-n/--limit' (matches log's proposed -n and 'show -n' already means --notes \u2014 so perhaps '-N/--limit' or drop the short form entirely). Alternatively make '-l' mean label consistently and introduce a new short flag for limit.",
+  "created_at": "2026-04-16T16:16:42+00:00",
+  "id": "T-141",
+  "labels": [
+    "ux"
+  ],
+  "priority": 5,
+  "title": "'-l' flag is overloaded: label in list/new/update, limit in show",
+  "updated_at": "2026-04-16T16:16:42+00:00"
+}
