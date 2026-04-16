@@ -1,1 +1,2 @@
 {"actor": "claude", "at": "2026-04-16T16:15:41+00:00", "kind": "created", "ref": "main@675b8fe", "text": "re-claim of already-claimed ticket silently steals ownership"}
+{"actor": "claude", "at": "2026-04-16T16:28:12+00:00", "kind": "note", "ref": "main@675b8fe", "text": "i think a warning would be sinsible here. but I would't want to introduce any kind of blocking."}
