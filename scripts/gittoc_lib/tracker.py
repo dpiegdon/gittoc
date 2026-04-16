@@ -1180,18 +1180,30 @@ class Tracker:
 
         seen_cycles: set[tuple[str, ...]] = set()
         visited: set[str] = set()
-        stack: list[str] = []
         active: set[str] = set()
 
-        def visit(issue_id: str) -> None:
-            active.add(issue_id)
-            stack.append(issue_id)
-            issue = issues_by_file_id[issue_id]
-            for dep_id in issue.deps:
-                if dep_id not in resolvable_ids:
+        # Iterative DFS: each work-stack frame holds the node being explored
+        # plus an iterator over its remaining deps. This avoids Python's
+        # recursion limit on deep dependency chains.
+        for start_id in sorted(resolvable_ids, key=issue_number):
+            if start_id in visited:
+                continue
+            path_stack: list[str] = [start_id]
+            active.add(start_id)
+            work_stack = [(start_id, iter(issues_by_file_id[start_id].deps))]
+            while work_stack:
+                current_id, dep_iter = work_stack[-1]
+                next_dep = next(dep_iter, None)
+                if next_dep is None:
+                    work_stack.pop()
+                    path_stack.pop()
+                    active.discard(current_id)
+                    visited.add(current_id)
                     continue
-                if dep_id in active:
-                    cycle = stack[stack.index(dep_id) :]
+                if next_dep not in resolvable_ids:
+                    continue
+                if next_dep in active:
+                    cycle = path_stack[path_stack.index(next_dep) :]
                     key = self._canonical_cycle(cycle)
                     if key not in seen_cycles:
                         seen_cycles.add(key)
@@ -1204,15 +1216,11 @@ class Tracker:
                             )
                         )
                     continue
-                if dep_id not in visited:
-                    visit(dep_id)
-            stack.pop()
-            active.remove(issue_id)
-            visited.add(issue_id)
-
-        for issue_id in sorted(resolvable_ids, key=issue_number):
-            if issue_id not in visited:
-                visit(issue_id)
+                if next_dep in visited:
+                    continue
+                active.add(next_dep)
+                path_stack.append(next_dep)
+                work_stack.append((next_dep, iter(issues_by_file_id[next_dep].deps)))
 
         if scope_paths is not None:
             findings = [

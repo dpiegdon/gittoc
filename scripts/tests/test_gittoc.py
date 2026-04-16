@@ -792,6 +792,25 @@ class TestFsck(GittocTestBase):
         self.assertIn("dangling dependency on T-99", result.stdout)
         self.assertIn("dependency cycle detected: T-1 -> T-2 -> T-1", result.stdout)
 
+    def test_fsck_deep_dependency_chain(self) -> None:
+        """Cycle detection must not hit Python's recursion limit on long chains."""
+        run(["init"], self.repo)
+        run(["new", "seed"], self.repo)
+        gittoc_dir = self.repo / ".git" / "gittoc"
+        open_dir = gittoc_dir / "issues" / "open"
+        seed_path = open_dir / "T-1.json"
+        seed_data = json.loads(seed_path.read_text(encoding="utf-8"))
+        chain_length = 2000
+        for index in range(2, chain_length + 1):
+            issue_data = dict(seed_data)
+            issue_data["id"] = f"T-{index}"
+            issue_data["title"] = f"chain-{index}"
+            issue_data["deps"] = [f"T-{index - 1}"]
+            (open_dir / f"T-{index}.json").write_text(
+                json.dumps(issue_data, indent=2) + "\n", encoding="utf-8"
+            )
+        self.assertIn("fsck ok", run(["fsck"], self.repo))
+
     def test_pull_runs_fsck_after_nontrivial_merge(self) -> None:
         remote_repo = Path(self.tempdir.name) / "fsck-pull.git"
         subprocess.run(
