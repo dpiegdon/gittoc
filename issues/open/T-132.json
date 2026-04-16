@@ -4,9 +4,10 @@
   "id": "T-132",
   "labels": [
     "bug",
-    "ux"
+    "ux",
+    "ready"
   ],
   "priority": 3,
   "title": "re-claim of already-claimed ticket silently steals ownership",
-  "updated_at": "2026-04-16T16:15:41+00:00"
+  "updated_at": "2026-04-16T17:34:20+00:00"
 }
