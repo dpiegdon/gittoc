@@ -1,0 +1,12 @@
+{
+  "body": "tracker.update_issue() gates the claim-eligibility check on 'target_state == \"claimed\" and issue.state != \"claimed\"' (tracker.py ~line 821). When a ticket is already in state=claimed and someone runs 'gittoc claim T-X' (or 'update --state claimed --owner other'), the check is skipped, the owner field is overwritten, and a fresh 'claimed' event is appended \u2014 with no warning. This effectively lets one owner silently steal another owner's claim. Options: (a) block re-claim by a different owner unless --force is passed, (b) emit an audit-style event that records the previous owner, or (c) at minimum warn to stderr when the owner changes.",
+  "created_at": "2026-04-16T16:15:41+00:00",
+  "id": "T-132",
+  "labels": [
+    "bug",
+    "ux"
+  ],
+  "priority": 3,
+  "title": "re-claim of already-claimed ticket silently steals ownership",
+  "updated_at": "2026-04-16T16:15:41+00:00"
+}
