@@ -1,0 +1,1 @@
+{"actor": "claude", "at": "2026-04-16T21:17:21+00:00", "kind": "created", "ref": "main@08e66e9", "text": "split event-log handling out of Tracker into an EventLog class"}

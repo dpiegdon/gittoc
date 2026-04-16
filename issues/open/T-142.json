@@ -1,0 +1,12 @@
+{
+  "body": "tracker.py is still 689 lines after the fsck + remote splits (T-134 and follow-up 08e66e9). The next cleanly-extractable cluster is event-log handling: a self-contained group of ~80 lines that currently live directly on Tracker.\n\nScope: move these Tracker methods into a new EventLog class in scripts/gittoc_lib/event_log.py, composed into Tracker as self.events (same pattern as self.remote):\n\n- event_path(issue_id, state)\n- find_event_path(issue_id)\n- move_event_file(issue_id, new_state, previous_path)\n- append_event(issue, kind, text, actor)\n- event_entries(issue_id)    # includes the JSONL parse + note_id numbering + per-instance cache\n- filtered_events(issue_id, kinds, limit)\n- note_count(issue_id)\n\nThe _event_cache dict moves onto EventLog. Call sites in commands.py, remote_sync.py (none today), integrity.py (uses event_entries + filtered_events via fsck's _validate_event_file), and tracker.py itself (create_issue, update_issue, add_note append events) need to be rewritten: tracker.event_entries(i) -> tracker.events.entries(i), tracker.append_event(...) -> tracker.events.append(...), etc.\n\nDrop method-name prefixes ('event_' / '_event') now that the class namespaces them: path, find, move_file, append, entries, filtered, note_count.\n\nExpected tracker.py size after: ~600 lines. Expected event_log.py size: ~100 lines.\n\nNon-goals: no API-compat shims (self-contained project, no external callers). Do NOT leave thin wrappers on Tracker \u2014 rewrite call sites directly. integrity.py should import EventLog or receive an events object; decide based on whether fsck conceptually belongs to Tracker (keep tracker.events access) or stands alone (pass events in).\n\nAcceptance: all 129+ tests still pass; tracker.py below ~650 lines; no method named event_* or _event_* remains on Tracker.",
+  "created_at": "2026-04-16T21:17:21+00:00",
+  "id": "T-142",
+  "labels": [
+    "refactor",
+    "structure"
+  ],
+  "priority": 3,
+  "title": "split event-log handling out of Tracker into an EventLog class",
+  "updated_at": "2026-04-16T21:17:21+00:00"
+}
