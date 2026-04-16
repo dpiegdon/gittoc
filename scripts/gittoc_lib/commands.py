@@ -553,7 +553,14 @@ def cmd_log(args: argparse.Namespace) -> int:
     else:
         git_args = ["log", *reverse, "--oneline"]
     out = run_git(git_args, cwd=tracker.checkout)
-    print(out.stdout.strip())
+    lines = [line for line in out.stdout.splitlines() if line]
+    # Slice client-side: git log --follow --reverse --max-count=N drops all
+    # output in some git versions, so apply the limit uniformly after the fact.
+    # Mirrors `git log -n N` semantics: N newest commits, then --reverse flips.
+    if args.limit is not None:
+        lines = lines[-args.limit :] if args.reverse else lines[: args.limit]
+    if lines:
+        print("\n".join(lines))
     return 0
 
 

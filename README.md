@@ -122,6 +122,7 @@ gittoc resume T-42                  # show context for a specific ticket
 gittoc log T-42                     # git history for one ticket
 gittoc log                          # all recent tracker changes (oldest-first)
 gittoc log --no-reverse             # newest-first, like standard git log
+gittoc log -n 20                    # cap to 20 entries (like git log -n)
 gittoc fsck                         # validate issue JSON, deps, cycles, and event logs
 
 # output format (-f on any command that supports it)

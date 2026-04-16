@@ -520,14 +520,20 @@ class TestExternalWorktree(GittocTestBase):
     def _add_external_worktree(self, branch: str = "feature") -> Path:
         """Create a feature branch and a linked worktree outside the main repo."""
         subprocess.run(
-            ["git", "checkout", "-b", branch], cwd=self.repo, check=True, capture_output=True
+            ["git", "checkout", "-b", branch],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
         )
         (self.repo / "work.txt").write_text("work\n", encoding="utf-8")
         subprocess.run(
             ["git", "add", "work.txt"], cwd=self.repo, check=True, capture_output=True
         )
         subprocess.run(
-            ["git", "commit", "-m", "work"], cwd=self.repo, check=True, capture_output=True
+            ["git", "commit", "-m", "work"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
         )
         subprocess.run(
             ["git", "checkout", "-"], cwd=self.repo, check=True, capture_output=True
@@ -852,7 +858,6 @@ class TestFsck(GittocTestBase):
         self.assertIn("malformed JSON", result.stderr)
         self.assertIn("issues/open/T-1.events.jsonl", result.stderr)
 
-
     def test_fsck_tolerates_events_without_ref(self) -> None:
         """Events written before the ref field was introduced must still pass fsck."""
         run(["init"], self.repo)
@@ -1130,6 +1135,32 @@ class TestMiscCoverage(GittocTestBase):
         forward = run(["log"], self.repo).splitlines()
         backward = run(["log", "--no-reverse"], self.repo).splitlines()
         self.assertEqual(forward, list(reversed(backward)))
+
+    def test_log_limit(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "first"], self.repo)
+        run(["new", "second"], self.repo)
+        run(["new", "third"], self.repo)
+        # Newest 2 commits, shown newest-first
+        lines = run(["log", "--no-reverse", "-n", "2"], self.repo).splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertIn("third", lines[0])
+        self.assertIn("second", lines[1])
+        # --limit long form behaves the same
+        long_form = run(["log", "--no-reverse", "--limit", "2"], self.repo).splitlines()
+        self.assertEqual(lines, long_form)
+
+    def test_log_limit_per_issue(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "task"], self.repo)
+        run(["note", "T-1", "first note"], self.repo)
+        run(["note", "T-1", "second note"], self.repo)
+        # Default --reverse on per-issue path exercises the --follow codepath
+        # where git's --max-count+--reverse+--follow combination is buggy
+        lines = run(["log", "T-1", "-n", "1"], self.repo).splitlines()
+        self.assertEqual(len(lines), 1)
+        lines = run(["log", "T-1", "--no-reverse", "-n", "1"], self.repo).splitlines()
+        self.assertEqual(len(lines), 1)
 
     def test_unblocked_command(self) -> None:
         run(["init"], self.repo)

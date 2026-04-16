@@ -80,6 +80,7 @@ Use `--help` on any command for full argument documentation.
 - `log T-1` — git history for one ticket file (oldest-first)
 - `log` — all recent tracker changes (oldest-first)
 - `log --no-reverse` — newest-first, like standard git log
+- `log -n N` / `log --limit N` — cap to at most N entries (matches `git log -n`)
 - `fsck` — validate issue JSON, event JSONL, dangling deps, cycles, and orphaned logs
 
 **Backlog**
