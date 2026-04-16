@@ -340,7 +340,7 @@ class TestNotesAndHistory(GittocTestBase):
         run(["note", issue, "Note A", "--actor", "tester"], self.repo)
         run(["note", issue, "Note B", "--actor", "tester"], self.repo)
         run(["note", issue, "Note C", "--actor", "tester"], self.repo)
-        notes_only = run(["show", issue, "-n", "-l", "1"], self.repo)
+        notes_only = run(["show", issue, "-n", "--limit", "1"], self.repo)
         self.assertIn("Note C", notes_only)
         self.assertNotIn("Note A", notes_only)
 

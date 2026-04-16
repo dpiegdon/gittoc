@@ -394,7 +394,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="show all notes (no limit)",
     )
     show_parser.add_argument(
-        "-l",
         "--limit",
         type=int,
         help="maximum number of notes/events to show",

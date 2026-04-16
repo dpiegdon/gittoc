@@ -115,7 +115,7 @@ gittoc reject T-42                  # mark as won't-do
 gittoc show T-42                    # ticket fields + 3 recent notes
 gittoc show T-42 -n                 # all notes
 gittoc show T-42 -a                 # everything: all notes + full event history
-gittoc show T-42 -a -l 5            # everything, capped to 5 entries
+gittoc show T-42 -a --limit 5       # everything, capped to 5 entries
 gittoc show T-42 -f json            # JSON output
 gittoc resume                       # auto-select next ticket with context
 gittoc resume T-42                  # show context for a specific ticket

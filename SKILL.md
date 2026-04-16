@@ -41,18 +41,25 @@ Do not use it for one-off work that can be completed in a single short turn.
 
 ## Suggested labels
 
-Labels are free-form, but these conventions help with filtering and grooming:
+Labels are free-form. Projects can pin a canonical set by committing
+`labels.json` to the tracker branch (see `documentation/labels.json.example`);
+when present, `gittoc labels` shows those labels with descriptions and counts.
+The default recommended set:
 
-- `ready` — groomed, spec is clear, no open design questions, safe to implement
-- `feature` — new capability
-- `bug` — something broken
-- `ux` — user-facing experience improvement
-- `docs` — documentation only
-- `chore` — maintenance, cleanup, refactoring
-- `perf` — performance improvement
-- `ops` — operational/infrastructure concern
-- `concept` — needs design discussion before implementation
-- `human` — requires human action, not agent-implementable
+- `ready` — well-defined, clearly scoped, and ready to implement
+- `agent` — safe for autonomous agent implementation without human supervision
+- `human` — requires human review or decision before proceeding
+- `feature` — new functionality
+- `bug` — something is broken or behaves incorrectly
+- `ux` — user experience improvements
+- `docs` — documentation improvements
+- `chore` — maintenance tasks, dependency updates, housekeeping
+- `refactor` — internal code cleanup that preserves existing behaviour
+- `structure` — reorganise files, modules, or repo layout without logic changes
+- `perf` — performance improvements
+- `reliability` — error handling, fault tolerance, resilience, and robustness
+- `security` — security-related fix or improvement
+- `ops` — build, test, deployment, or infrastructure tooling
 
 ## Commands
 
@@ -68,7 +75,7 @@ Use `--help` on any command for full argument documentation.
 - `show T-1` / `s T-1` — ticket fields + 3 recent notes
 - `show T-1 -n` — all notes
 - `show T-1 -a` — everything: all notes + full event history
-- `show T-1 -l 5` — cap entries shown
+- `show T-1 --limit 5` — cap entries shown
 - `show T-1 -f json` — JSON output for scripting
 - `log T-1` — git history for one ticket file (oldest-first)
 - `log` — all recent tracker changes (oldest-first)
@@ -80,34 +87,36 @@ Use `--help` on any command for full argument documentation.
 - `list` / `l` — open tickets by priority; `-a` for all states
 - `list -s claimed,blocked` — filter by state (comma-separated)
 - `list -l bug` / `list -l feature,ux` — filter by label (AND; comma-separated)
-- `unblocked` — only tickets with no unmet dependencies
+- `unblocked` / `ubl` — only tickets with no unmet dependencies
 - `labels` / `labels -a` — all labels in use with counts
-- `grep PATTERN [-i] [-n]` — search open ticket files; `-a` for all states, `-s closed,rejected` for specific
+- `grep` / `g` `PATTERN [-i] [-n]` — search open ticket files; `-a` for all states, `-s closed,rejected` for specific
 - `list --sort=id` — chronological order instead of priority
 
 **Working with tickets**
 - `new "Title" -p 2 -b "context" -l feature` — create a ticket
+- `new "Blocked task" -d T-1,T-2` — create with dependencies
 - `claim T-1` — claim a ticket (defaults owner to `$GITTOC_OWNER` / `$USER`)
 - `claimed` / `c` — list all currently claimed issues
-- `update T-1 --state blocked -p 4` — update fields
+- `update` / `up` `T-1 --state blocked -p 4` — update fields
 - `update T-1 -l bug,ux` — add labels
 - `update T-1 -x ux` — remove labels
 - `update T-1 -L task,docs` — replace all labels
-- `dep T-2 T-1` — make T-2 depend on T-1 (T-1 must complete first)
+- `depends` / `dep` `T-2 T-1` — make T-2 depend on T-1 (T-1 must complete first)
 - `dep T-2 T-1,T-3,T-4` — add multiple blockers (comma-separated)
 - `dep T-2 T-1 --remove` / `dep T-2 T-1 -r` — remove a dependency
-- `note T-1 "context"` / `n T-1 "context"` — append a durable note
+- `note` / `n` `T-1 "context"` — append a durable note
 - `close T-1` — close as done
 - `reject T-1` — close and reject ticket as won't-do
 
 **Remote sync**
+- `init` — create tracker branch / attach worktree; auto-configures `gittoc.remote` if inferable
 - `remote` — inspect tracker remote wiring
 - `remote --set origin` — configure tracker remote
-- `pull` / `pull origin` — fetch and merge tracker branch (uses configured remote by default)
-- `push` / `push origin` — push tracker branch (uses configured remote by default)
+- `pull` / `pl` / `pul` `[remote]` — fetch and merge tracker branch (uses configured remote by default)
+- `push` / `ps` / `pus` `[remote]` — push tracker branch (uses configured remote by default)
 - auto-push/pull: enable with `git config gittoc.autopush true` (or `.agents/skills/gittoc/scripts/setup --autopush`);
-  every mutating command will then pull before and push after the local write
-  non-trivial pull merges automatically run `fsck` against the changed tracker files
+  every mutating command will then pull before and push after the local write.
+  Non-trivial pull merges automatically run `fsck` against the changed tracker files.
 
 ## Recommended workflow
 
