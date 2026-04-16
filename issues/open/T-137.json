@@ -1,0 +1,11 @@
+{
+  "body": "'gittoc log' prints the entire tracker-branch history with no way to cap output. On a tracker with hundreds of commits this is noisy and hard to scan. Mirror git log's -n N:\\n\\n  gittoc log -n 20              # last 20 commits (oldest-first, as today)\\n  gittoc log T-42 -n 5          # last 5 commits touching T-42\\n\\nImplementation is a single argparse int argument plus '--max-count' in the run_git call.",
+  "created_at": "2026-04-16T16:16:15+00:00",
+  "id": "T-137",
+  "labels": [
+    "ux"
+  ],
+  "priority": 4,
+  "title": "log: add -n/--limit to cap entries",
+  "updated_at": "2026-04-16T16:16:15+00:00"
+}
