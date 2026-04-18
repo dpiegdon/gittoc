@@ -8,5 +8,5 @@
   ],
   "priority": 3,
   "title": "split event-log handling out of Tracker into an EventLog class",
-  "updated_at": "2026-04-16T21:17:21+00:00"
+  "updated_at": "2026-04-18T23:04:36+00:00"
 }
