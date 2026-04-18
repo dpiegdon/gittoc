@@ -30,7 +30,7 @@ def render_normal(issue: Issue, tracker) -> str:
     """Render an issue as a single annotated line with marker, deps, owner, labels, and note count."""
     owner = f" owner={col.owner(issue.owner)}" if issue.owner else ""
     label_str = f" labels={col.label(','.join(issue.labels))}" if issue.labels else ""
-    notes = tracker.note_count(issue.issue_id)
+    notes = tracker.events.note_count(issue.issue_id)
     # inconsistent rendering for deps and notes_text, but this improves readability
     notes_text = col.count(f" notes={notes}" if notes else "")
     deps = col.deps(f" deps={str(len(issue.deps))}" if issue.deps else "")
@@ -47,7 +47,7 @@ def render_verbose(issue: Issue, tracker) -> str:
     labels = ", ".join(issue.labels) if issue.labels else "-"
     owner = issue.owner or "-"
     body = issue.body or "-"
-    notes = tracker.note_count(issue.issue_id)
+    notes = tracker.events.note_count(issue.issue_id)
     lines = [
         render_normal(issue, tracker),
         f"  deps: {deps}",
@@ -122,7 +122,7 @@ def print_issues(issues: list[Issue], tracker, fmt: str) -> None:
             payload.append(
                 issue.to_display(
                     path.relative_to(tracker.checkout),
-                    tracker.note_count(issue.issue_id),
+                    tracker.events.note_count(issue.issue_id),
                 )
             )
         print(json.dumps(payload, indent=2, sort_keys=True))

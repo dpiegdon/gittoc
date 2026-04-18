@@ -344,18 +344,18 @@ def _build_show_data(
 ) -> dict:
     """Build the data dict for show/resume output."""
     issue, path = tracker.load_issue(issue_id)
-    note_count = tracker.note_count(issue.issue_id)
+    note_count = tracker.events.note_count(issue.issue_id)
     data = issue.to_display(path.relative_to(tracker.checkout), note_count)
     if all_events:
-        data["history"] = tracker.filtered_events(issue.issue_id, limit=limit)
+        data["history"] = tracker.events.filtered(issue.issue_id, limit=limit)
     elif notes_only:
-        notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=limit)
+        notes = tracker.events.filtered(issue.issue_id, kinds={"note"}, limit=limit)
         data["recent_notes"] = notes
         data["recent_notes_shown"] = len(notes)
         data["recent_notes_total"] = note_count
     else:
         notes_limit = limit if limit is not None else SHOW_NOTES_LIMIT
-        recent_notes = tracker.filtered_events(
+        recent_notes = tracker.events.filtered(
             issue.issue_id, kinds={"note"}, limit=notes_limit
         )
         data["recent_notes"] = recent_notes

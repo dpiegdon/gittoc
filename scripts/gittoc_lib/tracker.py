@@ -19,7 +19,6 @@ from .common import (
     TRACKER_BRANCH,
     branch_exists,
     current_branch,
-    current_ref,
     default_owner,
     has_legacy_hidden_clone,
     infer_remote,
@@ -33,6 +32,7 @@ from .common import (
     validate_priority,
     worktree_path,
 )
+from .event_log import EventLog
 from .models import Issue
 from .remote_sync import RemoteSync
 
@@ -49,8 +49,8 @@ class Tracker:
         self.repo = repo
         self.checkout = checkout
         self.base_head = self.head()
-        self._event_cache: dict[str, list[dict]] = {}
         self._state_cache: dict[str, str] = {}
+        self.events = EventLog(self)
         self.remote = RemoteSync(self)
 
     @classmethod
@@ -222,10 +222,6 @@ class Tracker:
         """Return the expected JSON file path for an issue in the given state."""
         return self.state_dir(state) / f"{validate_issue_id(issue_id)}.json"
 
-    def event_path(self, issue_id: str, state: str) -> Path:
-        """Return the expected event log path for an issue in the given state."""
-        return self.state_dir(state) / f"{validate_issue_id(issue_id)}{EVENT_SUFFIX}"
-
     def find_issue_path(self, issue_id: str) -> Path:
         """Search all state directories and return the path where the issue lives."""
         issue_id = validate_issue_id(issue_id)
@@ -234,15 +230,6 @@ class Tracker:
             if path.exists():
                 return path
         raise SystemExit(f"issue not found: {issue_id}")
-
-    def find_event_path(self, issue_id: str) -> Path | None:
-        """Return the event log path for an issue, or None if no log exists yet."""
-        issue_id = validate_issue_id(issue_id)
-        for state in STATE_ORDER:
-            path = self.event_path(issue_id, state)
-            if path.exists():
-                return path
-        return None
 
     def commit_if_needed(self, message: str, actor: str | None = None) -> None:
         """Stage and commit any pending changes to the issues tree, if any exist."""
@@ -269,96 +256,6 @@ class Tracker:
             previous_path.unlink()
         self._state_cache[issue.issue_id] = issue.state
         return path
-
-    def move_event_file(
-        self, issue_id: str, new_state: str, previous_path: Path | None
-    ) -> None:
-        """Relocate the event log alongside the issue when its state directory changes."""
-        if not previous_path:
-            return
-        previous_event = previous_path.with_name(previous_path.stem + EVENT_SUFFIX)
-        if not previous_event.exists():
-            return
-        target = self.event_path(issue_id, new_state)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if previous_event != target:
-            previous_event.rename(target)
-
-    def append_event(
-        self, issue: Issue, kind: str, text: str = "", actor: str | None = None
-    ) -> None:
-        """Append a timestamped event entry to the issue's event log."""
-        path = self.event_path(issue.issue_id, issue.state)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        ref = current_ref(self.repo)
-        entry = {
-            "actor": actor or default_owner(),
-            "at": now_utc(),
-            "kind": kind,
-            "ref": ref,
-            "text": text,
-        }
-        with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(entry, sort_keys=True) + "\n")
-        self._event_cache.pop(issue.issue_id, None)
-
-    def event_entries(self, issue_id: str) -> list[dict]:
-        """Return all event log entries for an issue, in chronological order.
-
-        Note events are augmented with a computed ``note_id`` (1-based
-        sequential index) so that individual notes are human-addressable.
-        Results are cached for the lifetime of this Tracker instance.
-        """
-        if issue_id in self._event_cache:
-            return self._event_cache[issue_id]
-        path = self.find_event_path(issue_id)
-        if not path or not path.exists():
-            self._event_cache[issue_id] = []
-            return []
-        entries: list[dict] = []
-        note_seq = 0
-        with path.open("r", encoding="utf-8") as handle:
-            for lineno, line in enumerate(handle, 1):
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
-                    print(
-                        col.warn(
-                            f"warning: skipping malformed event at {path}:{lineno}"
-                        ),
-                        file=sys.stderr,
-                    )
-                    continue
-                if entry.get("kind") == "note":
-                    note_seq += 1
-                    entry["note_id"] = note_seq
-                entries.append(entry)
-        self._event_cache[issue_id] = entries
-        return entries
-
-    def filtered_events(
-        self,
-        issue_id: str,
-        *,
-        kinds: set[str] | None = None,
-        limit: int | None = None,
-    ) -> list[dict]:
-        """Return event entries filtered by kind and/or capped at limit (most recent)."""
-        entries = self.event_entries(issue_id)
-        if kinds:
-            entries = [entry for entry in entries if entry.get("kind") in kinds]
-        if limit is not None:
-            entries = entries[-limit:]
-        return entries
-
-    def note_count(self, issue_id: str) -> int:
-        """Return the number of note events recorded for an issue."""
-        return sum(
-            1 for entry in self.event_entries(issue_id) if entry["kind"] == "note"
-        )
 
     def load_defined_labels(self) -> dict[str, str]:
         """Return the defined label set from labels.json on the tracker branch.
@@ -462,7 +359,7 @@ class Tracker:
             state=state,
         )
         self.write_issue(issue)
-        self.append_event(issue, "created", issue.title)
+        self.events.append(issue, "created", issue.title)
         self.commit_if_needed(f"Add issue {issue.issue_id}: {issue.title}")
         return issue
 
@@ -636,9 +533,9 @@ class Tracker:
             ),
             updated_at=now_utc(),
         )
-        self.move_event_file(updated.issue_id, updated.state, path)
+        self.events.move_file(updated.issue_id, updated.state, path)
         self.write_issue(updated, previous_path=path)
-        self.append_event(updated, event_kind, event_text, actor=event_actor)
+        self.events.append(updated, event_kind, event_text, actor=event_actor)
         self.commit_if_needed(
             message or f"Update issue {updated.issue_id}", actor=event_actor
         )
@@ -670,7 +567,7 @@ class Tracker:
             issue, deps=tuple(sorted(deps, key=issue_number)), updated_at=now_utc()
         )
         self.write_issue(updated, previous_path=path)
-        self.append_event(updated, "dependency", " ".join(dep_ids))
+        self.events.append(updated, "dependency", " ".join(dep_ids))
         self.commit_if_needed(f"Add dependencies to {updated.issue_id}")
         return updated
 
@@ -686,13 +583,13 @@ class Tracker:
         new_deps = tuple(d for d in issue.deps if d not in to_remove)
         updated = replace(issue, deps=new_deps, updated_at=now_utc())
         self.write_issue(updated, previous_path=path)
-        self.append_event(updated, "dependency", f"removed {' '.join(dep_ids)}")
+        self.events.append(updated, "dependency", f"removed {' '.join(dep_ids)}")
         self.commit_if_needed(f"Remove dependencies from {updated.issue_id}")
         return updated
 
     def add_note(self, issue_id: str, text: str, actor: str | None = None) -> Issue:
         """Append a free-text note event to an issue and commit."""
         issue, _ = self.load_issue(issue_id)
-        self.append_event(issue, "note", text, actor=actor)
+        self.events.append(issue, "note", text, actor=actor)
         self.commit_if_needed(f"Add note to {issue.issue_id}", actor=actor)
         return issue
