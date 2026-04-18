@@ -371,7 +371,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--owner",
         help="owner for auto-selection (default: $GITTOC_OWNER or $USER)",
     )
-    add_format_argument(resume_parser)
+    add_text_format_argument(resume_parser)
     resume_parser.set_defaults(func=cmd_resume)
 
     show_parser = sub.add_parser("show", aliases=["s"], help="show one issue in detail")

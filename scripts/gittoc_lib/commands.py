@@ -334,24 +334,26 @@ def cmd_summary(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_show(args: argparse.Namespace) -> int:
-    """Print a single issue with optional notes/history detail."""
-    tracker = Tracker.open()
-    issue, path = tracker.load_issue(args.issue_id)
+def _build_show_data(
+    tracker: Tracker,
+    issue_id: str,
+    *,
+    all_events: bool = False,
+    notes_only: bool = False,
+    limit: int | None = None,
+) -> dict:
+    """Build the data dict for show/resume output."""
+    issue, path = tracker.load_issue(issue_id)
     note_count = tracker.note_count(issue.issue_id)
     data = issue.to_display(path.relative_to(tracker.checkout), note_count)
-    limit = args.limit
-    if args.all:
-        # -a: everything — full event history; notes are part of history, shown once
+    if all_events:
         data["history"] = tracker.filtered_events(issue.issue_id, limit=limit)
-    elif args.notes:
-        # -n: all notes, no limit (unless -l is set)
+    elif notes_only:
         notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=limit)
         data["recent_notes"] = notes
         data["recent_notes_shown"] = len(notes)
         data["recent_notes_total"] = note_count
     else:
-        # Default: 3 recent notes (or -l N)
         notes_limit = limit if limit is not None else SHOW_NOTES_LIMIT
         recent_notes = tracker.filtered_events(
             issue.issue_id, kinds={"note"}, limit=notes_limit
@@ -362,8 +364,21 @@ def cmd_show(args: argparse.Namespace) -> int:
         if note_count > len(recent_notes):
             data["recent_notes_hint"] = (
                 f"showing {len(recent_notes)} of {note_count} notes; "
-                f"use `show {args.issue_id} -n` for all"
+                f"use `show {issue_id} -n` for all"
             )
+    return data
+
+
+def cmd_show(args: argparse.Namespace) -> int:
+    """Print a single issue with optional notes/history detail."""
+    tracker = Tracker.open()
+    data = _build_show_data(
+        tracker,
+        args.issue_id,
+        all_events=args.all,
+        notes_only=args.notes,
+        limit=args.limit,
+    )
     if args.format == "json":
         print(json.dumps(data, indent=2, sort_keys=True))
     else:
@@ -515,10 +530,10 @@ def cmd_note(args: argparse.Namespace) -> int:
 
 
 def cmd_resume(args: argparse.Namespace) -> int:
-    """Select the next issue to work on and display it using the list format."""
+    """Select the next issue and display it in show format."""
     tracker = Tracker.open()
     if args.issue_id:
-        issue, _ = tracker.load_issue(args.issue_id)
+        issue_id = args.issue_id
     else:
         owner = args.owner or default_owner()
         issue, _ = tracker.resume_issue(owner)
@@ -528,5 +543,10 @@ def cmd_resume(args: argparse.Namespace) -> int:
             else:
                 print("no resumable issues")
             return 0
-    print_issues([issue], tracker, args.format)
+        issue_id = issue.issue_id
+    data = _build_show_data(tracker, issue_id)
+    if args.format == "json":
+        print(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        print(render_show_text(data))
     return 0

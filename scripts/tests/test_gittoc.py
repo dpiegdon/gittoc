@@ -413,7 +413,7 @@ class TestShowAndResume(GittocTestBase):
         run(["init"], self.repo)
         run(["new", "Task one", "-p", "1"], self.repo)
         resume = json.loads(run(["resume", "--format", "json"], self.repo))
-        self.assertEqual(resume[0]["id"], "T-1")
+        self.assertEqual(resume["id"], "T-1")
 
     def test_resume_prefers_claimed(self) -> None:
         run(["init"], self.repo)
@@ -430,21 +430,22 @@ class TestShowAndResume(GittocTestBase):
         run(["dep", issue2, "T-1"], self.repo)
         run(["close", "T-1"], self.repo)
         resume = json.loads(run(["resume", "--format", "json"], self.repo))
-        self.assertEqual(resume[0]["id"], issue2)
+        self.assertEqual(resume["id"], issue2)
 
     def test_resume_alias(self) -> None:
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)
         resume = json.loads(run(["r", "T-1", "--format", "json"], self.repo))
-        self.assertEqual(resume[0]["id"], "T-1")
+        self.assertEqual(resume["id"], "T-1")
 
-    def test_resume_shows_note_count(self) -> None:
+    def test_resume_shows_recent_notes(self) -> None:
         run(["init"], self.repo)
         issue = run(["new", "Task"], self.repo)
         for i in range(5):
             run(["note", issue, f"Note {i}"], self.repo)
         resume = json.loads(run(["resume", issue, "--format", "json"], self.repo))
-        self.assertEqual(resume[0]["notes_count"], 5)
+        self.assertEqual(resume["recent_notes_total"], 5)
+        self.assertEqual(len(resume["recent_notes"]), 3)
 
 
 class TestUpdate(GittocTestBase):
