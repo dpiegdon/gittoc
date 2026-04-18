@@ -1,4 +1,5 @@
 {
+  "body": "color.warn() and color.error() are newly introduced and should be used where appropriate.",
   "created_at": "2026-04-18T22:09:54+00:00",
   "id": "T-144",
   "labels": [
@@ -6,6 +7,6 @@
     "ready"
   ],
   "priority": 2,
-  "title": "use newly introduced color.warn() and color.error() for warnings and error messages",
-  "updated_at": "2026-04-18T22:09:54+00:00"
+  "title": "use color.warn() color.error()",
+  "updated_at": "2026-04-18T22:10:45+00:00"
 }
