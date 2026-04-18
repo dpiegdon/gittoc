@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from . import VERSION_FILE
+from . import colors as col
 from .common import (
     TRACKER_BRANCH,
     infer_remote,
@@ -235,7 +236,9 @@ class RemoteSync:
             status = self.pull(remote)
         except RemotePushPullError as exc:
             print(
-                f"warning: auto-pull fetch failed: {exc}; continuing with local state",
+                col.warn(
+                    f"warning: auto-pull fetch failed: {exc}; continuing with local state"
+                ),
                 file=sys.stderr,
             )
             return
@@ -259,9 +262,11 @@ class RemoteSync:
             self.push(remote)
         except RemotePushPullError as exc:
             print(
-                f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr
+                col.warn(f"warning: auto-push failed: {exc}; run: gittoc push"),
+                file=sys.stderr,
             )
         except SystemExit as exc:
             print(
-                f"warning: auto-push failed: {exc}; run: gittoc push", file=sys.stderr
+                col.warn(f"warning: auto-push failed: {exc}; run: gittoc push"),
+                file=sys.stderr,
             )

@@ -8,6 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from . import colors as col
 from .common import (
     STATE_ORDER,
     STATE_SET,
@@ -91,13 +92,6 @@ def parse_issue_ids(values: list[str] | None) -> list[str]:
     return ids
 
 
-def format_history_entry(entry: dict) -> str:
-    """Format a single event log entry as a human-readable one-liner."""
-    note_id = entry.get("note_id")
-    kind = f"note#{note_id}" if note_id else entry["kind"]
-    return f"{entry['at']} {kind} {entry['actor']}: {entry['text']}"
-
-
 def resume_payload(
     tracker: Tracker,
     issue,
@@ -117,44 +111,17 @@ def resume_payload(
     data["recent_notes"] = notes
     data["recent_notes_shown"] = len(notes)
     data["recent_notes_total"] = note_count
-    data["recent_events"] = tracker.filtered_events(
+    if note_count > len(notes):
+        data["recent_notes_hint"] = (
+            f"showing {len(notes)} of {note_count} notes; "
+            f"use `show {issue.issue_id} -n` for all"
+        )
+    data["history"] = tracker.filtered_events(
         issue.issue_id,
         kinds={"created", "updated", "claimed", "closed", "dependency"},
         limit=events_limit,
     )
     return data
-
-
-def print_resume_text(data: dict) -> None:
-    """Print the resume payload in human-readable text format."""
-    marker = ">" if data["ready"] else "*"
-    owner = f" owner={data['owner']}" if data.get("owner") else ""
-    deps_list = data.get("deps", [])
-    deps = f" deps={len(deps_list)}" if deps_list else ""
-    selection = f" selection={data['selection']}" if data.get("selection") else ""
-    print(
-        f"{marker} {data['id']} p{data['priority']} [{data['state']}] {data['title']}{deps}{owner}{selection}"
-    )
-    if data.get("body"):
-        print()
-        print(data["body"])
-    notes = data["recent_notes"]
-    if notes:
-        print()
-        print("Recent notes:")
-        for entry in notes:
-            print(f"- {format_history_entry(entry)}")
-        if data["recent_notes_total"] > data["recent_notes_shown"]:
-            print(
-                f"- showing {data['recent_notes_shown']} of {data['recent_notes_total']} notes; "
-                f"use `show {data['id']} -n` for all"
-            )
-    events = data["recent_events"]
-    if events:
-        print()
-        print("Recent events:")
-        for entry in events:
-            print(f"- {format_history_entry(entry)}")
 
 
 def cmd_init(_args: argparse.Namespace) -> int:
@@ -203,14 +170,16 @@ def cmd_pull(args: argparse.Namespace) -> int:
     remote = args.remote or tracker.remote.effective()
     if not remote:
         print(
-            "error: no remote specified and none configured (run: gittoc remote --set <name>)",
+            col.error(
+                "error: no remote specified and none configured (run: gittoc remote --set <name>)"
+            ),
             file=sys.stderr,
         )
         return 1
     try:
         status = tracker.remote.pull(remote)
     except RemotePushPullError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(col.error(f"error: {exc}"), file=sys.stderr)
         return 1
     report = status.get("fsck")
     payload = dict(status)
@@ -246,14 +215,16 @@ def cmd_push(args: argparse.Namespace) -> int:
     remote = args.remote or tracker.remote.effective()
     if not remote:
         print(
-            "error: no remote specified and none configured (run: gittoc remote --set <name>)",
+            col.error(
+                "error: no remote specified and none configured (run: gittoc remote --set <name>)"
+            ),
             file=sys.stderr,
         )
         return 1
     try:
         status = tracker.remote.push(remote)
     except RemotePushPullError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(col.error(f"error: {exc}"), file=sys.stderr)
         return 1
     if args.format == "json":
         print(json.dumps(status, indent=2, sort_keys=True))
@@ -501,7 +472,7 @@ def cmd_grep(args: argparse.Namespace) -> int:
     """Search ticket files for a pattern using grep."""
     grep_args = [a for a in (args.grep_args or []) if a != "--"]
     if not grep_args:
-        print("error: grep requires a pattern", file=sys.stderr)
+        print(col.error("error: grep requires a pattern"), file=sys.stderr)
         return 1
     pattern = grep_args[0]
     extra_flags = grep_args[1:]
@@ -602,5 +573,5 @@ def cmd_resume(args: argparse.Namespace) -> int:
     if args.format == "json":
         print(json.dumps(data, indent=2, sort_keys=True))
     else:
-        print_resume_text(data)
+        print(render_show_text(data))
     return 0

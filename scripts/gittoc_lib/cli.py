@@ -7,6 +7,7 @@ import subprocess
 import sys
 
 from . import __version__
+from . import colors as col
 from .commands import (
     cmd_claim,
     cmd_claimed,
@@ -473,8 +474,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     except subprocess.CalledProcessError as exc:
         msg = exc.stderr.strip() or exc.stdout.strip() or str(exc)
-        print(f"git error: {msg}", file=sys.stderr)
+        print(col.error(f"git error: {msg}"), file=sys.stderr)
         return 1
     except OSError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(col.error(f"error: {exc}"), file=sys.stderr)
         return 1

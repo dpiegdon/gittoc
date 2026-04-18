@@ -9,6 +9,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from . import CURRENT_FORMAT_VERSION, CURRENT_LAYOUT_VERSION, VERSION_FILE
+from . import colors as col
 from .common import (
     EVENT_SUFFIX,
     ISSUES_ROOT,
@@ -325,7 +326,9 @@ class Tracker:
                     entry = json.loads(line)
                 except json.JSONDecodeError:
                     print(
-                        f"warning: skipping malformed event at {path}:{lineno}",
+                        col.warn(
+                            f"warning: skipping malformed event at {path}:{lineno}"
+                        ),
                         file=sys.stderr,
                     )
                     continue
@@ -507,8 +510,10 @@ class Tracker:
             except SystemExit:
                 # Referenced dep does not exist; treat as a leaf node.
                 print(
-                    f"warning: dependency {current} not found, "
-                    "skipping during cycle check",
+                    col.warn(
+                        f"warning: dependency {current} not found, "
+                        "skipping during cycle check"
+                    ),
                     file=sys.stderr,
                 )
                 continue
@@ -597,8 +602,10 @@ class Tracker:
             and owner != issue.owner
         ):
             print(
-                f"warning: {issue.issue_id} was already claimed by {issue.owner};"
-                f" ownership transferred to {owner}",
+                col.warn(
+                    f"warning: {issue.issue_id} was already claimed by {issue.owner};"
+                    f" ownership transferred to {owner}"
+                ),
                 file=sys.stderr,
             )
         resolved_owner: str | None
@@ -609,8 +616,10 @@ class Tracker:
         ):
             resolved_owner = None
             print(
-                f"note: cleared owner ({issue.owner}) on {issue.issue_id}"
-                f" because state changed to {target_state}",
+                col.warn(
+                    f"note: cleared owner ({issue.owner}) on {issue.issue_id}"
+                    f" because state changed to {target_state}"
+                ),
                 file=sys.stderr,
             )
         else:

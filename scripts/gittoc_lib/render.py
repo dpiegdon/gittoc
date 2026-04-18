@@ -98,6 +98,9 @@ def render_show_text(data: dict) -> str:
     hint = data.get("recent_notes_hint")
     if hint:
         lines.append(col.warn(f"  ({hint})"))
+    selection = data.get("selection")
+    if selection:
+        lines.append(f"  {col.field_name('selection:')} {selection}")
     history = data.get("history")
     if history:
         lines.append("")
