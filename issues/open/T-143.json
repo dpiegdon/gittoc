@@ -3,9 +3,10 @@
   "id": "T-143",
   "labels": [
     "refactor",
-    "ux"
+    "ux",
+    "ready"
   ],
   "priority": 3,
   "title": "print_resume_text should use cmd_show()",
-  "updated_at": "2026-04-18T22:07:37+00:00"
+  "updated_at": "2026-04-18T22:07:47+00:00"
 }
