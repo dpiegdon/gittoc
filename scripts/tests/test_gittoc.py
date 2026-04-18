@@ -413,7 +413,7 @@ class TestShowAndResume(GittocTestBase):
         run(["init"], self.repo)
         run(["new", "Task one", "-p", "1"], self.repo)
         resume = json.loads(run(["resume", "--format", "json"], self.repo))
-        self.assertEqual(resume["id"], "T-1")
+        self.assertEqual(resume[0]["id"], "T-1")
 
     def test_resume_prefers_claimed(self) -> None:
         run(["init"], self.repo)
@@ -422,7 +422,6 @@ class TestShowAndResume(GittocTestBase):
         run(["claim", "T-2", "--owner", "tester"], self.repo)
         resume = run(["resume", "--owner", "tester"], self.repo)
         self.assertIn("T-2", resume)
-        self.assertIn("selection: claimed-by-owner", resume)
 
     def test_resume_falls_back_to_ready(self) -> None:
         run(["init"], self.repo)
@@ -431,23 +430,21 @@ class TestShowAndResume(GittocTestBase):
         run(["dep", issue2, "T-1"], self.repo)
         run(["close", "T-1"], self.repo)
         resume = json.loads(run(["resume", "--format", "json"], self.repo))
-        self.assertEqual(resume["id"], issue2)
-        self.assertEqual(resume["selection"], "highest-priority-ready")
+        self.assertEqual(resume[0]["id"], issue2)
 
     def test_resume_alias(self) -> None:
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)
         resume = json.loads(run(["r", "T-1", "--format", "json"], self.repo))
-        self.assertEqual(resume["id"], "T-1")
+        self.assertEqual(resume[0]["id"], "T-1")
 
-    def test_resume_notes_in_output(self) -> None:
+    def test_resume_shows_note_count(self) -> None:
         run(["init"], self.repo)
         issue = run(["new", "Task"], self.repo)
         for i in range(5):
             run(["note", issue, f"Note {i}"], self.repo)
         resume = json.loads(run(["resume", issue, "--format", "json"], self.repo))
-        self.assertEqual(len(resume["recent_notes"]), 3)
-        self.assertEqual(resume["recent_notes_total"], 5)
+        self.assertEqual(resume[0]["notes_count"], 5)
 
 
 class TestUpdate(GittocTestBase):

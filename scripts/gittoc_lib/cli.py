@@ -371,19 +371,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--owner",
         help="owner for auto-selection (default: $GITTOC_OWNER or $USER)",
     )
-    resume_parser.add_argument(
-        "--notes-limit",
-        type=int,
-        default=3,
-        help="number of recent notes to include (default: 3)",
-    )
-    resume_parser.add_argument(
-        "--events-limit",
-        type=int,
-        default=3,
-        help="number of recent events to include (default: 3)",
-    )
-    add_text_format_argument(resume_parser)
+    add_format_argument(resume_parser)
     resume_parser.set_defaults(func=cmd_resume)
 
     show_parser = sub.add_parser("show", aliases=["s"], help="show one issue in detail")

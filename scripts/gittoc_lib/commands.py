@@ -92,38 +92,6 @@ def parse_issue_ids(values: list[str] | None) -> list[str]:
     return ids
 
 
-def resume_payload(
-    tracker: Tracker,
-    issue,
-    path: Path,
-    *,
-    notes_limit: int,
-    events_limit: int,
-    reason: str | None = None,
-) -> dict:
-    """Build the full resume data dict including recent notes and events."""
-    note_count = tracker.note_count(issue.issue_id)
-    data = issue.to_display(path.relative_to(tracker.checkout), note_count)
-    data["ready"] = tracker.ready(issue)
-    if reason:
-        data["selection"] = reason
-    notes = tracker.filtered_events(issue.issue_id, kinds={"note"}, limit=notes_limit)
-    data["recent_notes"] = notes
-    data["recent_notes_shown"] = len(notes)
-    data["recent_notes_total"] = note_count
-    if note_count > len(notes):
-        data["recent_notes_hint"] = (
-            f"showing {len(notes)} of {note_count} notes; "
-            f"use `show {issue.issue_id} -n` for all"
-        )
-    data["history"] = tracker.filtered_events(
-        issue.issue_id,
-        kinds={"created", "updated", "claimed", "closed", "dependency"},
-        limit=events_limit,
-    )
-    return data
-
-
 def cmd_init(_args: argparse.Namespace) -> int:
     """Initialize the tracker worktree and auto-configure the remote if possible."""
     tracker = Tracker.open()
@@ -547,31 +515,18 @@ def cmd_note(args: argparse.Namespace) -> int:
 
 
 def cmd_resume(args: argparse.Namespace) -> int:
-    """Show recovery context for a specific or auto-selected issue."""
+    """Select the next issue to work on and display it using the list format."""
     tracker = Tracker.open()
-    reason: str | None = None
     if args.issue_id:
-        issue, path = tracker.load_issue(args.issue_id)
+        issue, _ = tracker.load_issue(args.issue_id)
     else:
         owner = args.owner or default_owner()
-        issue, reason = tracker.resume_issue(owner)
+        issue, _ = tracker.resume_issue(owner)
         if issue is None:
             if args.format == "json":
                 print("null")
             else:
                 print("no resumable issues")
             return 0
-        _, path = tracker.load_issue(issue.issue_id)
-    data = resume_payload(
-        tracker,
-        issue,
-        path,
-        notes_limit=args.notes_limit,
-        events_limit=args.events_limit,
-        reason=reason,
-    )
-    if args.format == "json":
-        print(json.dumps(data, indent=2, sort_keys=True))
-    else:
-        print(render_show_text(data))
+    print_issues([issue], tracker, args.format)
     return 0
