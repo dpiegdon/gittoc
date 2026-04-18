@@ -96,3 +96,11 @@ def owner(text: str) -> str:
 
 def field_name(text: str) -> str:
     return _c(text, _DIM)
+
+
+def warn(text: str) -> str:
+    return _c(text, _BOLD, _YELLOW)
+
+
+def error(text: str) -> str:
+    return _c(text, _BOLD, _RED)

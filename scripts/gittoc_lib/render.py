@@ -97,7 +97,7 @@ def render_show_text(data: dict) -> str:
             lines.append(f"  {ev_at} {ev_label} {ev_actor}: {text}")
     hint = data.get("recent_notes_hint")
     if hint:
-        lines.append(f"  ({hint})")
+        lines.append(col.warn(f"  ({hint})"))
     history = data.get("history")
     if history:
         lines.append("")
