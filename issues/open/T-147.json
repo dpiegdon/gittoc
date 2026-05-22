@@ -1,0 +1,12 @@
+{
+  "body": "Distilled from a heavy real-use field report. Two conventions to bless in SKILL.md/README, and a non-goals section to protect against future scope creep.\n\nCONVENTIONS TO DOCUMENT:\n1. Relationships beyond deps via a parseable note prefix. T-40/T-45 already rejected adding a schema-level relation field in favor of the note convention; the field report confirms that call and only asks that the convention be documented with a parseable prefix (e.g. note \"relates: T-3\", \"split-of: T-53\", \"dup-of: T-9\") so it composes/greps. Do NOT add a schema field \u2014 keep it a documented note convention.\n2. Priority x labels as orthogonal axes. priority is a flat int; labels are an orthogonal axis. An agent-vs-human label used as a \"safe to do autonomously / needs a human decision\" axis, cross-producted with priority, was genuinely useful for triage. `list -l agent --sort=priority` already supports it. Recommend it as a convention.\n\nNON-GOALS TO PRESERVE (do not \"improve\" into Jira):\n- Notes-as-audit-trail is the killer feature (pinning why/what-was-verified survives compaction and hand-offs).\n- Repo-local, zero-infra, travels with git.\n- States + labels are exactly enough; resist workflow ceremony.\n- Multi-writer path is load-bearing in real use (Claude + Codex + Copilot + 2 humans concurrently): treat optimistic locking, the actor field, and ref stamping as first-class invariants when changing event handling.",
+  "created_at": "2026-05-22T23:20:13+00:00",
+  "id": "T-147",
+  "labels": [
+    "docs",
+    "agent"
+  ],
+  "priority": 4,
+  "title": "document agent-oriented conventions and design non-goals (field report)",
+  "updated_at": "2026-05-22T23:20:13+00:00"
+}
