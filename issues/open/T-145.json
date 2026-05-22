@@ -1,0 +1,13 @@
+{
+  "body": "Field report from heavy multi-hour agent use: note/body text passed on the command line is evaluated by the CALLER's shell, so backticks, $(...), !, etc. in note bodies trigger command-substitution and blow up (e.g. `git toc note T-1 \"...use `type IS NOT 'x'`...\"` -> \"command not found\"). Single-quoting works around it, but this is a constant footgun for AGENTS specifically, who naturally write note text full of backticked code refs and shell metacharacters. gittoc cannot control the caller's shell, so the robust fix is to let note/body bypass the shell argument entirely. Asks: (1) support reading note/body from a file or stdin, e.g. `--body-file PATH` and/or `-F -` for stdin, so an agent can heredoc the text and never fight quoting; (2) at minimum, add a loud line to SKILL.md/README: \"note/body is shell-evaluated at the call site \u2014 pass via stdin/file or single-quote.\" Applies to `note` text and `new`/`update` --body.",
+  "created_at": "2026-05-22T23:20:04+00:00",
+  "id": "T-145",
+  "labels": [
+    "ux",
+    "agent",
+    "feature"
+  ],
+  "priority": 2,
+  "title": "note/body text is shell-evaluated at the call site \u2014 support file/stdin input",
+  "updated_at": "2026-05-22T23:20:04+00:00"
+}
