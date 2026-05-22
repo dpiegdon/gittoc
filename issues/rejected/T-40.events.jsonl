@@ -8,3 +8,4 @@
 {"actor": "dpiegdon", "at": "2026-03-30T21:38:56+00:00", "kind": "updated", "text": "fields updated"}
 {"actor": "claude", "at": "2026-03-30T22:11:06+00:00", "kind": "rejected", "text": ""}
 {"actor": "claude", "at": "2026-03-30T22:11:11+00:00", "kind": "note", "text": "Rejected: notes cover this sufficiently. 'gittoc note T-5 \"see also T-3\"' is the convention."}
+{"actor": "claude", "at": "2026-05-22T23:20:17+00:00", "kind": "note", "ref": "main@43d354c", "text": "Field report (heavy multi-hour agent use) confirms this rejection was the right call: the note convention (\"see also T-3\" / \"relates: T-3\") was sufficient in practice. The only refinement requested is documenting a PARSEABLE prefix (relates/split-of/dup-of) so the convention composes and greps \u2014 captured as a docs task in T-147, no schema change."}
