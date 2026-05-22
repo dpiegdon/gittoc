@@ -1,0 +1,13 @@
+{
+  "body": "Builds on T-128, which made every event store ref:\"<branch>@<hash>\" (HEAD at event time). Field report: this is \"the single most valuable under-documented feature\" \u2014 closing a ticket right after committing a fix stamps the close event with the fix commit, no manual SHA-in-note needed. But the ref is currently only visible via `-f json`; `show -a` and `log` do not print it. Asks: (a) surface the short hash in the text views, e.g. `[22:55] closed (04bb189) owner:`; (b) document the ordering contract explicitly in SKILL.md/README \u2014 commit the fix FIRST, then close, so ref captures the fix commit and not the pre-fix HEAD.",
+  "created_at": "2026-05-22T23:20:13+00:00",
+  "id": "T-146",
+  "labels": [
+    "ux",
+    "docs",
+    "agent"
+  ],
+  "priority": 3,
+  "title": "surface event ref (commit hash) in text views and document commit-then-close ordering",
+  "updated_at": "2026-05-22T23:20:13+00:00"
+}
