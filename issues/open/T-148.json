@@ -1,0 +1,12 @@
+{
+  "body": "pulling with 'git toc pull' currently always shows 'pulled gittoc from ...remote... to ...hash...', even if the local version is the same or newer. better would be something like 'gittoc from ...remote... (...hash...) was already merged' (or similar)",
+  "created_at": "2026-05-25T19:12:21+00:00",
+  "id": "T-148",
+  "labels": [
+    "ready",
+    "agent"
+  ],
+  "priority": 2,
+  "title": "pulling ticket updates should indicate if nothing changed",
+  "updated_at": "2026-05-25T19:12:21+00:00"
+}
