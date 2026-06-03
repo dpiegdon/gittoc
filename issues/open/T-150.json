@@ -1,0 +1,12 @@
+{
+  "body": "Every gittoc invocation imports ~232ms worth of modules before doing ~50ms of\nreal work; interactive `git toc` calls feel sluggish (~280ms). The dataclasses\n-> inspect and pathlib/subprocess floor (~90ms) is unavoidable, but integrity\n(fsck), remote_sync error types, and shutil (bootstrap only) are pulled eagerly\nfor commands that never use them. Defer those imports into the functions that\nneed them so common commands (summary/list/note/new/claim) import less. Helps\nboth the test suite and real CLI latency.",
+  "created_at": "2026-06-03T22:06:29+00:00",
+  "id": "T-150",
+  "labels": [
+    "perf",
+    "agent"
+  ],
+  "priority": 4,
+  "title": "reduce CLI startup import cost via lazy imports",
+  "updated_at": "2026-06-03T22:06:29+00:00"
+}
