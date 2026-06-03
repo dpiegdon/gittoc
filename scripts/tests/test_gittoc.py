@@ -744,6 +744,36 @@ class TestPullAndPush(GittocTestBase):
         pulled = json.loads(run(["show", "T-1", "-f", "json"], clone))
         self.assertEqual(pulled["title"], "Pulled tracker issue")
 
+    def test_pull_reports_already_up_to_date(self) -> None:
+        remote_repo = Path(self.tempdir.name) / "uptodate.git"
+        subprocess.run(
+            ["git", "init", "--bare", str(remote_repo)], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "remote", "add", "origin", str(remote_repo)],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], self.repo)
+        run(["push", "origin"], self.repo)
+
+        clone = Path(self.tempdir.name) / "uptodate-clone"
+        subprocess.run(
+            ["git", "clone", str(remote_repo), str(clone)],
+            check=True,
+            capture_output=True,
+        )
+        # First pull attaches the worktree; clone is already at the remote head.
+        first = run(["pull", "origin"], clone)
+        # A second pull with no remote changes must report nothing changed.
+        second = run(["pull", "origin"], clone)
+        self.assertIn("already up to date", second)
+        self.assertNotIn("pulled", second)
+        # JSON output exposes the unchanged merge_kind for scripting.
+        second_json = json.loads(run(["pull", "origin", "--format", "json"], clone))
+        self.assertEqual(second_json["merge_kind"], "unchanged")
+
     def test_pull_alias(self) -> None:
         remote_repo = Path(self.tempdir.name) / "alias.git"
         subprocess.run(

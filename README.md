@@ -142,6 +142,8 @@ git config gittoc.autopush true
 
 `gittoc pull` runs a read-only integrity check on changed tracker files after a
 non-trivial merge commit, and `gittoc fsck` scans the whole tracker on demand.
+When the local tracker is already current, `pull` reports "already up to date"
+instead of a pulled-to-hash line (`merge_kind` is `unchanged` in JSON output).
 
 Push and pull are version-gated: if collaborators are on different gittoc versions
 with incompatible tracker formats, the sync is rejected before any data is written,
