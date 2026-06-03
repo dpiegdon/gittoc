@@ -98,6 +98,10 @@ def field_name(text: str) -> str:
     return _c(text, _DIM)
 
 
+def ok(text: str) -> str:
+    return _c(text, _GREEN)
+
+
 def warn(text: str) -> str:
     return _c(text, _BOLD, _YELLOW)
 

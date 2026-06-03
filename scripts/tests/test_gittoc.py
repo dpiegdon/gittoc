@@ -6,9 +6,11 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "gittoc"
@@ -2132,6 +2134,30 @@ class TestCommaArguments(GittocTestBase):
         self.assertIn("T-1", out)
         self.assertIn("T-2", out)
         self.assertIn("T-3", out)
+
+
+class TestColors(unittest.TestCase):
+    """Unit tests for the TTY-gated color helpers."""
+
+    @staticmethod
+    def _colors():
+        import importlib
+
+        sys.path.insert(0, str(ROOT))
+        try:
+            return importlib.import_module("gittoc_lib.colors")
+        finally:
+            sys.path.pop(0)
+
+    def test_ok_wraps_in_green_when_tty(self) -> None:
+        colors = self._colors()
+        with mock.patch.object(sys.stdout, "isatty", return_value=True):
+            self.assertEqual(colors.ok("done"), "\033[32mdone\033[0m")
+
+    def test_ok_is_plain_when_not_tty(self) -> None:
+        colors = self._colors()
+        with mock.patch.object(sys.stdout, "isatty", return_value=False):
+            self.assertEqual(colors.ok("done"), "done")
 
 
 if __name__ == "__main__":

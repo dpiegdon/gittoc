@@ -157,8 +157,10 @@ def cmd_pull(args: argparse.Namespace) -> int:
         print(json.dumps(payload, indent=2, sort_keys=True))
     elif status.get("merge_kind") == "unchanged":
         print(
-            f"{TRACKER_BRANCH} from {status['remote']} already up to date "
-            f"at {status['head']}"
+            col.ok(
+                f"{TRACKER_BRANCH} from {status['remote']} already up to date "
+                f"at {status['head']}"
+            )
         )
     else:
         print(f"pulled {TRACKER_BRANCH} from {status['remote']} to {status['head']}")
