@@ -50,6 +50,15 @@ python3 -m pytest scripts/tests/test_gittoc.py
 python3 -m py_compile scripts/gittoc scripts/gittoc_lib/*.py scripts/tests/test_gittoc.py
 ```
 
+On multi-core machines the suite runs roughly twice as fast through the
+stdlib parallel runner (same tests, real CLI binary, no extra dependencies):
+
+```bash
+python3 scripts/tests/run_parallel.py          # one worker per core
+python3 scripts/tests/run_parallel.py -j 4     # explicit worker count
+python3 scripts/tests/run_parallel.py -k pull  # only ids containing "pull"
+```
+
 - Add regression tests when fixing bugs.
 - If you cannot run a test, say so explicitly.
 
