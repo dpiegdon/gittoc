@@ -16,18 +16,21 @@ ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "gittoc"
 
 
-def run(args: list[str], cwd: Path) -> str:
+def run(args: list[str], cwd: Path, stdin: str | None = None) -> str:
     proc = subprocess.run(
         [str(CLI), *args],
         cwd=str(cwd),
         text=True,
         capture_output=True,
         check=True,
+        input=stdin,
     )
     return proc.stdout.strip()
 
 
-def run_fail(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
+def run_fail(
+    args: list[str], cwd: Path, stdin: str | None = None
+) -> subprocess.CompletedProcess:
     """Run a command expected to fail, returning the completed process."""
     return subprocess.run(
         [str(CLI), *args],
@@ -35,6 +38,7 @@ def run_fail(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
         text=True,
         capture_output=True,
         check=False,
+        input=stdin,
     )
 
 
@@ -2134,6 +2138,78 @@ class TestCommaArguments(GittocTestBase):
         self.assertIn("T-1", out)
         self.assertIn("T-2", out)
         self.assertIn("T-3", out)
+
+
+class TestFileAndStdinInput(GittocTestBase):
+    """note/new/update can read body/text from a file or stdin (-F)."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        run(["init"], self.repo)
+        run(["new", "host issue"], self.repo)
+
+    def test_note_text_from_stdin(self) -> None:
+        run(["note", "T-1", "-F", "-"], self.repo, stdin="from stdin")
+        data = json.loads(run(["show", "T-1", "-n", "-f", "json"], self.repo))
+        self.assertEqual(data["recent_notes"][0]["text"], "from stdin")
+
+    def test_note_text_from_file(self) -> None:
+        note_file = self.repo / "note.txt"
+        note_file.write_text("from a file", encoding="utf-8")
+        run(["note", "T-1", "-F", str(note_file)], self.repo)
+        data = json.loads(run(["show", "T-1", "-n", "-f", "json"], self.repo))
+        self.assertEqual(data["recent_notes"][0]["text"], "from a file")
+
+    def test_new_body_from_stdin(self) -> None:
+        new_id = run(["new", "stdin body", "-F", "-"], self.repo, stdin="body text")
+        data = json.loads(run(["show", new_id, "-f", "json"], self.repo))
+        self.assertEqual(data["body"], "body text")
+
+    def test_update_body_from_file(self) -> None:
+        body_file = self.repo / "body.txt"
+        body_file.write_text("updated body", encoding="utf-8")
+        run(["update", "T-1", "-F", str(body_file)], self.repo)
+        data = json.loads(run(["show", "T-1", "-f", "json"], self.repo))
+        self.assertEqual(data["body"], "updated body")
+
+    def test_note_inline_and_file_conflict(self) -> None:
+        proc = run_fail(["note", "T-1", "inline", "-F", "-"], self.repo, stdin="x")
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("not both", proc.stderr)
+
+    def test_note_requires_text(self) -> None:
+        proc = run_fail(["note", "T-1"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("requires text", proc.stderr)
+
+    def test_empty_note_from_stdin_rejected(self) -> None:
+        proc = run_fail(["note", "T-1", "-F", "-"], self.repo, stdin="")
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("empty", proc.stderr)
+
+    def test_update_clear_body_with_empty_file(self) -> None:
+        run(["update", "T-1", "-b", "has body"], self.repo)
+        empty = self.repo / "empty.txt"
+        empty.write_text("", encoding="utf-8")
+        run(["update", "T-1", "-F", str(empty)], self.repo)
+        data = json.loads(run(["show", "T-1", "-f", "json"], self.repo))
+        self.assertNotIn("body", data)
+
+    def test_trailing_newline_stripped(self) -> None:
+        run(["note", "T-1", "-F", "-"], self.repo, stdin="one trailing\n")
+        run(["note", "T-1", "-F", "-"], self.repo, stdin="two trailing\n\n")
+        data = json.loads(run(["show", "T-1", "-n", "-f", "json"], self.repo))
+        notes = data["recent_notes"]
+        self.assertEqual(notes[0]["text"], "one trailing")
+        self.assertEqual(notes[1]["text"], "two trailing\n")
+
+    def test_shell_metacharacters_roundtrip(self) -> None:
+        payload = "see `type IS NOT 'x'` and $(whoami); cost $5 and ! history"
+        meta_file = self.repo / "meta.txt"
+        meta_file.write_text(payload, encoding="utf-8")
+        run(["note", "T-1", "-F", str(meta_file)], self.repo)
+        data = json.loads(run(["show", "T-1", "-n", "-f", "json"], self.repo))
+        self.assertEqual(data["recent_notes"][0]["text"], payload)
 
 
 class TestColors(unittest.TestCase):

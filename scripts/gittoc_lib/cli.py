@@ -257,6 +257,13 @@ def build_parser() -> argparse.ArgumentParser:
     new_parser.add_argument("title", help="one-line summary of the issue")
     new_parser.add_argument("-b", "--body", help="longer description or context")
     new_parser.add_argument(
+        "-F",
+        "--file",
+        metavar="FILE",
+        help="read body from FILE, or '-' for stdin (alternative to -b; "
+        "avoids shell evaluation of backticks/$())",
+    )
+    new_parser.add_argument(
         "-l",
         "--label",
         action="append",
@@ -283,7 +290,14 @@ def build_parser() -> argparse.ArgumentParser:
         "note", aliases=["n"], help="append a note to an issue"
     )
     note_parser.add_argument("issue_id", help="ticket to annotate, e.g. T-42")
-    note_parser.add_argument("text", help="note text")
+    note_parser.add_argument("text", nargs="?", help="note text (omit to use -F)")
+    note_parser.add_argument(
+        "-F",
+        "--file",
+        metavar="FILE",
+        help="read note text from FILE, or '-' for stdin; avoids the caller's "
+        "shell evaluating backticks/$() — quote your heredoc delimiter: <<'EOF'",
+    )
     note_parser.add_argument(
         "--actor",
         help="override actor name (default: $GITTOC_OWNER or $USER)",
@@ -410,6 +424,13 @@ def build_parser() -> argparse.ArgumentParser:
     update_parser.add_argument("issue_id", help="ticket to update, e.g. T-42")
     update_parser.add_argument("-t", "--title", help="new title")
     update_parser.add_argument("-b", "--body", help="new body text")
+    update_parser.add_argument(
+        "-F",
+        "--file",
+        metavar="FILE",
+        help="read new body from FILE, or '-' for stdin (alternative to -b; "
+        "avoids shell evaluation of backticks/$())",
+    )
     update_parser.add_argument("--state", choices=STATE_ORDER, help="new state")
     update_parser.add_argument(
         "--owner",

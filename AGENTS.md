@@ -26,6 +26,9 @@ rather than keeping state in chat.
 - When multiple agents or humans are working concurrently, push both the
   `gittoc` branch and the working branch after each commit.
 - If you are tasked with solving multiple tickets, try to finish one ticket before taking another.
+- Note/body text on the command line is evaluated by your shell (backticks,
+  `$(...)`, `!`). Single-quote it, or pass it via `-F FILE` / `-F -` (with a
+  quoted heredoc `<<'EOF'`) on `note`, `new`, and `update` to avoid mangling.
 
 ## Commit Discipline
 

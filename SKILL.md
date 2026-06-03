@@ -106,6 +106,8 @@ Use `--help` on any command for full argument documentation.
 - `dep T-2 T-1,T-3,T-4` — add multiple blockers (comma-separated)
 - `dep T-2 T-1 --remove` / `dep T-2 T-1 -r` — remove a dependency
 - `note` / `n` `T-1 "context"` — append a durable note
+- `note T-1 -F FILE` / `note T-1 -F -` — read note text from a file or stdin
+- `new`/`update` `-F FILE` — read body from a file or stdin (alternative to `-b`)
 - `close T-1` — close as done
 - `reject T-1` — close and reject ticket as won't-do
 
@@ -172,6 +174,13 @@ This keeps the schema minimal. Notes are searchable via `gittoc grep`.
 
 ## Notes
 
+- Note/body text given as a CLI argument is evaluated by the calling shell:
+  backticks, `$(...)`, and `!` trigger substitution and can corrupt or break
+  the command. **Single-quote** such text, or pass it via `-F FILE` / `-F -`
+  (stdin) on `note`, `new`, and `update`. With a stdin heredoc, quote the
+  delimiter (`<<'EOF'`) or the shell still expands the body. Agents writing
+  backtick-heavy prose should prefer `-F` — a single trailing newline is
+  stripped from file/stdin input.
 - Mutating commands use optimistic concurrency; they refuse to commit if the
   tracker changed mid-command. Review the new state and re-run the command if still applicable.
 - `resume` without an ID prefers claimed tickets owned by the current user,

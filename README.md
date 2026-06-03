@@ -103,6 +103,8 @@ gittoc new "short title" -p 2 -b "longer context" -l bug
 gittoc new "blocked task" -d T-1,T-2      # create with deps (comma-separated)
 gittoc claim T-42
 gittoc note T-42 "found a race during creation"
+gittoc note T-42 -F notes.txt        # read note text from a file
+gittoc note T-42 -F -                # read note text from stdin
 gittoc update T-42 -p 1 -l bug,ux    # add labels
 gittoc update T-42 -x ux             # remove a label
 gittoc update T-42 -L task,docs      # replace all labels
@@ -151,6 +153,28 @@ with a clear message explaining what to upgrade.
 
 Command aliases: `l`=list, `s`=show, `sum`=summary, `r`=resume, `c`=claim, `n`=note,
 `dep`=depends, `g`=grep, `ubl`=unblocked, `up`=update, `pl`=pull, `ps`=push.
+
+### Note/body text and the calling shell
+
+Note and body text passed as a command-line argument is evaluated by **your
+shell** before gittoc ever sees it — backticks, `$(...)`, and `!` trigger
+command substitution or history expansion and can mangle or break the command.
+gittoc cannot fix the caller's shell, so for text containing shell
+metacharacters either **single-quote** the argument, or bypass the shell
+argument entirely with `-F` on `note`, `new`, and `update`:
+
+```bash
+gittoc note T-42 -F notes.txt            # read text from a file (most robust)
+gittoc note T-42 -F - <<'EOF'            # read from stdin; QUOTE the delimiter
+fix in `lock()`; see $(git rev-parse HEAD)
+EOF
+gittoc new "title" -F body.md            # -F is an alternative to -b
+gittoc update T-42 -F body.md
+```
+
+The heredoc delimiter must be quoted (`<<'EOF'`, not `<<EOF`); an unquoted
+delimiter lets the shell expand the body anyway. A single trailing newline is
+stripped from file/stdin input.
 
 ### Ticket relationships
 

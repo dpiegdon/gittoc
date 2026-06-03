@@ -92,6 +92,39 @@ def parse_issue_ids(values: list[str] | None) -> list[str]:
     return ids
 
 
+def resolve_text_input(
+    inline: str | None,
+    file_arg: str | None,
+    *,
+    what: str,
+    allow_empty: bool,
+) -> str | None:
+    """Resolve text from an inline argument or a -F file/stdin source.
+
+    The caller's shell evaluates inline arguments (backticks, ``$()``, ``!``),
+    so the ``-F`` path lets callers pass backtick-heavy prose via a file or a
+    quoted heredoc on stdin without fighting quoting. A single trailing newline
+    is stripped so heredocs and editor-saved files do not leave a dangling blank
+    line. Returns ``None`` only when neither source is provided.
+    """
+    if inline is not None and file_arg is not None:
+        raise SystemExit(f"provide {what} inline or with -F, not both")
+    if file_arg is None:
+        return inline
+    if file_arg == "-":
+        text = sys.stdin.read()
+    else:
+        try:
+            text = Path(file_arg).read_text(encoding="utf-8")
+        except OSError as exc:
+            raise SystemExit(f"cannot read {what} from {file_arg}: {exc}") from exc
+    if text.endswith("\n"):
+        text = text[:-1]
+    if not allow_empty and not text:
+        raise SystemExit(f"{what} is empty")
+    return text
+
+
 def cmd_init(_args: argparse.Namespace) -> int:
     """Initialize the tracker worktree and auto-configure the remote if possible."""
     tracker = Tracker.open()
@@ -210,10 +243,11 @@ def cmd_push(args: argparse.Namespace) -> int:
 
 def cmd_new(args: argparse.Namespace) -> int:
     """Create a new issue and optionally add dependencies."""
+    body = resolve_text_input(args.body, args.file, what="body", allow_empty=True)
     tracker = Tracker.open()
     _auto_pull(tracker)
     issue = tracker.create_issue(
-        args.title, args.body or "", parse_labels(args.label), args.priority
+        args.title, body or "", parse_labels(args.label), args.priority
     )
     deps = parse_issue_ids(args.dep)
     if deps:
@@ -395,6 +429,7 @@ def cmd_show(args: argparse.Namespace) -> int:
 
 def cmd_update(args: argparse.Namespace) -> int:
     """Update one or more fields of an existing issue."""
+    body = resolve_text_input(args.body, args.file, what="body", allow_empty=True)
     tracker = Tracker.open()
     _auto_pull(tracker)
     state = parse_state(args.state)
@@ -419,7 +454,7 @@ def cmd_update(args: argparse.Namespace) -> int:
     has_changes = any(
         [
             args.title is not None,
-            args.body is not None,
+            body is not None,
             state is not None,
             args.owner is not None,
             labels is not None,
@@ -432,7 +467,7 @@ def cmd_update(args: argparse.Namespace) -> int:
     issue = tracker.update_issue(
         args.issue_id,
         title=args.title,
-        body=args.body,
+        body=body,
         state=state,
         owner=args.owner,
         labels=labels,
@@ -528,9 +563,14 @@ def cmd_log(args: argparse.Namespace) -> int:
 
 def cmd_note(args: argparse.Namespace) -> int:
     """Append a note to an issue and print its ID."""
+    text = resolve_text_input(
+        args.text, args.file, what="note text", allow_empty=False
+    )
+    if text is None:
+        raise SystemExit("note requires text (positional argument or -F)")
     tracker = Tracker.open()
     _auto_pull(tracker)
-    issue = tracker.add_note(args.issue_id, args.text, actor=args.actor)
+    issue = tracker.add_note(args.issue_id, text, actor=args.actor)
     print(issue.issue_id)
     _auto_push(tracker)
     return 0
