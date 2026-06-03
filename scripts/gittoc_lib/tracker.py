@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -96,6 +95,8 @@ class Tracker:
     @staticmethod
     def _bootstrap_worktree(repo: Path, checkout: Path) -> Path:
         """Create an orphan tracker branch with an empty issues directory structure."""
+        import shutil
+
         # git worktree add requires at least one commit; create one if the repo is empty.
         proc = run_git(["rev-parse", "--verify", "HEAD"], cwd=repo, check=False)
         if proc.returncode != 0:

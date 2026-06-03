@@ -19,7 +19,6 @@ from .common import (
     run_git,
     validate_issue_id,
 )
-from .integrity import IntegrityReport, fsck, render_integrity_report
 from .remote_sync import RemotePushPullError
 from .render import print_issues, render_show_text
 from .tracker import Tracker
@@ -182,6 +181,8 @@ def cmd_pull(args: argparse.Namespace) -> int:
     except RemotePushPullError as exc:
         print(col.error(f"error: {exc}"), file=sys.stderr)
         return 1
+    from .integrity import IntegrityReport, render_integrity_report
+
     report = status.get("fsck")
     payload = dict(status)
     if isinstance(report, IntegrityReport):
@@ -208,6 +209,8 @@ def cmd_pull(args: argparse.Namespace) -> int:
 
 def cmd_fsck(args: argparse.Namespace) -> int:
     """Run a read-only integrity scan over tracker issues and event logs."""
+    from .integrity import fsck, render_integrity_report
+
     tracker = Tracker.open()
     report = fsck(tracker)
     if args.format == "json":

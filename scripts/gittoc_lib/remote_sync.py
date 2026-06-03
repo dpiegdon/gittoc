@@ -19,7 +19,6 @@ from .common import (
     remote_branch_exists,
     run_git,
 )
-from .integrity import IntegrityReport, fsck, render_integrity_report
 
 if TYPE_CHECKING:
     from .tracker import Tracker
@@ -189,6 +188,8 @@ class RemoteSync:
             "merge_kind": merge_kind,
         }
         if merge_kind == "merge":
+            from .integrity import fsck
+
             status["fsck"] = fsck(
                 self.tracker, self._changed_paths(before_head, self.tracker.base_head)
             )
@@ -243,11 +244,14 @@ class RemoteSync:
             )
             return
         report = status.get("fsck")
-        if isinstance(report, IntegrityReport) and not report.ok:
-            raise SystemExit(
-                "pull merged tracker changes but fsck found integrity issues:\n"
-                f"{render_integrity_report(report)}"
-            )
+        if report is not None:
+            from .integrity import IntegrityReport, render_integrity_report
+
+            if isinstance(report, IntegrityReport) and not report.ok:
+                raise SystemExit(
+                    "pull merged tracker changes but fsck found integrity issues:\n"
+                    f"{render_integrity_report(report)}"
+                )
 
     def auto_push(self) -> None:
         """Push to the effective remote after a mutation.
