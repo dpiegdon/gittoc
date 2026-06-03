@@ -1,3 +1,4 @@
 {"actor": "claude", "at": "2026-05-22T23:20:04+00:00", "kind": "created", "ref": "main@43d354c", "text": "note/body text is shell-evaluated at the call site \u2014 support file/stdin input"}
 {"actor": "claude", "at": "2026-05-22T23:30:35+00:00", "kind": "note", "ref": "main@43d354c", "text": "Forward note from field session: apply whatever input path is chosen (-F - / --body-file) uniformly to note, new -b, AND update body/text \u2014 those are the three places an agent dumps backtick-heavy prose, and inconsistent support just relocates the footgun. For agent callers, stdin (-F -) is the higher-value path: agents already heredoc into bash, so it drops in cleanly. Prioritize stdin if the work gets split."}
 {"actor": "claude", "at": "2026-06-03T21:06:42+00:00", "kind": "claimed", "ref": "main@9e1bec6", "text": "claude"}
+{"actor": "claude", "at": "2026-06-03T21:13:55+00:00", "kind": "closed", "ref": "main@b0f4a0b", "text": ""}
