@@ -1,0 +1,12 @@
+{
+  "body": "The E2E suite runs single-threaded (~190s) but is subprocess-bound: 640 CLI\ninvocations each pay ~232ms of Python startup. Tests are independent (each uses\nits own TemporaryDirectory), so they parallelize safely. Add a stdlib-only\nProcessPoolExecutor runner (scripts/tests/run_parallel.py) that loads the test\nmodule once per worker and distributes test ids. Measured ~1.9x on a 4-core Pi\n(190s -> 104s); flattens past 2 workers due to fork/exec contention. Preserves\nfull end-to-end fidelity (still runs the real gittoc binary).",
+  "created_at": "2026-06-03T22:06:29+00:00",
+  "id": "T-149",
+  "labels": [
+    "ops",
+    "agent"
+  ],
+  "priority": 3,
+  "title": "add stdlib parallel test runner to speed up the suite",
+  "updated_at": "2026-06-03T22:06:29+00:00"
+}
