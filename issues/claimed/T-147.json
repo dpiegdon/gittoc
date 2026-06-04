@@ -6,7 +6,8 @@
     "docs",
     "agent"
   ],
+  "owner": "claude",
   "priority": 4,
   "title": "document agent-oriented conventions and design non-goals (field report)",
-  "updated_at": "2026-05-22T23:20:13+00:00"
+  "updated_at": "2026-06-04T11:40:32+00:00"
 }
