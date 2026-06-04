@@ -82,6 +82,20 @@ from the repo people are already working in.
 - humans can inspect files directly if they want
 - agents can query small structured results instead of parsing huge markdown blobs
 
+### Non-goals
+
+To stay useful, `gittoc` deliberately resists growing into a full issue tracker:
+
+- **Notes are the audit trail.** Pinning *why* and *what was verified* survives
+  compaction and hand-offs — that is the point, not a fallback.
+- **Repo-local and zero-infra.** No database, daemon, or service; state travels
+  with git.
+- **States plus labels are enough.** No custom workflows, transitions, or
+  approval ceremony.
+- **Multi-writer use is load-bearing.** Concurrent agents and humans are a real
+  scenario, so optimistic locking, the `actor` field, and `ref` stamping are
+  treated as invariants.
+
 ## Current commands
 
 Use `--help` on any command for full argument documentation.
@@ -197,15 +211,30 @@ with a trailing `?` (e.g. `(caab8f3?)`) instead of as a dead pointer. The raw
 ### Ticket relationships
 
 Dependencies (`dep`) are the only structured relation — they gate readiness and
-block claiming. All other cross-references use notes by convention:
+block claiming. Everything else is just a note, so you might prefix relationship
+notes to keep them greppable. These prefixes are only suggestions, not a schema:
 
 ```bash
-gittoc note T-7 "duplicate of T-3"       # then: gittoc close T-7
-gittoc note T-5 "see also T-3"           # non-blocking related ticket
-gittoc list -l auth-rewrite               # use labels for grouping / epics
+gittoc note T-7 "dup-of: T-3"        # then: gittoc close T-7
+gittoc note T-5 "relates: T-3"       # non-blocking related ticket
+gittoc note T-9 "split-of: T-53"     # carved out of another ticket
+gittoc grep "dup-of:" -a             # find them later
+gittoc list -l auth-rewrite          # use labels for grouping / epics
 ```
 
-Notes are searchable via `gittoc grep`.
+Blocking is `dep`; the note prefixes are for the non-blocking links deps don't
+model. Notes are searchable via `gittoc grep`.
+
+### Triage with priority and labels
+
+Priority is a flat urgency score and labels are an independent axis, so they
+compose. One pattern you may find useful is an autonomy axis — the `agent` and
+`human` labels — crossed with priority:
+
+```bash
+gittoc list -l agent --sort=priority   # safe to automate, most urgent first
+gittoc list -l human                   # needs a human decision
+```
 
 If you have a local git alias `git toc`, all commands work through that too:
 
