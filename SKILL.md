@@ -61,6 +61,9 @@ The default recommended set:
 - `security` — security-related fix or improvement
 - `ops` — build, test, deployment, or infrastructure tooling
 
+Priority and labels are orthogonal axes, so they compose for triage — e.g.
+`list -l agent --sort=priority` surfaces autonomously-safe work by urgency.
+
 ## Commands
 
 Invoke as `git toc <command>`, `gittoc <command>` or `.agents/skills/gittoc/scripts/gittoc <command>`.
@@ -162,23 +165,17 @@ rebase/squash/gc) is shown with a trailing `?`.
 Dependencies (`dep`) are the only structured relation. They gate readiness and
 block claiming — use them for real ordering constraints.
 
-All other cross-references use notes by convention:
+All other cross-references are just notes; a greppable prefix is one way to keep
+them findable:
 
 ```bash
-# marking a duplicate
-gittoc note T-7 "duplicate of T-3"
-gittoc note T-3 "T-7 closed as duplicate"
-gittoc close T-7
-
-# related tickets (non-blocking)
-gittoc note T-5 "see also T-3"
-
-# grouping / epics
-gittoc update T-5 -l auth-rewrite
-gittoc list -l auth-rewrite
+gittoc note T-7 "dup-of: T-3"      # duplicate; then: gittoc close T-7
+gittoc note T-5 "relates: T-3"     # related, non-blocking
+gittoc note T-9 "split-of: T-53"   # carved out of another ticket
+gittoc list -l auth-rewrite        # labels for grouping / epics
 ```
 
-This keeps the schema minimal. Notes are searchable via `gittoc grep`.
+Notes are searchable via `gittoc grep`.
 
 ## Notes
 

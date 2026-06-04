@@ -29,11 +29,6 @@ rather than keeping state in chat.
 - Note/body text on the command line is evaluated by your shell (backticks,
   `$(...)`, `!`). Single-quote it, or pass it via `-F FILE` / `-F -` (with a
   quoted heredoc `<<'EOF'`) on `note`, `new`, and `update` to avoid mangling.
-- For relationships beyond `dep`, a greppable note prefix is suggested (not a
-  schema): `dup-of: T-3`, `relates: T-5`, `split-of: T-53`. Blocking is `dep`;
-  these are only for non-blocking links.
-- Triage with priority and labels as orthogonal axes — e.g.
-  `list -l agent --sort=priority` for autonomously-safe work by urgency.
 
 ## Commit Discipline
 

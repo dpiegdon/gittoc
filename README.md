@@ -212,7 +212,7 @@ with a trailing `?` (e.g. `(caab8f3?)`) instead of as a dead pointer. The raw
 
 Dependencies (`dep`) are the only structured relation — they gate readiness and
 block claiming. Everything else is just a note, so you might prefix relationship
-notes to keep them greppable. These prefixes are only suggestions, not a schema:
+notes to keep them greppable:
 
 ```bash
 gittoc note T-7 "dup-of: T-3"        # then: gittoc close T-7
