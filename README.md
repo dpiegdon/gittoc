@@ -176,6 +176,24 @@ The heredoc delimiter must be quoted (`<<'EOF'`, not `<<EOF`); an unquoted
 delimiter lets the shell expand the body anyway. A single trailing newline is
 stripped from file/stdin input.
 
+### Event refs and commit ordering
+
+Every event records the code repository's HEAD at the moment it happened, and
+`show`/`resume` surface it as a short commit hash:
+
+```
+  history:
+    [..] created (5e40494) alice: ...
+    [..] closed  (caab8f3) bob:
+```
+
+This makes the ticket a free pointer into code history, so **commit the fix
+first, then close** — the close event then stamps the fix commit rather than
+the pre-fix HEAD, with no manual SHA-in-note. Hashes are checked before
+display; one that no longer resolves (after a rebase, squash, or gc) is shown
+with a trailing `?` (e.g. `(caab8f3?)`) instead of as a dead pointer. The raw
+`ref` is unchanged in `-f json` output.
+
 ### Ticket relationships
 
 Dependencies (`dep`) are the only structured relation — they gate readiness and

@@ -146,8 +146,16 @@ gittoc dep T-3 T-1   # T-3 depends on T-1 (T-1 must complete first)
 Finishing:
 
 ```bash
-gittoc close T-1
+git commit ...        # commit the fix FIRST
+gittoc close T-1      # then close — the close event stamps the fix commit
 ```
+
+Every event records the code repo's HEAD at event time, and `show`/`resume`
+surface it as a short hash (e.g. `closed (04bb189) owner:`). Commit the fix
+**before** closing so the close event points at the fix commit, not the
+pre-fix HEAD — this gives a free pointer from the ticket into code history,
+with no manual SHA-in-note. A hash that no longer resolves (after a
+rebase/squash/gc) is shown with a trailing `?`.
 
 ## Ticket relationships
 

@@ -42,6 +42,17 @@ def run_fail(
     )
 
 
+def import_lib(name: str):
+    """Import a gittoc_lib submodule for direct unit testing."""
+    import importlib
+
+    sys.path.insert(0, str(ROOT))
+    try:
+        return importlib.import_module(f"gittoc_lib.{name}")
+    finally:
+        sys.path.pop(0)
+
+
 def current_branch(cwd: Path) -> str:
     proc = subprocess.run(
         ["git", "branch", "--show-current"],
@@ -357,8 +368,8 @@ class TestNotesAndHistory(GittocTestBase):
         run(["note", issue, "Fifth note truncation", "--actor", "tester"], self.repo)
 
         history = run(["show", issue, "-a"], self.repo)
-        self.assertIn("claimed tester: tester", history)
-        self.assertIn("note#1 tester: First note", history)
+        self.assertRegex(history, r"claimed \([0-9a-f]+\) tester: tester")
+        self.assertRegex(history, r"note#1 \([0-9a-f]+\) tester: First note")
 
     def test_note_ids_sequential(self) -> None:
         run(["init"], self.repo)
@@ -367,9 +378,9 @@ class TestNotesAndHistory(GittocTestBase):
         run(["note", issue, "Beta", "--actor", "b"], self.repo)
         run(["note", issue, "Gamma", "--actor", "c"], self.repo)
         history = run(["show", issue, "-n"], self.repo)
-        self.assertIn("note#1 a: Alpha", history)
-        self.assertIn("note#2 b: Beta", history)
-        self.assertIn("note#3 c: Gamma", history)
+        self.assertRegex(history, r"note#1 \([0-9a-f]+\) a: Alpha")
+        self.assertRegex(history, r"note#2 \([0-9a-f]+\) b: Beta")
+        self.assertRegex(history, r"note#3 \([0-9a-f]+\) c: Gamma")
         # JSON output should include note_id field
         shown = json.loads(run(["show", issue, "-n", "-f", "json"], self.repo))
         entries = shown["recent_notes"]
@@ -2210,6 +2221,83 @@ class TestFileAndStdinInput(GittocTestBase):
         run(["note", "T-1", "-F", str(meta_file)], self.repo)
         data = json.loads(run(["show", "T-1", "-n", "-f", "json"], self.repo))
         self.assertEqual(data["recent_notes"][0]["text"], payload)
+
+
+class TestEventRef(GittocTestBase):
+    """The event ref (commit hash) is surfaced in show/resume text views."""
+
+    def test_show_history_surfaces_ref(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["close", "T-1", "--actor", "dev"], self.repo)
+        history = run(["show", "T-1", "-a"], self.repo)
+        head = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=self.repo,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+        self.assertRegex(history, rf"closed \({head}\) dev")
+
+    def test_show_notes_surface_ref(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["note", "T-1", "a note", "--actor", "dev"], self.repo)
+        notes = run(["show", "T-1", "-n"], self.repo)
+        self.assertRegex(notes, r"note#1 \([0-9a-f]+\) dev: a note")
+
+    def test_missing_objects_detects_orphan(self) -> None:
+        run(["init"], self.repo)
+        common = import_lib("common")
+        head = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=self.repo,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+        missing = common.missing_objects(self.repo, {head, "deadbeef1234"})
+        self.assertIn("deadbeef1234", missing)
+        self.assertNotIn(head, missing)
+
+
+class TestRenderUnit(unittest.TestCase):
+    """Unit tests for the pure rendering helpers."""
+
+    @staticmethod
+    def _data():
+        return {
+            "id": "T-1",
+            "priority": 3,
+            "state": "closed",
+            "title": "x",
+            "history": [
+                {
+                    "kind": "closed",
+                    "actor": "me",
+                    "at": "2026-01-01T00:00:00+00:00",
+                    "ref": "main@abc1234",
+                }
+            ],
+        }
+
+    def test_ref_short_hash_parsing(self) -> None:
+        common = import_lib("common")
+        self.assertEqual(common.ref_short_hash("main@abc1234"), "abc1234")
+        self.assertEqual(common.ref_short_hash("abc1234"), "abc1234")
+        self.assertEqual(common.ref_short_hash(""), "")
+
+    def test_live_ref_rendered_without_marker(self) -> None:
+        render = import_lib("render")
+        out = render.render_show_text(self._data())
+        self.assertIn("(abc1234)", out)
+        self.assertNotIn("abc1234?", out)
+
+    def test_dead_ref_marked(self) -> None:
+        render = import_lib("render")
+        out = render.render_show_text(self._data(), dead_refs={"abc1234"})
+        self.assertIn("(abc1234?)", out)
 
 
 class TestColors(unittest.TestCase):

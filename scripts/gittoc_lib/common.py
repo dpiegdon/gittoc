@@ -36,7 +36,10 @@ def default_owner() -> str:
 
 
 def run_git(
-    args: list[str], cwd: Path | None = None, check: bool = True
+    args: list[str],
+    cwd: Path | None = None,
+    check: bool = True,
+    input: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a git subprocess and return the completed process.
 
@@ -66,6 +69,7 @@ def run_git(
         capture_output=True,
         check=False,
         env=env,
+        input=input,
     )
     if check and proc.returncode != 0:
         raise subprocess.CalledProcessError(
@@ -189,6 +193,45 @@ def current_ref(root: Path) -> str:
     sha = sha_proc.stdout.strip()
     branch = run_git(["branch", "--show-current"], cwd=root, check=False).stdout.strip()
     return f"{branch}@{sha}" if branch else sha
+
+
+def ref_short_hash(ref: str) -> str:
+    """Return the commit hash from an event ref of the form 'branch@hash'.
+
+    Events store the HEAD ref at event time as ``"<branch>@<shorthash>"`` (or
+    just ``"<shorthash>"`` in detached-HEAD state). Returns the hash portion,
+    or an empty string for an empty ref.
+    """
+    if not ref:
+        return ""
+    return ref.split("@", 1)[1] if "@" in ref else ref
+
+
+def missing_objects(repo: Path, candidates: object) -> set[str]:
+    """Return the subset of candidate hashes that do not resolve in the repo.
+
+    Uses a single ``git cat-file --batch-check`` call so surfacing event refs
+    in text views costs one git invocation regardless of how many events are
+    shown. A surfaced hash that no longer resolves (after a squash/rebase/gc)
+    can then be marked rather than printed as a dead pointer.
+    """
+    wanted = sorted({c for c in candidates if c})
+    if not wanted:
+        return set()
+    proc = run_git(
+        ["cat-file", "--batch-check"],
+        cwd=repo,
+        check=False,
+        input="\n".join(wanted) + "\n",
+    )
+    missing: set[str] = set()
+    for line in proc.stdout.splitlines():
+        parts = line.split()
+        # A missing object reports "<input> missing"; existing objects report
+        # "<sha> <type> <size>" and ambiguous ones "<input> ambiguous".
+        if len(parts) >= 2 and parts[1] == "missing":
+            missing.add(parts[0])
+    return missing
 
 
 def git_common_dir(root: Path) -> Path:

@@ -15,7 +15,9 @@ from .common import (
     TRACKER_BRANCH,
     default_owner,
     issue_number,
+    missing_objects,
     parse_state,
+    ref_short_hash,
     run_git,
     validate_issue_id,
 )
@@ -378,6 +380,18 @@ def cmd_summary(args: argparse.Namespace) -> int:
     return 0
 
 
+def _dead_refs(tracker: Tracker, data: dict) -> frozenset[str]:
+    """Return the short hashes of event refs in *data* that no longer resolve.
+
+    Computed only for text output (JSON keeps the raw ref). Scans the notes and
+    history that will be rendered and batch-checks their commit hashes in one
+    git call so a surfaced ref orphaned by a later rebase/gc can be marked.
+    """
+    entries = (data.get("recent_notes") or []) + (data.get("history") or [])
+    hashes = {ref_short_hash(entry.get("ref", "")) for entry in entries}
+    return frozenset(missing_objects(tracker.repo, hashes))
+
+
 def _build_show_data(
     tracker: Tracker,
     issue_id: str,
@@ -426,7 +440,7 @@ def cmd_show(args: argparse.Namespace) -> int:
     if args.format == "json":
         print(json.dumps(data, indent=2, sort_keys=True))
     else:
-        print(render_show_text(data))
+        print(render_show_text(data, _dead_refs(tracker, data)))
     return 0
 
 
@@ -598,5 +612,5 @@ def cmd_resume(args: argparse.Namespace) -> int:
     if args.format == "json":
         print(json.dumps(data, indent=2, sort_keys=True))
     else:
-        print(render_show_text(data))
+        print(render_show_text(data, _dead_refs(tracker, data)))
     return 0

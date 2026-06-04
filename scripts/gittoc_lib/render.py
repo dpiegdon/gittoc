@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 from . import colors as col
+from .common import ref_short_hash
 from .models import Issue
 
 
@@ -61,7 +62,30 @@ def render_verbose(issue: Issue, tracker) -> str:
     return "\n".join(lines)
 
 
-def render_show_text(data: dict) -> str:
+def render_event_line(entry: dict, indent: str, dead_refs: frozenset[str]) -> str:
+    """Render a single event/note entry, surfacing its commit ref when present.
+
+    The ref's short hash is shown after the event label, e.g.
+    ``[..] closed (04bb189) owner: ...``. A hash that no longer resolves
+    (in ``dead_refs``) is marked with a trailing ``?`` rather than printed as
+    a dead pointer.
+    """
+    note_id = entry.get("note_id")
+    kind = entry.get("kind", "?")
+    ev_label = col.event_label(f"{kind}#{note_id}" if note_id else kind)
+    ev_actor = col.actor(entry.get("actor", "?"))
+    ev_at = col.timestamp(f"[{entry.get('at', '')}]")
+    text = entry.get("text", "")
+    short = ref_short_hash(entry.get("ref", ""))
+    if short:
+        token = f"({short}?)" if short in dead_refs else f"({short})"
+        ref_part = f"{col.ref(token)} "
+    else:
+        ref_part = ""
+    return f"{indent}{ev_at} {ev_label} {ref_part}{ev_actor}: {text}"
+
+
+def render_show_text(data: dict, dead_refs: frozenset[str] = frozenset()) -> str:
     """Render a show-command data dict as human-readable text."""
     lines: list[str] = []
     _id = col.issue_id(str(data.get("id", "?")))
@@ -89,12 +113,7 @@ def render_show_text(data: dict) -> str:
     if recent_notes:
         lines.append("")
         for note in recent_notes:
-            note_id = note.get("note_id")
-            ev_label = col.event_label(f"note#{note_id}" if note_id else "note")
-            ev_actor = col.actor(note.get("actor", "?"))
-            ev_at = col.timestamp(f"[{note.get('at', '')}]")
-            text = note.get("text", "")
-            lines.append(f"  {ev_at} {ev_label} {ev_actor}: {text}")
+            lines.append(render_event_line(note, "  ", dead_refs))
     hint = data.get("recent_notes_hint")
     if hint:
         lines.append(col.warn(f"  ({hint})"))
@@ -103,13 +122,7 @@ def render_show_text(data: dict) -> str:
         lines.append("")
         lines.append(f"  {col.field_name('history:')}")
         for entry in history:
-            note_id = entry.get("note_id")
-            kind = entry.get("kind", "?")
-            ev_label = col.event_label(f"{kind}#{note_id}" if note_id else kind)
-            ev_actor = col.actor(entry.get("actor", "?"))
-            ev_at = col.timestamp(f"[{entry.get('at', '')}]")
-            text = entry.get("text", "")
-            lines.append(f"    {ev_at} {ev_label} {ev_actor}: {text}")
+            lines.append(render_event_line(entry, "    ", dead_refs))
     return "\n".join(lines)
 
 
