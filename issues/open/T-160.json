@@ -1,0 +1,11 @@
+{
+  "body": "render_normal calls tracker.events.note_count per issue, which reads and json-parses the entire .events.jsonl for each ticket. `list -a` on a ~150-ticket tracker does ~150 file parses just to print notes=N.\n\nNot a problem today \u2014 only act if a large tracker actually hurts. Cheap option then: count note lines with a substring check instead of json.loads, or cache counts. Filed at p5 deliberately; speculative optimization otherwise.",
+  "created_at": "2026-06-09T20:03:27+00:00",
+  "id": "T-160",
+  "labels": [
+    "perf"
+  ],
+  "priority": 5,
+  "title": "Avoid full event-log JSON parse per issue in list normal format",
+  "updated_at": "2026-06-09T20:03:27+00:00"
+}

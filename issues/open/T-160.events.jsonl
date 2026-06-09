@@ -1,0 +1,1 @@
+{"actor": "claude", "at": "2026-06-09T20:03:27+00:00", "kind": "created", "ref": "main@4ce3f3e", "text": "Avoid full event-log JSON parse per issue in list normal format"}
