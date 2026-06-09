@@ -1,0 +1,11 @@
+{
+  "body": "Small nits from a code review, none urgent, fine to do in one pass:\n\n- cmd_init prints \"initialized tracker branch...\" even when it already existed; say \"already initialized at ...\" on idempotent reruns (commands.py:129-137)\n- _would_introduce_cycle prints a warning to stderr from inside the tracker layer (tracker.py:410); layering smell \u2014 consider returning warnings to the caller\n- _bootstrap_worktree duplicates the VERSION-writing logic of _write_version (tracker.py:120-129); could call _write_version(commit=False)",
+  "created_at": "2026-06-09T20:03:27+00:00",
+  "id": "T-161",
+  "labels": [
+    "chore"
+  ],
+  "priority": 5,
+  "title": "Cosmetic cleanups: init message, cycle-check layering, VERSION write DRY",
+  "updated_at": "2026-06-09T20:03:27+00:00"
+}
