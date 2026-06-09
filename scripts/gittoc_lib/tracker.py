@@ -496,7 +496,6 @@ class Tracker:
             target_state == "claimed"
             and issue.state == "claimed"
             and owner is not None
-            and issue.owner is not None
             and owner != issue.owner
         ):
             print(
@@ -506,13 +505,13 @@ class Tracker:
                 ),
                 file=sys.stderr,
             )
-        resolved_owner: str | None
+        resolved_owner: str
         if (
             target_state in ("open", "blocked")
             and issue.state == "claimed"
             and owner is None
         ):
-            resolved_owner = None
+            resolved_owner = ""
             print(
                 col.warn(
                     f"note: cleared owner ({issue.owner}) on {issue.issue_id}"
