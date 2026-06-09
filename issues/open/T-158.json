@@ -1,0 +1,13 @@
+{
+  "body": "~6 git spawns happen before any command logic: rev-parse --show-toplevel, rev-parse --git-common-dir, branch --show-current, and rev-parse HEAD twice (base_head is computed in Tracker.__init__ and again in Tracker.open after migrations).\n\nCheap wins:\n- `git rev-parse --show-toplevel --git-common-dir` answers two questions in one call (one line each on stdout)\n- drop the duplicate head read by threading the value through (the post-migration re-read in open() is the one that must stay)\n\nRoughly 10-20ms per invocation on the Pi. Follow-up in the same vein as T-150. Verify with: strace -f -e trace=execve ./scripts/gittoc summary",
+  "created_at": "2026-06-09T20:03:13+00:00",
+  "id": "T-158",
+  "labels": [
+    "perf",
+    "ready",
+    "agent"
+  ],
+  "priority": 4,
+  "title": "Reduce startup git subprocess count in Tracker.open",
+  "updated_at": "2026-06-09T20:03:13+00:00"
+}
