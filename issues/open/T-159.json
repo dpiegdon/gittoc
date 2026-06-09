@@ -1,0 +1,13 @@
+{
+  "body": "commands.py:574-575: `gittoc log --limit -1` produces a confusing slice (lines[1:] or lines[:-1]) instead of an error; --limit 0 silently prints nothing.\n\nFix: reject N < 1 with a clear message, either via an argparse type function or an explicit check in cmd_log. Add a regression test for negative and zero values.",
+  "created_at": "2026-06-09T20:03:26+00:00",
+  "id": "T-159",
+  "labels": [
+    "bug",
+    "ready",
+    "agent"
+  ],
+  "priority": 4,
+  "title": "Validate log --limit is a positive integer",
+  "updated_at": "2026-06-09T20:03:26+00:00"
+}
