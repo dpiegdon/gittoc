@@ -1,0 +1,51 @@
+#!/bin/sh -e
+#
+# Local dev-only verification pipeline for gittoc.
+#
+# Creates an isolated Python venv under this directory, installs the developer
+# tooling (see requirements.txt), and runs the full lint + test suite from the
+# release checklist. gittoc itself stays stdlib-only and runs under the system
+# python3 (via the scripts/gittoc shebang) even here — this venv only carries
+# the *developer* tools, never anything gittoc needs at runtime.
+#
+# This whole scripts/dev/ directory is dev-only: the install `setup` script
+# deletes it, so vendored installs in other repos never carry it or its venv.
+#
+# Usage:
+#   scripts/dev/check                  # set up the venv if needed, run all checks
+#   scripts/dev/check -k pull          # extra args pass through to the test runner
+#   PYTHON=python3.9 scripts/dev/check # pin the interpreter used to build the venv
+
+DEV_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$DEV_DIR/../.." && pwd)"
+VENV="$DEV_DIR/.venv"
+PY="${PYTHON:-python3}"
+
+if [ ! -x "$VENV/bin/python" ]; then
+	echo "dev: creating venv at $VENV"
+	"$PY" -m venv "$VENV"
+fi
+
+VPY="$VENV/bin/python"
+"$VPY" -m pip install --quiet --upgrade pip
+"$VPY" -m pip install --quiet -r "$DEV_DIR/requirements.txt"
+
+cd "$REPO_ROOT"
+
+echo "dev: isort --check"
+"$VPY" -m isort --check scripts/gittoc_lib/ scripts/tests/
+echo "dev: black --check"
+"$VPY" -m black --check scripts/gittoc_lib/ scripts/tests/
+echo "dev: pyflakes"
+"$VPY" -m pyflakes scripts/gittoc_lib/ scripts/tests/
+echo "dev: vermin (enforce documented python floor)"
+# vermin ships a console script, not a python -m entry. -t=3.9- exits non-zero
+# if the code starts requiring anything newer than the documented 3.9 floor.
+"$VENV/bin/vermin" -t=3.9- --no-tips --violations \
+	scripts/gittoc scripts/gittoc_lib/ scripts/tests/
+echo "dev: py_compile"
+"$VPY" -m py_compile scripts/gittoc scripts/gittoc_lib/*.py scripts/tests/test_gittoc.py
+echo "dev: tests"
+"$VPY" scripts/tests/run_parallel.py "$@"
+
+echo "dev: all checks passed"

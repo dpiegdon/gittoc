@@ -4,6 +4,15 @@ This is a pragmatic checklist for all public `gittoc` releases.
 
 ## Run internal testsuite
 
+The local dev pipeline runs all of the checks below (plus a vermin Python-floor
+check) in an isolated venv with pinned tool versions:
+
+```bash
+scripts/dev/check
+```
+
+Or run them individually (isort reads `.isort.cfg`, profile=black):
+
 ```bash
 python3 -m isort --check scripts/gittoc_lib/ scripts/tests/
 python3 -m black --check scripts/gittoc_lib/ scripts/tests/

@@ -1,0 +1,13 @@
+# Developer tooling for the local check pipeline (scripts/dev/check).
+#
+# These are DEV-ONLY dependencies. gittoc itself has zero runtime
+# dependencies and must run on a plain Python 3.9+ stdlib; nothing here is
+# ever needed to *use* gittoc, only to lint and test it. The install `setup`
+# script deletes scripts/dev/, so vendored installs never carry this file.
+#
+# Pinned so the checks give a reproducible verdict across machines (black and
+# isort especially change their formatting between releases). Bump deliberately.
+black==26.5.1
+isort==8.0.1
+pyflakes==3.4.0
+vermin==1.8.0

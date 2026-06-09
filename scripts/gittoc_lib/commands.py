@@ -580,9 +580,7 @@ def cmd_log(args: argparse.Namespace) -> int:
 
 def cmd_note(args: argparse.Namespace) -> int:
     """Append a note to an issue and print its ID."""
-    text = resolve_text_input(
-        args.text, args.file, what="note text", allow_empty=False
-    )
+    text = resolve_text_input(args.text, args.file, what="note text", allow_empty=False)
     if text is None:
         raise SystemExit("note requires text (positional argument or -F)")
     tracker = Tracker.open()

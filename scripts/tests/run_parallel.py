@@ -93,9 +93,7 @@ def main(argv: list[str] | None = None) -> int:
     start = time.perf_counter()
     failures: list[tuple[str, str]] = []
     completed = 0
-    with ProcessPoolExecutor(
-        max_workers=args.jobs, initializer=_init_worker
-    ) as pool:
+    with ProcessPoolExecutor(max_workers=args.jobs, initializer=_init_worker) as pool:
         for test_id, ok, _duration, output in pool.map(_run_one, ids):
             completed += 1
             sys.stdout.write("." if ok else "F")

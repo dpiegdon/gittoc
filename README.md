@@ -270,3 +270,4 @@ in use.
 - `scripts/gittoc`: CLI entrypoint
 - `scripts/gittoc_lib/`: internal modules
 - `scripts/tests/test_gittoc.py`: end-to-end test
+- `scripts/dev/`: dev-only lint + test pipeline in a venv (removed on install)

@@ -45,6 +45,18 @@ rather than keeping state in chat.
 
 ## Testing
 
+The fastest path is the local dev pipeline. It builds an isolated venv, installs
+the pinned dev tools, and runs lint (isort, black, pyflakes), the Python-floor
+check (vermin), `py_compile`, and the full test suite in one go:
+
+```bash
+scripts/dev/check            # all checks; extra args pass through to the tests
+scripts/dev/check -k pull    # e.g. only test ids containing "pull"
+```
+
+`scripts/dev/` is dev-only — the install `setup` script removes it (and its
+venv) so vendored installs never carry it. To run pieces by hand instead:
+
 ```bash
 python3 -m pytest scripts/tests/test_gittoc.py
 python3 -m py_compile scripts/gittoc scripts/gittoc_lib/*.py scripts/tests/test_gittoc.py

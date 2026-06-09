@@ -2,7 +2,7 @@
 
 # Idempotent installation script for gittoc system into repositories.
 # Run from the project root.
-#  - Removes unneeded files like .git of gittoc repo, AGENTS.md intended for development.
+#  - Removes dev-only files (.git, AGENTS.md, scripts/dev pipeline) not needed by installs.
 #  - Sets up `git toc` alias.
 #  - Sets up skill symlinks and git alias for a vendored gittoc install.
 #  - Optionally enables autopush mode.
@@ -15,7 +15,8 @@
 GITTOC_DIR="$(cd "$(dirname "$0")/../" && pwd)"
 
 # remove unneeded files that may befuddle agents or users
-for F in AGENTS.md .git assets/gittoc_logo.png; do
+# (scripts/dev is the dev-only lint/test pipeline + its venv; installs don't need it)
+for F in AGENTS.md .git assets/gittoc_logo.png scripts/dev .isort.cfg; do
 	if [ -e "$GITTOC_DIR/$F" ]; then
 		rm -Rf "$GITTOC_DIR/$F"
 	fi

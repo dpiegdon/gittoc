@@ -782,7 +782,7 @@ class TestPullAndPush(GittocTestBase):
             capture_output=True,
         )
         # First pull attaches the worktree; clone is already at the remote head.
-        first = run(["pull", "origin"], clone)
+        run(["pull", "origin"], clone)
         # A second pull with no remote changes must report nothing changed.
         second = run(["pull", "origin"], clone)
         self.assertIn("already up to date", second)
