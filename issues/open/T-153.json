@@ -1,0 +1,14 @@
+{
+  "body": "tracker.py:509-536: the owner-clearing branch (claimed -> open/blocked) assigns resolved_owner = None into replace(), so an in-memory Issue carries None where the field is declared `owner: str`. It works by accident because to_record() tests truthiness.\n\nAlso: the guard `issue.owner is not None` at tracker.py:499 is dead code \u2014 a loaded issue's owner is always a string (\"\" when absent).\n\nFix: normalize the cleared owner to \"\" and drop the dead check. Consider a dev-only mypy/pyright pass as follow-up to catch this class of drift (separate decision, possibly own ticket).",
+  "created_at": "2026-06-09T20:02:54+00:00",
+  "id": "T-153",
+  "labels": [
+    "bug",
+    "refactor",
+    "ready",
+    "agent"
+  ],
+  "priority": 3,
+  "title": "Normalize cleared owner to empty string in update_issue",
+  "updated_at": "2026-06-09T20:02:54+00:00"
+}
