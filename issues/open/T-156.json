@@ -1,0 +1,13 @@
+{
+  "body": "Two offline clones can both mint the same T-n; after a pull-merge both files can survive (e.g. in different state dirs). fsck correctly flags \"duplicate issue record id\" but nothing tells the user how to recover.\n\nFix: add a short documented procedure (README, near the sync section): pick the survivor, rename the other file + its record id to a fresh T-n, fix any deps pointing at it, move its events file alongside, commit. Resolution TOOLING is out of scope per non-goals \u2014 this is a docs-only ticket.",
+  "created_at": "2026-06-09T20:03:12+00:00",
+  "id": "T-156",
+  "labels": [
+    "docs",
+    "ready",
+    "agent"
+  ],
+  "priority": 4,
+  "title": "Document recovery procedure for duplicate ticket IDs after merge",
+  "updated_at": "2026-06-09T20:03:12+00:00"
+}
