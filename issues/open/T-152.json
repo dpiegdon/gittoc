@@ -1,12 +1,13 @@
 {
-  "body": "No CI config exists (no .woodpecker.yml, no .github/workflows on the mirror).\n\nA minimal pipeline running the existing release-checklist commands would mechanically catch regressions like T-151:\n  python3 -m isort --check scripts/gittoc_lib/ scripts/tests/\n  python3 -m black --check scripts/gittoc_lib/ scripts/tests/\n  python3 -m pyflakes scripts/gittoc_lib/ scripts/tests/\n  python3 -m pytest scripts/tests/test_gittoc.py\n\nKey point: run on the MINIMUM supported Python version, not just latest. Optionally add `vermin` as a dev-only floor check.\n\nPure dev tooling, so the zero-runtime-deps stance is untouched. Labeled `human`: enabling Woodpecker on codeberg (or Actions on the GitHub mirror) needs repo-owner access. Depends on T-151 so the first pipeline run is green.",
+  "body": "A local dev-only verification pipeline, runnable without polluting host installs.\n\nScope (maintainer direction):\n- NO remote CI (GitHub Actions / Woodpecker). The remotes are just storage.\n- A local script (e.g. scripts/dev/check) that creates/uses a venv, installs\n  dev tools (isort, black, pyflakes, pytest; optionally vermin to enforce the\n  documented Python floor), and runs the release-checklist checks.\n- Dev-only and encapsulated: the setup script already strips dev files on\n  install (AGENTS.md, .git, logo) \u2014 add the dev pipeline dir/venv to that\n  removal list so vendored installs never carry it.\n- venv and caches must be gitignored.\n\nChecks to wrap:\n  python3 -m isort --check scripts/gittoc_lib/ scripts/tests/\n  python3 -m black --check scripts/gittoc_lib/ scripts/tests/\n  python3 -m pyflakes scripts/gittoc_lib/ scripts/tests/\n  python3 scripts/tests/run_parallel.py   (or pytest test_gittoc.py)\n\nVerify: fresh clone -> run the dev check -> green; then run setup into a\nthrowaway repo and confirm the dev pipeline dir + venv are gone.",
   "created_at": "2026-06-09T20:02:39+00:00",
   "id": "T-152",
   "labels": [
     "ops",
-    "human"
+    "ready",
+    "agent"
   ],
-  "priority": 2,
-  "title": "Add CI pipeline running lint and tests on minimum supported Python",
+  "priority": 3,
+  "title": "Add local dev-only pipeline (venv, lint+tests), removable on install",
   "updated_at": "2026-06-09T20:14:11+00:00"
 }
