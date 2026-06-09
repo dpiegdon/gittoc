@@ -38,6 +38,8 @@ echo "dev: black --check"
 "$VPY" -m black --check scripts/gittoc_lib/ scripts/tests/
 echo "dev: pyflakes"
 "$VPY" -m pyflakes scripts/gittoc_lib/ scripts/tests/
+echo "dev: mypy (type check; tests excluded — dynamic test patterns)"
+"$VPY" -m mypy scripts/gittoc scripts/gittoc_lib/
 echo "dev: vermin (enforce documented python floor)"
 # vermin ships a console script, not a python -m entry. -t=3.9- exits non-zero
 # if the code starts requiring anything newer than the documented 3.9 floor.

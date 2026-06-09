@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -90,7 +91,9 @@ def validate_issue_id(issue_id: str) -> str:
 
 def issue_number(issue_id: str) -> int:
     """Return the integer part of a T-<n> issue ID."""
-    return int(ISSUE_RE.match(validate_issue_id(issue_id)).group(1))
+    match = ISSUE_RE.match(validate_issue_id(issue_id))
+    assert match is not None  # validate_issue_id guarantees the pattern matches
+    return int(match.group(1))
 
 
 def validate_priority(priority: int) -> int:
@@ -202,7 +205,7 @@ def ref_short_hash(ref: str) -> str:
     return ref.split("@", 1)[1] if "@" in ref else ref
 
 
-def missing_objects(repo: Path, candidates: object) -> set[str]:
+def missing_objects(repo: Path, candidates: Iterable[str]) -> set[str]:
     """Return the subset of candidate hashes that do not resolve in the repo.
 
     Uses a single ``git cat-file --batch-check`` call so surfacing event refs

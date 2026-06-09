@@ -7,6 +7,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import cast
 
 from . import colors as col
 from .common import (
@@ -154,7 +155,11 @@ def cmd_remote(args: argparse.Namespace) -> int:
     if args.format == "json":
         print(json.dumps(status, indent=2, sort_keys=True))
     else:
-        remotes = ", ".join(status["remotes"]) if status["remotes"] else "-"
+        remotes = (
+            ", ".join(cast("list[str]", status["remotes"]))
+            if status["remotes"]
+            else "-"
+        )
         print(
             f"remotes={remotes} inferred={status['inferred_remote'] or '-'} "
             f"configured={status['configured_remote'] or '-'} "
@@ -265,6 +270,7 @@ def cmd_new(args: argparse.Namespace) -> int:
 def cmd_list(args: argparse.Namespace) -> int:
     """List issues filtered by state, label, and/or readiness."""
     tracker = Tracker.open()
+    states: tuple[str, ...]
     if args.all:
         states = STATE_ORDER
     else:
@@ -524,6 +530,7 @@ def cmd_grep(args: argparse.Namespace) -> int:
     pattern = grep_args[0]
     extra_flags = grep_args[1:]
     tracker = Tracker.open()
+    states: tuple[str, ...]
     if args.all:
         states = STATE_ORDER
     else:

@@ -146,6 +146,7 @@ class Issue:
         issue, errors = cls.validate_path(path)
         if errors:
             raise SystemExit(f"{errors[0]} in {path}")
+        assert issue is not None  # no errors means validate_path returned an Issue
         return issue
 
     def to_record(self) -> dict:

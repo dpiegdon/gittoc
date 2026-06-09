@@ -42,12 +42,15 @@ rather than keeping state in chat.
 - Format with `isort` first, then `black` before committing (black wins on
   import formatting conflicts).
 - Check `python3 -m pyflakes` output before committing.
+- Keep `mypy` clean; the dev pipeline type-checks `scripts/gittoc` and
+  `scripts/gittoc_lib/` (tests are excluded).
 
 ## Testing
 
 The fastest path is the local dev pipeline. It builds an isolated venv, installs
-the pinned dev tools, and runs lint (isort, black, pyflakes), the Python-floor
-check (vermin), `py_compile`, and the full test suite in one go:
+the pinned dev tools, and runs lint (isort, black, pyflakes), a type check
+(mypy), the Python-floor check (vermin), `py_compile`, and the full test suite
+in one go:
 
 ```bash
 scripts/dev/check            # all checks; extra args pass through to the tests

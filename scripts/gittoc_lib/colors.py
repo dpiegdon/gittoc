@@ -86,8 +86,8 @@ def label(text: str) -> str:
     return _c(text, _CYAN)
 
 
-def count(n: int) -> str:
-    return _c(str(n), _YELLOW)
+def count(text: str) -> str:
+    return _c(text, _YELLOW)
 
 
 def timestamp(text: str) -> str:

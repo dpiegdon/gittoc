@@ -333,6 +333,7 @@ def fsck(tracker: "Tracker", paths: list[Path] | None = None) -> IntegrityReport
                     _make_finding(checkout, error, path=path, issue_ids=(file_id,))
                 )
             continue
+        assert issue is not None  # validate_path returns an Issue when errors is empty
         if file_id not in duplicate_file_ids:
             issues_by_file_id[file_id] = issue
             issue_path_by_file_id[file_id] = path
