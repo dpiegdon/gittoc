@@ -11,7 +11,7 @@ local context.
 
 ## Quick install
 
-Requires Python 3.8+ and git. The setup script assumes gittoc repo is installed to .agents/skills/gittoc/ .
+Requires Python 3.9+ and git. The setup script assumes gittoc repo is installed to .agents/skills/gittoc/ .
 To do that, execute in root of your repo:
 
 ```bash

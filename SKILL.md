@@ -2,7 +2,7 @@
 name: gittoc
 description: Git-repository-specific ticket system. Use when work spans multiple turns or sessions and needs a repo-local issue tracker with dependencies, ready-task discovery, and git history, without external services or nonstandard dependencies.
 license: MIT. LICENSE.txt has complete terms.
-compatibility: Requires python 3.8+ and git.
+compatibility: Requires python 3.9+ and git.
 metadata:
   author: codeberg.org/dpiegdon/gittoc
   version: "0.7.0"
