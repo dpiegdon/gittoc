@@ -521,6 +521,10 @@ class Tracker:
             )
         else:
             resolved_owner = issue.owner if owner is None else owner
+        # A claimed ticket must always have an owner; default it like `claim`
+        # so `update --state claimed` without --owner does not orphan the claim.
+        if target_state == "claimed" and not resolved_owner:
+            resolved_owner = default_owner()
         updated = replace(
             issue,
             title=issue.title if title is None else title,

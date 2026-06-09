@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -329,6 +330,23 @@ class TestClaimWorkflow(GittocTestBase):
         run(["update", issue1, "--state", "open", "--owner", "alice"], self.repo)
         shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
         self.assertEqual(shown["owner"], "alice")
+
+    def test_update_to_claimed_defaults_owner(self) -> None:
+        """`update --state claimed` with no --owner defaults the owner like `claim`."""
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task"], self.repo)
+        with mock.patch.dict(os.environ, {"GITTOC_OWNER": "autoclaim"}):
+            run(["update", issue1, "--state", "claimed"], self.repo)
+        shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
+        self.assertEqual(shown["state"], "claimed")
+        self.assertEqual(shown["owner"], "autoclaim")
+
+    def test_update_to_claimed_with_explicit_owner(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Task"], self.repo)
+        run(["update", issue1, "--state", "claimed", "--owner", "bob"], self.repo)
+        shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
+        self.assertEqual(shown["owner"], "bob")
 
 
 class TestLabels(GittocTestBase):
