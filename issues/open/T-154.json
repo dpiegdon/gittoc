@@ -1,0 +1,14 @@
+{
+  "body": "`gittoc claim T-1` defaults owner to $GITTOC_OWNER/$USER, but the same transition via `gittoc update T-1 --state claimed` leaves owner=\"\" \u2014 a claimed ticket nobody owns. resume's claimed-by-owner selection will never surface it.\n\nFix: default the owner inside update_issue on the open->claimed transition when none is given (mirroring cmd_claim), or reject claimed-without-owner with a clear message. Defaulting is more consistent with claim.",
+  "created_at": "2026-06-09T20:02:55+00:00",
+  "id": "T-154",
+  "labels": [
+    "bug",
+    "ux",
+    "ready",
+    "agent"
+  ],
+  "priority": 3,
+  "title": "Default owner on open->claimed transition via update",
+  "updated_at": "2026-06-09T20:02:55+00:00"
+}
