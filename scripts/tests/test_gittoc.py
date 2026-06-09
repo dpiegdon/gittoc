@@ -2355,13 +2355,41 @@ class TestColors(unittest.TestCase):
 
     def test_ok_wraps_in_green_when_tty(self) -> None:
         colors = self._colors()
-        with mock.patch.object(sys.stdout, "isatty", return_value=True):
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
+            sys.stdout, "isatty", return_value=True
+        ):
             self.assertEqual(colors.ok("done"), "\033[32mdone\033[0m")
 
     def test_ok_is_plain_when_not_tty(self) -> None:
         colors = self._colors()
-        with mock.patch.object(sys.stdout, "isatty", return_value=False):
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
+            sys.stdout, "isatty", return_value=False
+        ):
             self.assertEqual(colors.ok("done"), "done")
+
+    def test_no_color_disables_even_on_tty(self) -> None:
+        colors = self._colors()
+        with mock.patch.dict(
+            os.environ, {"NO_COLOR": "1"}, clear=True
+        ), mock.patch.object(sys.stdout, "isatty", return_value=True):
+            self.assertEqual(colors.ok("done"), "done")
+
+    def test_warn_color_tracks_stderr_not_stdout(self) -> None:
+        """warn/error are printed to stderr, so their color follows stderr."""
+        colors = self._colors()
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
+            sys.stdout, "isatty", return_value=False
+        ), mock.patch.object(sys.stderr, "isatty", return_value=True):
+            self.assertEqual(colors.warn("careful"), "\033[1m\033[33mcareful\033[0m")
+            # a stdout helper stays plain because stdout is not a TTY here
+            self.assertEqual(colors.ok("done"), "done")
+
+    def test_warn_plain_when_stderr_not_tty(self) -> None:
+        colors = self._colors()
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
+            sys.stdout, "isatty", return_value=True
+        ), mock.patch.object(sys.stderr, "isatty", return_value=False):
+            self.assertEqual(colors.warn("careful"), "careful")
 
 
 if __name__ == "__main__":

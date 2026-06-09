@@ -1,12 +1,14 @@
 """ANSI terminal color helpers for gittoc output.
 
-Colors are applied only when sys.stdout is a TTY. All public functions
-return plain strings when colors are disabled, so callers need no
-conditional logic.
+Color is applied only when the destination stream is a TTY (stdout for most
+helpers, stderr for warn/error) and the NO_COLOR convention is not in effect.
+All public functions return plain strings when color is disabled, so callers
+need no conditional logic.
 """
 
 from __future__ import annotations
 
+import os
 import sys
 
 _RESET = "\033[0m"
@@ -21,9 +23,26 @@ _MAGENTA = "\033[35m"
 _BRIGHT_BLUE = "\033[94m"
 
 
-def _c(text: str, *codes: str) -> str:
-    """Wrap text in ANSI codes if stdout is a TTY."""
-    if not sys.stdout.isatty():
+def _color_enabled(stream) -> bool:
+    """Return True if ANSI color should be emitted for *stream*.
+
+    Honors the NO_COLOR convention (https://no-color.org/): any non-empty
+    NO_COLOR disables color everywhere. Otherwise color is enabled only when
+    the destination stream is a TTY.
+    """
+    if os.environ.get("NO_COLOR"):
+        return False
+    return stream.isatty()
+
+
+def _c(text: str, *codes: str, stream=None) -> str:
+    """Wrap text in ANSI codes when color is enabled for the target stream.
+
+    Defaults to stdout; warn/error pass stderr so their color tracks the
+    stream they are actually printed to, not stdout.
+    """
+    target = sys.stdout if stream is None else stream
+    if not _color_enabled(target):
         return text
     return "".join(codes) + text + _RESET
 
@@ -107,8 +126,8 @@ def ok(text: str) -> str:
 
 
 def warn(text: str) -> str:
-    return _c(text, _BOLD, _YELLOW)
+    return _c(text, _BOLD, _YELLOW, stream=sys.stderr)
 
 
 def error(text: str) -> str:
-    return _c(text, _BOLD, _RED)
+    return _c(text, _BOLD, _RED, stream=sys.stderr)
