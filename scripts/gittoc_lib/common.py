@@ -78,11 +78,6 @@ def run_git(
     return proc
 
 
-def repo_root() -> Path:
-    """Return the absolute path to the root of the current git repository."""
-    return Path(run_git(["rev-parse", "--show-toplevel"]).stdout.strip()).resolve()
-
-
 def validate_issue_id(issue_id: str) -> str:
     """Raise SystemExit if issue_id does not match T-<n> format, otherwise return it."""
     match = ISSUE_RE.match(issue_id)
@@ -234,28 +229,23 @@ def missing_objects(repo: Path, candidates: object) -> set[str]:
     return missing
 
 
-def git_common_dir(root: Path) -> Path:
-    """Return the absolute path to the shared git directory.
+def repo_and_worktree() -> tuple[Path, Path]:
+    """Return (repo root, hidden gittoc worktree path) in a single git call.
 
-    In a linked worktree, the regular ``.git`` entry is a file pointing to
-    ``<main-repo>/.git/worktrees/<name>``; ``--git-common-dir`` resolves to
-    the shared ``.git`` directory so the tracker worktree can be located
-    from any linked worktree.
+    Combines ``rev-parse --show-toplevel --git-common-dir`` so opening the
+    tracker costs one git invocation instead of two. ``--git-common-dir`` is
+    reported relative to the current directory (``.git`` from the repo root,
+    ``../.git`` from a subdir) or absolute from a linked worktree, so a
+    relative result is resolved against the current directory. Placing the
+    worktree under the shared git directory yields the same absolute path
+    whether gittoc is invoked from the main checkout or any linked worktree.
     """
-    proc = run_git(["rev-parse", "--git-common-dir"], cwd=root)
-    path = Path(proc.stdout.strip())
-    if not path.is_absolute():
-        path = root / path
-    return path.resolve()
-
-
-def worktree_path(root: Path) -> Path:
-    """Return the expected path of the hidden gittoc worktree.
-
-    Placed under the shared git directory so the same absolute path is
-    used when invoked from the main checkout or from any linked worktree.
-    """
-    return git_common_dir(root) / TRACKER_WORKTREE_DIRNAME
+    proc = run_git(["rev-parse", "--show-toplevel", "--git-common-dir"])
+    top, common = proc.stdout.splitlines()[:2]
+    common_dir = Path(common)
+    if not common_dir.is_absolute():
+        common_dir = Path.cwd() / common_dir
+    return Path(top).resolve(), (common_dir / TRACKER_WORKTREE_DIRNAME).resolve()
 
 
 def is_worktree(path: Path) -> bool:

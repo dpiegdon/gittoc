@@ -25,11 +25,10 @@ from .common import (
     issue_number,
     now_utc,
     remote_branch_exists,
-    repo_root,
+    repo_and_worktree,
     run_git,
     validate_issue_id,
     validate_priority,
-    worktree_path,
 )
 from .event_log import EventLog
 from .models import Issue
@@ -55,18 +54,18 @@ class Tracker:
     @classmethod
     def open(cls) -> "Tracker":
         """Open the tracker, ensuring the worktree exists and running migrations."""
-        repo = repo_root()
-        checkout = cls._ensure_worktree(repo)
+        repo, checkout = repo_and_worktree()
+        checkout = cls._ensure_worktree(repo, checkout)
         tracker = cls(repo, checkout)
-        tracker.run_pending_migrations()
+        # __init__ already read HEAD; only re-read if a migration committed.
+        if tracker.run_pending_migrations():
+            tracker.base_head = tracker.head()
         tracker.check_version_compatible()
-        tracker.base_head = tracker.head()
         return tracker
 
     @staticmethod
-    def _ensure_worktree(repo: Path) -> Path:
+    def _ensure_worktree(repo: Path, checkout: Path) -> Path:
         """Ensure the hidden gittoc worktree exists, creating or attaching it as needed."""
-        checkout = worktree_path(repo)
         if has_legacy_hidden_clone(checkout):
             raise SystemExit(
                 f"legacy hidden clone detected at {checkout}; remove it before using worktree mode"
@@ -275,11 +274,12 @@ class Tracker:
             pass
         return {}
 
-    def run_pending_migrations(self) -> None:
+    def run_pending_migrations(self) -> bool:
         """Run any pending tracker migrations sequentially.
 
         Each migration is guarded by a version check and commits its own
         VERSION bump.  Migrations must be idempotent — safe to re-run.
+        Returns True if a migration committed (so HEAD moved), else False.
 
         NOTE for future format changes (v2+): when designing a new format
         version, consider adding or renaming a required field so that older
@@ -290,6 +290,8 @@ class Tracker:
         fmt, layout = self.read_version()
         if fmt == 0 and layout == 0:
             self._write_version(CURRENT_FORMAT_VERSION, CURRENT_LAYOUT_VERSION)
+            return True
+        return False
 
     def next_issue_id(self) -> str:
         """Scan existing issue files and return the next unused T-<n> identifier."""
