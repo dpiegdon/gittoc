@@ -1,0 +1,14 @@
+{
+  "body": "commands.py:298-319: cmd_claim loops over issue IDs, committing each claim as it goes. If a later ID is unclaimable (SystemExit from update_issue), earlier claims are already committed but nothing is printed about them and auto-push is skipped.\n\nFix: pre-validate claimability of ALL ids (exists, state open, ready) before the first mutation so the command either claims everything or nothing. No transaction machinery needed \u2014 just an upfront check loop.",
+  "created_at": "2026-06-09T20:02:55+00:00",
+  "id": "T-155",
+  "labels": [
+    "reliability",
+    "ux",
+    "ready",
+    "agent"
+  ],
+  "priority": 3,
+  "title": "Make multi-ID claim validate all IDs before first mutation",
+  "updated_at": "2026-06-09T20:02:55+00:00"
+}
