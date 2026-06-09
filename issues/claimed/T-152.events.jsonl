@@ -3,3 +3,4 @@
 {"actor": "claude", "at": "2026-06-09T20:14:11+00:00", "kind": "dependency", "ref": "main@6b0d2e1", "text": "removed T-151"}
 {"actor": "claude", "at": "2026-06-09T20:14:11+00:00", "kind": "updated", "ref": "main@6b0d2e1", "text": "fields updated"}
 {"actor": "claude", "at": "2026-06-09T20:14:11+00:00", "kind": "note", "ref": "main@6b0d2e1", "text": "rescope: maintainer wants no remote CI (remotes are storage only); a local venv-based dev pipeline that setup removes on install is the wanted shape. dropped `human` label (now agent-safe, no repo-owner access needed) and the T-151 dep accordingly. lowered p2->p3: it's an opt-in dev convenience, not an automatic guardrail."}
+{"actor": "claude", "at": "2026-06-09T20:16:13+00:00", "kind": "claimed", "ref": "main@6b0d2e1", "text": "claude"}
