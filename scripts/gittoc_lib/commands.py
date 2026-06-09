@@ -301,6 +301,11 @@ def cmd_claim(args: argparse.Namespace) -> int:
     _auto_pull(tracker)
     owner = args.owner or default_owner()
     issue_ids = parse_issue_ids(args.issue_ids)
+    # Validate every id up front so a batch claim is all-or-nothing: if any
+    # ticket is missing or unclaimable, abort before mutating (committing) any.
+    for issue_id in issue_ids:
+        issue, _ = tracker.load_issue(issue_id)
+        tracker.ensure_claimable(issue)
     issues = []
     for issue_id in issue_ids:
         issues.append(

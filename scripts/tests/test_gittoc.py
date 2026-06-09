@@ -348,6 +348,28 @@ class TestClaimWorkflow(GittocTestBase):
         shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
         self.assertEqual(shown["owner"], "bob")
 
+    def test_multi_claim_is_all_or_nothing(self) -> None:
+        """A batch claim containing an unclaimable id must claim none of them."""
+        run(["init"], self.repo)
+        good = run(["new", "Good"], self.repo)
+        blocker = run(["new", "Blocker"], self.repo)
+        blocked = run(["new", "Blocked", "-d", blocker], self.repo)
+        proc = run_fail(["claim", good, blocked, "--owner", "tester"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(blocked, proc.stderr)
+        # The claimable ticket listed before the bad one must be left untouched.
+        shown = json.loads(run(["show", good, "-f", "json"], self.repo))
+        self.assertEqual(shown["state"], "open")
+        self.assertNotIn("owner", shown)
+
+    def test_multi_claim_missing_id_claims_none(self) -> None:
+        run(["init"], self.repo)
+        good = run(["new", "Good"], self.repo)
+        proc = run_fail(["claim", good, "T-999", "--owner", "tester"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        shown = json.loads(run(["show", good, "-f", "json"], self.repo))
+        self.assertEqual(shown["state"], "open")
+
 
 class TestLabels(GittocTestBase):
     def test_add_and_remove_labels(self) -> None:

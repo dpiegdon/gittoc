@@ -390,6 +390,26 @@ class Tracker:
             self.dependency_closed(dep_id) for dep_id in issue.deps
         )
 
+    def ensure_claimable(self, issue: Issue) -> None:
+        """Raise SystemExit if *issue* cannot transition to the claimed state.
+
+        Re-claiming an already-claimed issue (ownership transfer) is allowed;
+        an open issue must be ready; any other state cannot be claimed. Shared
+        by ``update_issue`` and ``claim`` so a batch claim can pre-validate
+        every id before mutating any of them.
+        """
+        if issue.state == "claimed":
+            return
+        if issue.state != "open":
+            raise SystemExit(
+                f"cannot claim issue from state {issue.state}: {issue.issue_id}"
+            )
+        if not self.ready(issue):
+            raise SystemExit(
+                f"cannot claim non-ready issue: {issue.issue_id}"
+                f" (has unresolved dependencies)"
+            )
+
     def _would_introduce_cycle(self, issue_id: str, dep_id: str) -> bool:
         """Return True if adding dep_id as a dependency of issue_id would create a cycle."""
         if dep_id == issue_id:
@@ -482,16 +502,8 @@ class Tracker:
         """Apply one or more field changes to an issue and commit the result."""
         issue, path = self.load_issue(issue_id)
         target_state = issue.state if state is None else state
-        if target_state == "claimed" and issue.state != "claimed":
-            if issue.state != "open":
-                raise SystemExit(
-                    f"cannot claim issue from state {issue.state}: {issue.issue_id}"
-                )
-            if not self.ready(issue):
-                raise SystemExit(
-                    f"cannot claim non-ready issue: {issue.issue_id}"
-                    f" (has unresolved dependencies)"
-                )
+        if target_state == "claimed":
+            self.ensure_claimable(issue)
         if (
             target_state == "claimed"
             and issue.state == "claimed"
