@@ -1,6 +1,9 @@
 {
   "body": "No CI config exists (no .woodpecker.yml, no .github/workflows on the mirror).\n\nA minimal pipeline running the existing release-checklist commands would mechanically catch regressions like T-151:\n  python3 -m isort --check scripts/gittoc_lib/ scripts/tests/\n  python3 -m black --check scripts/gittoc_lib/ scripts/tests/\n  python3 -m pyflakes scripts/gittoc_lib/ scripts/tests/\n  python3 -m pytest scripts/tests/test_gittoc.py\n\nKey point: run on the MINIMUM supported Python version, not just latest. Optionally add `vermin` as a dev-only floor check.\n\nPure dev tooling, so the zero-runtime-deps stance is untouched. Labeled `human`: enabling Woodpecker on codeberg (or Actions on the GitHub mirror) needs repo-owner access. Depends on T-151 so the first pipeline run is green.",
   "created_at": "2026-06-09T20:02:39+00:00",
+  "deps": [
+    "T-151"
+  ],
   "id": "T-152",
   "labels": [
     "ops",
