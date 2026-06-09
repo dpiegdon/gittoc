@@ -168,6 +168,31 @@ with a clear message explaining what to upgrade.
 Command aliases: `l`=list, `s`=show, `sum`=summary, `r`=resume, `c`=claim, `n`=note,
 `dep`=depends, `g`=grep, `ubl`=unblocked, `up`=update, `pl`=pull, `ps`=push.
 
+### Recovering from duplicate ticket IDs
+
+Two people working offline can both mint the same `T-N` before syncing. After a
+pull, `gittoc fsck` reports the collision:
+
+```
+error: issues/open/T-7.json: duplicate issue record id T-7; also present at issues/claimed/T-7.json
+```
+
+There is no auto-resolver — picking the survivor and a new number is a human
+judgement call. The fix is a one-time manual renumber in the tracker worktree
+(`.git/gittoc/`):
+
+```bash
+gittoc list -a --sort=id            # the last id is the current maximum; +1 is free
+cd .git/gittoc
+git mv issues/open/T-7.json issues/open/T-12.json                  # loser -> free id
+git mv issues/open/T-7.events.jsonl issues/open/T-12.events.jsonl  # its log, if any
+# edit issues/open/T-12.json and set "id" to "T-12"
+# repoint any ticket whose deps listed T-7 at the survivor or at T-12
+git commit -am "untangle duplicate T-7"
+cd -
+gittoc fsck                         # confirm the tracker is clean again
+```
+
 ### Note/body text and the calling shell
 
 Note and body text passed as a command-line argument is evaluated by **your
