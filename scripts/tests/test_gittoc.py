@@ -1304,6 +1304,21 @@ class TestMiscCoverage(GittocTestBase):
         ).splitlines()
         self.assertEqual(len(lines), 1)
 
+    def test_log_limit_rejects_non_positive(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "task"], self.repo)
+        for bad in ("0", "-1"):
+            proc = run_fail(["log", "--limit", bad], self.repo)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("--limit", proc.stderr)
+
+    def test_show_limit_rejects_non_positive(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "task"], self.repo)
+        proc = run_fail(["show", "T-1", "--limit", "0"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("--limit", proc.stderr)
+
     def test_unblocked_command(self) -> None:
         run(["init"], self.repo)
         run(["new", "blocker"], self.repo)

@@ -35,6 +35,17 @@ from .common import DEFAULT_PRIORITY, STATE_ORDER
 from .tracker import StaleTrackerError
 
 
+def positive_int(value: str) -> int:
+    """argparse type for a positive integer (>= 1), e.g. --limit."""
+    try:
+        number = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"expected an integer, got {value!r}")
+    if number < 1:
+        raise argparse.ArgumentTypeError(f"must be >= 1, got {number}")
+    return number
+
+
 def add_format_argument(
     parser: argparse.ArgumentParser, default: str = "normal"
 ) -> None:
@@ -247,7 +258,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     log_parser.add_argument(
         "--limit",
-        type=int,
+        type=positive_int,
         metavar="N",
         help="show at most N commits",
     )
@@ -404,7 +415,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     show_parser.add_argument(
         "--limit",
-        type=int,
+        type=positive_int,
         help="maximum number of notes/events to show",
     )
     add_text_format_argument(show_parser)
