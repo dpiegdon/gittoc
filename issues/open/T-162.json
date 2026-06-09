@@ -1,0 +1,13 @@
+{
+  "body": "T-153 was an owner type drift (None assigned where Issue.owner is declared str) that no test could catch because it was externally invisible. A static type checker would catch this whole class mechanically.\n\nNow that scripts/dev/check exists (T-152), add a type check to it:\n- pick mypy or pyright; pin it in scripts/dev/requirements.txt\n- run it over scripts/gittoc and scripts/gittoc_lib (tests optional)\n- start permissive if needed (e.g. mypy without --strict) and tighten over time\n\nCaveat: a first run on a not-previously-checked codebase may surface findings; budget a small cleanup pass, or gate at a sensible level first. The code is small and already well-annotated, so this should be modest. relates: T-153",
+  "created_at": "2026-06-09T20:40:07+00:00",
+  "id": "T-162",
+  "labels": [
+    "ops",
+    "ready",
+    "agent"
+  ],
+  "priority": 4,
+  "title": "Add a static type check (mypy or pyright) to the dev pipeline",
+  "updated_at": "2026-06-09T20:40:07+00:00"
+}
