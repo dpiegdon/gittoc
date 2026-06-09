@@ -1,0 +1,14 @@
+{
+  "body": "The docs (SKILL.md compatibility, README) claim Python 3.8+, but two APIs require 3.9:\n- cli.py:244 uses argparse.BooleanOptionalAction (added 3.9) for `log --reverse`\n- integrity.py:230 uses Path.is_relative_to (added 3.9)\n\nThe parser is built unconditionally, so on 3.8 EVERY command crashes at parser-build time, not just `log`.\n\nFix either way:\n(a) bump the documented floor to 3.9+ in SKILL.md and README (3.8 is EOL since Oct 2024), or\n(b) replace both call sites with 3.8-safe equivalents (manual --no-reverse flag; try/except ValueError around relative_to).\n\nOption (a) is cheaper and honest. Consider a dev-only `vermin` check to keep the claimed floor true (see CI ticket).",
+  "created_at": "2026-06-09T20:02:30+00:00",
+  "id": "T-151",
+  "labels": [
+    "bug",
+    "docs",
+    "ready",
+    "agent"
+  ],
+  "priority": 1,
+  "title": "Fix Python 3.9-only APIs or bump documented floor to 3.9",
+  "updated_at": "2026-06-09T20:02:30+00:00"
+}
