@@ -1,0 +1,11 @@
+{
+  "body": "Regression from T-164: the host root is derived from cwd, so `cd .agents/skills/gittoc && scripts/setup` sees the clone's own toplevel == GITTOC_DIR and refuses. Derive the host root from the gittoc dir's parent, and detect a dev checkout by its own state (local gittoc branch, extra local branches, dirty tree) rather than by cwd.",
+  "created_at": "2026-09-28T21:01:40+00:00",
+  "id": "T-178",
+  "labels": [
+    "bug"
+  ],
+  "priority": 2,
+  "title": "setup: refusal check misdetects a fresh vendored clone when run from inside it",
+  "updated_at": "2026-09-28T21:01:40+00:00"
+}
