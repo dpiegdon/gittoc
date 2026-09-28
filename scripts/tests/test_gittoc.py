@@ -1562,6 +1562,30 @@ class TestAutoPush(GittocTestBase):
         self.assertIn("warning", proc.stderr)
         self.assertIn("T-2", proc.stdout)
 
+    def test_new_validates_before_auto_pull(self) -> None:
+        """A doomed `new` must fail on validation without touching the remote (T-179)."""
+        self.init_with_remote()
+        subprocess.run(
+            ["git", "config", "gittoc.autopush", "true"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "remote", "set-url", "origin", "/nonexistent/path"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        proc = run_fail(["new", "   "], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("title must not be empty", proc.stderr)
+        self.assertNotIn("auto-pull", proc.stderr)
+        proc = run_fail(["new", "ok", "-d", "bogus"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("invalid issue id", proc.stderr)
+        self.assertNotIn("auto-pull", proc.stderr)
+
     def test_auto_pull_merge_conflict_aborts_mutation(self) -> None:
         """A merge conflict during auto-pull must abort before any local write."""
         remote_repo = self.init_with_remote()

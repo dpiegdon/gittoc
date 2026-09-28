@@ -22,6 +22,7 @@ from .common import (
     ref_short_hash,
     run_git,
     validate_issue_id,
+    validate_title,
 )
 from .remote_sync import RemotePushPullError
 from .render import print_issues, render_show_text
@@ -260,15 +261,15 @@ def cmd_push(args: argparse.Namespace) -> int:
 
 def cmd_new(args: argparse.Namespace) -> int:
     """Create a new issue and optionally add dependencies."""
+    # Cheap validation first: with autopush enabled, opening the tracker
+    # fetches and merges, which a doomed invocation should not pay for.
+    title = validate_title(args.title)
     body = resolve_text_input(args.body, args.file, what="body", allow_empty=True)
+    deps = parse_issue_ids(args.dep)
     tracker = Tracker.open()
     _auto_pull(tracker)
     issue = tracker.create_issue(
-        args.title,
-        body or "",
-        parse_labels(args.label),
-        args.priority,
-        deps=parse_issue_ids(args.dep),
+        title, body or "", parse_labels(args.label), args.priority, deps=deps
     )
     print(issue.issue_id)
     _auto_push(tracker)
