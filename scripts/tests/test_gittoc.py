@@ -448,6 +448,20 @@ class TestDependenciesAndReady(GittocTestBase):
         shown = json.loads(run(["show", issue2, "-f", "json"], self.repo))
         self.assertNotIn("deps", shown)
 
+    def test_dependency_event_text_is_deduplicated_everywhere(self) -> None:
+        """`new -d` and `dep` record the same, deduplicated event text (T-181)."""
+        run(["init"], self.repo)
+        run(["new", "a"], self.repo)
+        run(["new", "b"], self.repo)
+        run(["new", "c", "-d", "T-2,T-1,T-2"], self.repo)
+        run(["new", "d"], self.repo)
+        run(["dep", "T-4", "T-2,T-1,T-2"], self.repo)
+        for issue_id in ("T-3", "T-4"):
+            shown = json.loads(run(["show", issue_id, "-a", "-f", "json"], self.repo))
+            texts = [e["text"] for e in shown["history"] if e["kind"] == "dependency"]
+            self.assertEqual(texts, ["T-2 T-1"], issue_id)
+            self.assertEqual(shown["deps"], ["T-1", "T-2"], issue_id)
+
     def test_remove_nonexistent_dep_fails(self) -> None:
         run(["init"], self.repo)
         issue1 = run(["new", "A"], self.repo)

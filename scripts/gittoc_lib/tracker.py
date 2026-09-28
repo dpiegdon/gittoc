@@ -429,12 +429,7 @@ class Tracker:
         same ``dependency`` event ``set_dependencies`` would have written.
         """
         priority = validate_priority(priority)
-        resolved_deps: list[str] = []
-        for dep_id in deps or []:
-            dep = validate_issue_id(dep_id)
-            self.find_issue_path(dep)
-            if dep not in resolved_deps:
-                resolved_deps.append(dep)
+        resolved_deps = self._resolve_deps(deps or [])
         timestamp = now_utc()
         issue = Issue(
             issue_id=self.next_issue_id(),
@@ -715,23 +710,40 @@ class Tracker:
         """Move an issue to the rejected state (won't-do / abandoned)."""
         return self.update_issue(issue_id, state="rejected", event_actor=actor)
 
-    def set_dependencies(self, issue_id: str, dep_ids: list[str]) -> Issue:
-        """Add blocking dependencies to an issue, rejecting cycles."""
-        issue, path = self.load_issue(issue_id)
-        deps = set(issue.deps)
+    def _resolve_deps(
+        self, dep_ids: list[str], *, issue_id: str | None = None
+    ) -> list[str]:
+        """Validate dependency ids and return them unique, in input order.
+
+        Every id must be well-formed and name an existing issue. When
+        *issue_id* names the issue receiving the dependencies, ids that would
+        close a cycle are rejected too (a brand-new issue has no dependents,
+        so ``create_issue`` passes none). Both ``create_issue`` and
+        ``set_dependencies`` go through here so the rules and the recorded
+        event text stay identical.
+        """
+        resolved: list[str] = []
         for dep_id in dep_ids:
             dep = validate_issue_id(dep_id)
             self.find_issue_path(dep)
-            if self._would_introduce_cycle(issue.issue_id, dep):
+            if issue_id is not None and self._would_introduce_cycle(issue_id, dep):
                 raise SystemExit(
-                    f"dependency would introduce a cycle: {issue.issue_id} -> {dep}"
+                    f"dependency would introduce a cycle: {issue_id} -> {dep}"
                 )
-            deps.add(dep)
+            if dep not in resolved:
+                resolved.append(dep)
+        return resolved
+
+    def set_dependencies(self, issue_id: str, dep_ids: list[str]) -> Issue:
+        """Add blocking dependencies to an issue, rejecting cycles."""
+        issue, path = self.load_issue(issue_id)
+        new_deps = self._resolve_deps(dep_ids, issue_id=issue.issue_id)
+        deps = set(issue.deps) | set(new_deps)
         updated = replace(
             issue, deps=tuple(sorted(deps, key=issue_number)), updated_at=now_utc()
         )
         self.write_issue(updated, previous_path=path)
-        self.events.append(updated, "dependency", " ".join(dep_ids))
+        self.events.append(updated, "dependency", " ".join(new_deps))
         self.commit_if_needed(f"Add dependencies to {updated.issue_id}")
         return updated
 
