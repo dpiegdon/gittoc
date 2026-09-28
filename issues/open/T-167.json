@@ -1,0 +1,11 @@
+{
+  "body": "update_issue always logs event kind 'updated' with 'fields updated' and commit 'Update issue', so terminal transitions via update are invisible in the audit trail. Map state transitions to the matching event kind.",
+  "created_at": "2026-09-28T20:39:28+00:00",
+  "id": "T-167",
+  "labels": [
+    "bug"
+  ],
+  "priority": 2,
+  "title": "update --state closed/rejected records 'updated' event instead of closed/rejected",
+  "updated_at": "2026-09-28T20:39:28+00:00"
+}
