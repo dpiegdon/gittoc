@@ -1,3 +1,4 @@
 {"actor": "user", "at": "2026-09-28T21:01:41+00:00", "kind": "created", "ref": "main@cfe2b84", "text": "share dependency resolution between create_issue and set_dependencies"}
 {"actor": "user", "at": "2026-09-28T21:10:01+00:00", "kind": "claimed", "ref": "main@c3d2c12", "text": "user"}
 {"actor": "user", "at": "2026-09-28T21:11:06+00:00", "kind": "closed", "ref": "main@14f6c5c", "text": ""}
+{"actor": "user", "at": "2026-09-28T21:11:06+00:00", "kind": "note", "ref": "main@14f6c5c", "text": "on main as 14f6c5c"}
