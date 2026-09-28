@@ -110,6 +110,14 @@ class EventLog:
                         file=sys.stderr,
                     )
                     continue
+                if not isinstance(entry, dict):
+                    print(
+                        col.warn(
+                            f"warning: skipping non-object event at {path}:{lineno}"
+                        ),
+                        file=sys.stderr,
+                    )
+                    continue
                 if entry.get("kind") == "note":
                     note_seq += 1
                     entry["note_id"] = note_seq
@@ -134,4 +142,4 @@ class EventLog:
 
     def note_count(self, issue_id: str) -> int:
         """Return the number of note events recorded for an issue."""
-        return sum(1 for entry in self.entries(issue_id) if entry["kind"] == "note")
+        return sum(1 for entry in self.entries(issue_id) if entry.get("kind") == "note")

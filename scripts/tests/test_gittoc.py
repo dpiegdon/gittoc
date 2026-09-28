@@ -618,6 +618,37 @@ class TestNotesAndHistory(GittocTestBase):
         self.assertIn("labels: bug", text)
         self.assertIn("tester: A note", text)
 
+    def test_non_object_and_kindless_event_lines_do_not_crash(self) -> None:
+        """A valid-JSON non-object or a kind-less entry must be tolerated by
+        list/show/resume (fsck still reports it)."""
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["note", "T-1", "real note"], self.repo)
+        event_path = (
+            self.repo / ".git" / "gittoc" / "issues" / "open" / "T-1.events.jsonl"
+        )
+        with event_path.open("a", encoding="utf-8") as handle:
+            handle.write("[]\n")
+            handle.write('{"at":"2024-01-01T00:00:00+00:00","text":"no kind"}\n')
+        proc = run_fail(["list"], self.repo)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("notes=1", proc.stdout)
+        self.assertIn("skipping non-object event", proc.stderr)
+        self.assertNotIn("Traceback", proc.stderr)
+        notes = json.loads(run(["show", "T-1", "-n", "-f", "json"], self.repo))
+        self.assertEqual(notes["notes_count"], 1)
+        self.assertEqual(len(notes["recent_notes"]), 1)
+        self.assertEqual(notes["recent_notes"][0]["text"], "real note")
+        # the kind-less entry stays in history but is not counted as a note
+        shown = json.loads(run(["show", "T-1", "-a", "-f", "json"], self.repo))
+        self.assertTrue(any(e.get("text") == "no kind" for e in shown["history"]))
+        self.assertIn("T-1", run(["resume", "T-1"], self.repo))
+        self.assertIn("T-1", run(["show", "T-1", "-a"], self.repo))
+        fsck = run_fail(["fsck"], self.repo)
+        self.assertNotEqual(fsck.returncode, 0)
+        self.assertIn("event entry must be a JSON object", fsck.stdout)
+        self.assertIn("missing event field 'kind'", fsck.stdout)
+
 
 class TestShowAndResume(GittocTestBase):
     def test_show_alias(self) -> None:
