@@ -271,13 +271,12 @@ class Tracker:
         return self.state_dir(state) / f"{validate_issue_id(issue_id)}.json"
 
     def find_issue_path(self, issue_id: str) -> Path:
-        """Search all state directories and return the path where the issue lives."""
+        """Return the path where the issue lives, or exit if it does not exist."""
         issue_id = validate_issue_id(issue_id)
-        for state in STATE_ORDER:
-            path = self.issue_path(issue_id, state)
-            if path.exists():
-                return path
-        raise SystemExit(f"issue not found: {issue_id}")
+        state = self._issue_state(issue_id)
+        if state is None:
+            raise SystemExit(f"issue not found: {issue_id}")
+        return self.issue_path(issue_id, state)
 
     def _pending_rel(self) -> list[str]:
         """Return the unique worktree-relative paths recorded by begin_write."""
@@ -540,9 +539,7 @@ class Tracker:
             if current in seen:
                 continue
             seen.add(current)
-            try:
-                current_issue, _ = self.load_issue(current)
-            except SystemExit:
+            if self._issue_state(current) is None:
                 # Referenced dep does not exist; treat as a leaf node.
                 print(
                     col.warn(
@@ -552,6 +549,7 @@ class Tracker:
                     file=sys.stderr,
                 )
                 continue
+            current_issue, _ = self.load_issue(current)
             stack.extend(current_issue.deps)
         return False
 
