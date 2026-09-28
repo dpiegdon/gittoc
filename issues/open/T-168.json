@@ -1,0 +1,12 @@
+{
+  "body": "Tracker._issue_state -> find_issue_path raises SystemExit 'issue not found: T-99' naming the missing dep, not the referencing ticket. Treat a missing dep as unresolved (not ready) and warn, like _would_introduce_cycle does.",
+  "created_at": "2026-09-28T20:39:28+00:00",
+  "id": "T-168",
+  "labels": [
+    "bug",
+    "reliability"
+  ],
+  "priority": 2,
+  "title": "dangling dependency aborts list/summary/unblocked/resume/claim",
+  "updated_at": "2026-09-28T20:39:28+00:00"
+}
