@@ -14,29 +14,31 @@
 
 GITTOC_DIR="$(cd "$(dirname "$0")/../" && pwd -P)"
 
-# identify paths in relation to parent git repo -- BEFORE deleting anything,
-# so that running setup inside the gittoc development checkout itself (where
-# the host repo *is* the gittoc repo) cannot wipe that repository's .git.
-if ! GIT_ROOTDIR="$(git rev-parse --show-toplevel 2>/dev/null)"; then
-	echo "error: not inside a git repository; run setup from the root of the host repo" >&2
+# Resolve the host repository from the gittoc directory's *parent*, not from
+# the caller's cwd: a freshly cloned vendored copy still carries its own .git,
+# which would otherwise shadow the host when setup is run from inside it.
+if ! GIT_ROOTDIR="$(git -C "$GITTOC_DIR/.." rev-parse --show-toplevel 2>/dev/null)"; then
+	echo "error: $GITTOC_DIR is not inside a git repository; vendor gittoc into the host repo first" >&2
 	exit 1
 fi
-case "$GIT_ROOTDIR" in
-	"$GITTOC_DIR"|"$GITTOC_DIR"/*)
-		echo "error: refusing to run setup inside the gittoc repository itself ($GITTOC_DIR)" >&2
-		echo "       setup is for vendored installs; run it from the root of the host repo" >&2
+
+# Refuse to strip a development checkout. A vendored clone is pristine: one
+# local branch, clean tree, no stash. A checkout someone works in has a local
+# 'gittoc' tracker branch, extra branches, uncommitted changes or stashes, and
+# deleting its .git would destroy that work.
+if [ "$(git -C "$GITTOC_DIR" rev-parse --show-toplevel 2>/dev/null)" = "$GITTOC_DIR" ]; then
+	if git -C "$GITTOC_DIR" show-ref --verify --quiet refs/heads/gittoc \
+		|| [ -n "$(git -C "$GITTOC_DIR" status --porcelain 2>/dev/null)" ] \
+		|| [ "$(git -C "$GITTOC_DIR" branch --list 2>/dev/null | grep -c .)" -gt 1 ] \
+		|| [ -n "$(git -C "$GITTOC_DIR" stash list 2>/dev/null)" ]; then
+		echo "error: $GITTOC_DIR looks like a development checkout (local branches, uncommitted changes or stashes)" >&2
+		echo "       refusing to delete its .git; setup is for pristine vendored clones" >&2
 		exit 1
-		;;
-esac
-case "$GITTOC_DIR" in
-	"$GIT_ROOTDIR"/*) ;;
-	*)
-		echo "error: gittoc directory $GITTOC_DIR is not inside the host repo $GIT_ROOTDIR" >&2
-		exit 1
-		;;
-esac
-# Both paths are physical (pwd -P / rev-parse) and GITTOC_DIR is known to be
-# below GIT_ROOTDIR, so plain POSIX prefix stripping gives the relative path
+	fi
+fi
+
+# Both paths are physical (pwd -P / rev-parse) and GITTOC_DIR is below
+# GIT_ROOTDIR, so plain POSIX prefix stripping gives the relative path
 # without GNU-only `realpath --relative-to` (absent on macOS/BSD).
 GITTOC_DIR_REL="${GITTOC_DIR#"$GIT_ROOTDIR"/}"
 

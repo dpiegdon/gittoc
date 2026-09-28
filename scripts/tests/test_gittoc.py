@@ -228,23 +228,67 @@ class TestSetupScript(GittocTestBase):
         link = self.repo / ".claude" / "skills" / "gittoc"
         self.assertTrue((link / "SKILL.md").exists())
 
+    def git_init_commit(self, path: Path) -> None:
+        """Turn path into a real single-branch repository with one commit."""
+        for args in (
+            ["init", "-q", "-b", "main"],
+            ["config", "user.email", "t@example.com"],
+            ["config", "user.name", "tester"],
+            ["add", "."],
+            ["commit", "-q", "--allow-empty", "-m", "clone"],
+        ):
+            subprocess.run(["git", *args], cwd=path, check=True, capture_output=True)
+
     def test_refuses_to_run_inside_gittoc_checkout(self) -> None:
-        """Running setup in the gittoc dev repo itself must not delete .git (T-164)."""
-        dev = Path(self.tempdir.name) / "gittoc-dev"
-        self.vendor_tree(dev)
+        """Running setup in a gittoc dev checkout must not delete its .git (T-164)."""
+        dev = self.vendor_tree(self.repo / self.VENDOR_REL)
         shutil.rmtree(dev / ".git")
-        subprocess.run(["git", "init"], cwd=dev, check=True, capture_output=True)
-        proc = self.run_setup(dev, dev)
-        self.assertNotEqual(proc.returncode, 0)
-        self.assertIn("refusing to run setup inside the gittoc repository", proc.stderr)
-        self.assertTrue((dev / ".git").is_dir())
-        self.assertTrue((dev / "AGENTS.md").exists())
-        # the repository is still a working git repository
+        self.git_init_commit(dev)
+        # the tracker branch marks a checkout that is being worked in
+        subprocess.run(
+            ["git", "branch", "gittoc"], cwd=dev, check=True, capture_output=True
+        )
+        for cwd in (dev, dev / "scripts", self.repo):
+            proc = self.run_setup(dev, cwd)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("looks like a development checkout", proc.stderr)
+            self.assertTrue((dev / ".git").is_dir())
+            self.assertTrue((dev / "AGENTS.md").exists())
         subprocess.run(["git", "status"], cwd=dev, check=True, capture_output=True)
-        # ...also when invoked from a subdirectory of the dev checkout
-        proc = self.run_setup(dev, dev / "scripts")
+        # uncommitted changes alone are enough to refuse
+        dev2 = Path(self.tempdir.name) / "dirty"
+        shutil.copytree(dev, dev2, symlinks=True)
+        subprocess.run(
+            ["git", "branch", "-D", "gittoc"], cwd=dev2, check=True, capture_output=True
+        )
+        (dev2 / "SKILL.md").write_text("edited\n", encoding="utf-8")
+        host2 = Path(self.tempdir.name) / "host2"
+        host2.mkdir()
+        self.git_init_commit(host2)
+        shutil.move(str(dev2), str(host2 / "gittoc"))
+        proc = self.run_setup(host2 / "gittoc", host2)
         self.assertNotEqual(proc.returncode, 0)
-        self.assertTrue((dev / ".git").is_dir())
+        self.assertIn("looks like a development checkout", proc.stderr)
+        self.assertTrue((host2 / "gittoc" / ".git").is_dir())
+
+    def test_fresh_clone_installs_from_inside_it(self) -> None:
+        """A pristine vendored clone still has its own .git; setup run from
+        inside it must install into the host, not refuse (T-178)."""
+        clone = self.vendor_tree(self.repo / self.VENDOR_REL)
+        shutil.rmtree(clone / ".git")
+        self.git_init_commit(clone)
+        proc = self.run_setup(clone, clone)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertFalse((clone / ".git").exists())
+        self.assertTrue((self.repo / ".git").is_dir())
+        alias = subprocess.run(
+            ["git", "config", "alias.toc"],
+            cwd=self.repo,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+        self.assertEqual(alias, f"!./{self.VENDOR_REL.as_posix()}/scripts/gittoc")
 
     def test_refuses_outside_git_repo(self) -> None:
         plain = Path(self.tempdir.name) / "plain"
