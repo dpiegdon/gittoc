@@ -1,0 +1,11 @@
+{
+  "body": "With autopush enabled, `new ''` or `new x -d T-999` fetches and merges the tracker branch before failing validation. Run the cheap checks before Tracker.open()/_auto_pull.",
+  "created_at": "2026-09-28T21:01:40+00:00",
+  "id": "T-179",
+  "labels": [
+    "ux"
+  ],
+  "priority": 4,
+  "title": "cmd_new: validate title and dep ids before auto-pull",
+  "updated_at": "2026-09-28T21:01:40+00:00"
+}
