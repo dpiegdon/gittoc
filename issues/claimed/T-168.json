@@ -6,7 +6,8 @@
     "bug",
     "reliability"
   ],
+  "owner": "user",
   "priority": 2,
   "title": "dangling dependency aborts list/summary/unblocked/resume/claim",
-  "updated_at": "2026-09-28T20:39:28+00:00"
+  "updated_at": "2026-09-28T20:40:57+00:00"
 }
