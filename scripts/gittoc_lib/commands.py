@@ -112,6 +112,8 @@ def resolve_text_input(
     if inline is not None and file_arg is not None:
         raise SystemExit(f"provide {what} inline or with -F, not both")
     if file_arg is None:
+        if inline is not None and not allow_empty and not inline.strip():
+            raise SystemExit(f"{what} is empty")
         return inline
     if file_arg == "-":
         text = sys.stdin.read()
@@ -122,7 +124,7 @@ def resolve_text_input(
             raise SystemExit(f"cannot read {what} from {file_arg}: {exc}") from exc
     if text.endswith("\n"):
         text = text[:-1]
-    if not allow_empty and not text:
+    if not allow_empty and not text.strip():
         raise SystemExit(f"{what} is empty")
     return text
 

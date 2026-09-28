@@ -105,6 +105,13 @@ def validate_priority(priority: int) -> int:
     return priority
 
 
+def validate_title(title: str) -> str:
+    """Raise SystemExit if title is empty or whitespace-only, otherwise return it."""
+    if not title.strip():
+        raise SystemExit("title must not be empty")
+    return title
+
+
 def parse_state(value: str | None) -> str | None:
     """Return state unchanged if valid, None if value is None; raise SystemExit if invalid."""
     if value is None:

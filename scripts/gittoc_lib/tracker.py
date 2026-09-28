@@ -29,6 +29,7 @@ from .common import (
     run_git,
     validate_issue_id,
     validate_priority,
+    validate_title,
 )
 from .event_log import EventLog
 from .models import Issue
@@ -419,7 +420,7 @@ class Tracker:
         timestamp = now_utc()
         issue = Issue(
             issue_id=self.next_issue_id(),
-            title=title,
+            title=validate_title(title),
             body=body,
             deps=tuple(sorted(resolved_deps, key=issue_number)),
             labels=tuple(labels),
@@ -611,7 +612,7 @@ class Tracker:
             resolved_owner = default_owner()
         updated = replace(
             issue,
-            title=issue.title if title is None else title,
+            title=issue.title if title is None else validate_title(title),
             body=issue.body if body is None else body,
             state=target_state,
             owner=resolved_owner,

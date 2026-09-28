@@ -2526,6 +2526,32 @@ class TestFileAndStdinInput(GittocTestBase):
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("empty", proc.stderr)
 
+    def test_empty_inline_note_rejected(self) -> None:
+        for text in ("", "   \t"):
+            proc = run_fail(["note", "T-1", text], self.repo)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("empty", proc.stderr)
+        proc = run_fail(["note", "T-1", "-F", "-"], self.repo, stdin="  \n")
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("empty", proc.stderr)
+        data = json.loads(run(["show", "T-1", "-n", "-f", "json"], self.repo))
+        self.assertEqual(data["notes_count"], 0)
+
+    def test_empty_title_rejected(self) -> None:
+        for title in ("", "   "):
+            proc = run_fail(["new", title], self.repo)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("title must not be empty", proc.stderr)
+            proc = run_fail(["update", "T-1", "-t", title], self.repo)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("title must not be empty", proc.stderr)
+        self.assertEqual(run(["list", "-f", "json"], self.repo).count('"id"'), 1)
+        data = json.loads(run(["show", "T-1", "-f", "json"], self.repo))
+        self.assertEqual(data["title"], "host issue")
+        # an empty body is still allowed on new and update
+        new_id = run(["new", "empty body", "-b", ""], self.repo)
+        run(["update", new_id, "-b", ""], self.repo)
+
     def test_update_clear_body_with_empty_file(self) -> None:
         run(["update", "T-1", "-b", "has body"], self.repo)
         empty = self.repo / "empty.txt"
