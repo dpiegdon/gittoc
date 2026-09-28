@@ -1,0 +1,11 @@
+{
+  "body": "Branch names may contain '@' (only '@{' is forbidden). ref 'release@2024@abc1234' yields hash '2024@abc1234' and every event shows as a dead '?' pointer. Use rsplit('@', 1).",
+  "created_at": "2026-09-28T20:39:29+00:00",
+  "id": "T-170",
+  "labels": [
+    "bug"
+  ],
+  "priority": 3,
+  "title": "ref_short_hash: split on last '@' so branch names containing '@' work",
+  "updated_at": "2026-09-28T20:39:29+00:00"
+}
