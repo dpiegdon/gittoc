@@ -284,6 +284,39 @@ class TestCreateAndList(GittocTestBase):
         ready_out = run(["unblocked", "--format", "compact"], self.repo)
         self.assertNotIn("T-2", ready_out)
 
+    def test_create_with_deps_is_one_commit_with_dependency_event(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Blocker task"], self.repo)
+        run(["new", "Dependent task", "-d", "T-1"], self.repo)
+        log = subprocess.run(
+            ["git", "-C", str(self.repo / ".git" / "gittoc"), "log", "--format=%s"],
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.splitlines()
+        self.assertEqual(len([s for s in log if "T-2" in s]), 1)
+        data = json.loads(run(["show", "T-2", "-a", "-f", "json"], self.repo))
+        kinds = [(e["kind"], e["text"]) for e in data["history"]]
+        self.assertEqual(kinds, [("created", "Dependent task"), ("dependency", "T-1")])
+
+    def test_create_with_missing_dep_creates_nothing(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Blocker task"], self.repo)
+        result = run_fail(["new", "Dependent task", "-d", "T-999"], self.repo)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("issue not found: T-999", result.stderr)
+        self.assertEqual(result.stdout.strip(), "")
+        self.assertNotIn("T-2", run(["list", "-a"], self.repo))
+        tracker_status = subprocess.run(
+            ["git", "-C", str(self.repo / ".git" / "gittoc"), "status", "--short"],
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+        self.assertEqual(tracker_status, "")
+        # Re-running with a valid dep mints T-2, not a duplicate-skipping T-3.
+        self.assertEqual(run(["new", "Dependent task", "-d", "T-1"], self.repo), "T-2")
+
     def test_list_alias_and_compact(self) -> None:
         run(["init"], self.repo)
         run(["new", "High priority task", "-p", "1"], self.repo)

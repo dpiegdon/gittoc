@@ -399,23 +399,40 @@ class Tracker:
         labels: list[str],
         priority: int,
         state: str = "open",
+        deps: list[str] | None = None,
     ) -> Issue:
-        """Create a new issue, write it to disk, append a created event, and commit."""
+        """Create a new issue, write it to disk, append a created event, and commit.
+
+        Dependencies are validated (every id must exist) before anything is
+        written, so an invalid ``-d`` aborts without persisting a ticket. A
+        brand-new issue has no dependents yet, so it cannot close a cycle. The
+        issue and its deps land in one commit; the event log still records the
+        same ``dependency`` event ``set_dependencies`` would have written.
+        """
+        priority = validate_priority(priority)
+        resolved_deps: list[str] = []
+        for dep_id in deps or []:
+            dep = validate_issue_id(dep_id)
+            self.find_issue_path(dep)
+            if dep not in resolved_deps:
+                resolved_deps.append(dep)
         timestamp = now_utc()
         issue = Issue(
             issue_id=self.next_issue_id(),
             title=title,
             body=body,
-            deps=(),
+            deps=tuple(sorted(resolved_deps, key=issue_number)),
             labels=tuple(labels),
             owner="",
-            priority=validate_priority(priority),
+            priority=priority,
             created_at=timestamp,
             updated_at=timestamp,
             state=state,
         )
         self.write_issue(issue)
         self.events.append(issue, "created", issue.title)
+        if resolved_deps:
+            self.events.append(issue, "dependency", " ".join(resolved_deps))
         self.commit_if_needed(f"Add issue {issue.issue_id}: {issue.title}")
         return issue
 

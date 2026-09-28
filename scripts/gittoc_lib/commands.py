@@ -257,11 +257,12 @@ def cmd_new(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     _auto_pull(tracker)
     issue = tracker.create_issue(
-        args.title, body or "", parse_labels(args.label), args.priority
+        args.title,
+        body or "",
+        parse_labels(args.label),
+        args.priority,
+        deps=parse_issue_ids(args.dep),
     )
-    deps = parse_issue_ids(args.dep)
-    if deps:
-        tracker.set_dependencies(issue.issue_id, deps)
     print(issue.issue_id)
     _auto_push(tracker)
     return 0
