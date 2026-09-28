@@ -2,3 +2,4 @@
 {"actor": "user", "at": "2026-09-28T20:40:57+00:00", "kind": "claimed", "ref": "worktree-agent-a00fd4b0c10ad11d1@22fd7b0", "text": "user"}
 {"actor": "user", "at": "2026-09-28T20:45:33+00:00", "kind": "note", "ref": "worktree-agent-a00fd4b0c10ad11d1@73eb0e8", "text": "Tracker._issue_state now returns None for a missing issue file (no SystemExit); dependency_closed(issue_id, dep_id) treats a missing dep as unresolved, warns once per (issue, dep) pair on stderr naming both tickets and pointing at fsck. list/summary/unblocked/resume/claim no longer abort; fsck's 'dangling dependency' error is unchanged. Two e2e tests added in TestDependenciesAndReady. Full scripts/dev/check green (160 tests)."}
 {"actor": "user", "at": "2026-09-28T20:50:19+00:00", "kind": "closed", "ref": "main@cfe2b84", "text": ""}
+{"actor": "user", "at": "2026-09-28T20:50:19+00:00", "kind": "note", "ref": "main@cfe2b84", "text": "cherry-picked to main as e8c9ae7"}
