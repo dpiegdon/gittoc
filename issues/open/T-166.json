@@ -1,0 +1,11 @@
+{
+  "body": "cmd_new commits the ticket, then set_dependencies raises for a missing/cyclic dep before the id is printed. Re-running creates a duplicate. Validate deps first and create with deps in one commit.",
+  "created_at": "2026-09-28T20:39:28+00:00",
+  "id": "T-166",
+  "labels": [
+    "bug"
+  ],
+  "priority": 2,
+  "title": "new -d: validate dependencies before creating and committing the issue",
+  "updated_at": "2026-09-28T20:39:28+00:00"
+}
