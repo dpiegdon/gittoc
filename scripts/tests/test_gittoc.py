@@ -769,6 +769,50 @@ class TestUpdate(GittocTestBase):
         summary = run(["summary"], self.repo)
         self.assertIn("blocked=1", summary)
 
+    def _history_kinds(self, issue_id: str) -> list[str]:
+        shown = json.loads(run(["show", issue_id, "-a", "-f", "json"], self.repo))
+        return [entry["kind"] for entry in shown["history"]]
+
+    def test_update_state_closed_records_closed_event(self) -> None:
+        """`update --state closed` must leave the same audit trail as `close`."""
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["update", "T-1", "--state", "closed", "-p", "1"], self.repo)
+        self.assertEqual(self._history_kinds("T-1"), ["created", "closed"])
+        self.assertIn("Close issue T-1", run(["log"], self.repo))
+        self.assertIn("closed=1", run(["summary"], self.repo))
+
+    def test_update_state_rejected_records_rejected_event(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["update", "T-1", "--state", "rejected"], self.repo)
+        self.assertEqual(self._history_kinds("T-1"), ["created", "rejected"])
+        self.assertIn("Reject issue T-1", run(["log"], self.repo))
+
+    def test_update_state_claimed_records_claimed_event(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["update", "T-1", "--state", "claimed", "--owner", "tester"], self.repo)
+        shown = json.loads(run(["show", "T-1", "-a", "-f", "json"], self.repo))
+        claimed = [e for e in shown["history"] if e["kind"] == "claimed"]
+        self.assertEqual(len(claimed), 1)
+        self.assertEqual(claimed[0]["text"], "tester")
+        self.assertIn("Claim issue T-1 for tester", run(["log"], self.repo))
+
+    def test_update_field_only_records_updated_event(self) -> None:
+        """Non-transition edits, including on a closed ticket, stay 'updated'."""
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["close", "T-1"], self.repo)
+        run(["update", "T-1", "--title", "Renamed"], self.repo)
+        run(["update", "T-1", "--state", "closed", "-p", "2"], self.repo)
+        self.assertEqual(
+            self._history_kinds("T-1"), ["created", "closed", "updated", "updated"]
+        )
+        log = run(["log"], self.repo)
+        self.assertEqual(log.count("Close issue T-1"), 1)
+        self.assertEqual(log.count("Update issue T-1"), 2)
+
     def test_update_alias(self) -> None:
         """The 'up' alias maps to the 'update' command."""
         run(["init"], self.repo)

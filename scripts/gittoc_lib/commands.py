@@ -324,13 +324,7 @@ def cmd_claim(args: argparse.Namespace) -> int:
     for issue_id in issue_ids:
         issues.append(
             tracker.update_issue(
-                issue_id,
-                state="claimed",
-                owner=owner,
-                message=f"Claim issue {issue_id} for {owner}",
-                event_kind="claimed",
-                event_text=owner,
-                event_actor=owner,
+                issue_id, state="claimed", owner=owner, event_actor=owner
             )
         )
     print_issues(issues, tracker, args.format)
@@ -564,13 +558,7 @@ def cmd_close(args: argparse.Namespace) -> int:
     tracker = Tracker.open()
     _auto_pull(tracker)
     actor = args.actor or default_owner()
-    issue = tracker.update_issue(
-        args.issue_id,
-        state="closed",
-        message=f"Close issue {args.issue_id}",
-        event_kind="closed",
-        event_actor=actor,
-    )
+    issue = tracker.update_issue(args.issue_id, state="closed", event_actor=actor)
     print_issues([issue], tracker, args.format)
     _auto_push(tracker)
     return 0

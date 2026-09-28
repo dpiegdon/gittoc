@@ -593,12 +593,18 @@ class Tracker:
         owner: str | None = None,
         labels: list[str] | None = None,
         priority: int | None = None,
-        message: str | None = None,
-        event_kind: str = "updated",
         event_text: str = "",
         event_actor: str | None = None,
     ) -> Issue:
-        """Apply one or more field changes to an issue and commit the result."""
+        """Apply one or more field changes to an issue and commit the result.
+
+        The event kind and commit message follow the *state transition*, not
+        the calling command: moving to ``closed``/``rejected``/``claimed``
+        records that kind (with the matching commit message) whether it came
+        from ``close``/``reject``/``claim`` or from ``update --state``, so the
+        audit trail cannot be bypassed. Any other change records ``updated``
+        with *event_text*.
+        """
         issue, path = self.load_issue(issue_id)
         target_state = issue.state if state is None else state
         if target_state == "claimed":
@@ -648,23 +654,38 @@ class Tracker:
             ),
             updated_at=now_utc(),
         )
+        event_kind, event_text, message = self._transition_event(
+            issue, updated, event_text
+        )
         self.events.move_file(updated.issue_id, updated.state, path)
         self.write_issue(updated, previous_path=path)
         self.events.append(updated, event_kind, event_text, actor=event_actor)
-        self.commit_if_needed(
-            message or f"Update issue {updated.issue_id}", actor=event_actor
-        )
+        self.commit_if_needed(message, actor=event_actor)
         return updated
+
+    @staticmethod
+    def _transition_event(
+        before: Issue, after: Issue, event_text: str
+    ) -> tuple[str, str, str]:
+        """Return (event kind, event text, commit message) for an issue change.
+
+        Terminal and claim transitions get their own kind and commit message;
+        a (re-)claim also records the owner as the event text, mirroring the
+        ``claim`` command. Everything else is a plain ``updated`` event.
+        """
+        issue_id = after.issue_id
+        transitioned = after.state != before.state
+        if transitioned and after.state == "closed":
+            return "closed", "", f"Close issue {issue_id}"
+        if transitioned and after.state == "rejected":
+            return "rejected", "", f"Reject issue {issue_id}"
+        if after.state == "claimed" and (transitioned or after.owner != before.owner):
+            return "claimed", after.owner, f"Claim issue {issue_id} for {after.owner}"
+        return "updated", event_text, f"Update issue {issue_id}"
 
     def reject_issue(self, issue_id: str, *, actor: str | None = None) -> Issue:
         """Move an issue to the rejected state (won't-do / abandoned)."""
-        return self.update_issue(
-            issue_id,
-            state="rejected",
-            message=f"Reject issue {issue_id}",
-            event_kind="rejected",
-            event_actor=actor,
-        )
+        return self.update_issue(issue_id, state="rejected", event_actor=actor)
 
     def set_dependencies(self, issue_id: str, dep_ids: list[str]) -> Issue:
         """Add blocking dependencies to an issue, rejecting cycles."""
