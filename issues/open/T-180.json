@@ -1,0 +1,11 @@
+{
+  "body": "_issue_state (T-168) re-implements the STATE_ORDER scan that find_issue_path and EventLog.find already contain, and _would_introduce_cycle detects missing deps by catching SystemExit with a different warning. Build find_issue_path on _issue_state and use it in the cycle check.",
+  "created_at": "2026-09-28T21:01:40+00:00",
+  "id": "T-180",
+  "labels": [
+    "refactor"
+  ],
+  "priority": 4,
+  "title": "dedupe issue-state lookup: build find_issue_path and cycle check on _issue_state",
+  "updated_at": "2026-09-28T21:01:40+00:00"
+}
