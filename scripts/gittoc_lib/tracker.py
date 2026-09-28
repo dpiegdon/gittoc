@@ -51,6 +51,7 @@ class Tracker:
         self._state_cache: dict[str, str] = {}
         # Worktree paths written by the in-flight mutation (see begin_write).
         self._pending: list[Path] = []
+        self._warned_missing_deps: set[tuple[str, str]] = set()
         self.events = EventLog(self)
         self.remote = RemoteSync(self)
 
@@ -437,14 +438,19 @@ class Tracker:
         self.commit_if_needed(f"Add issue {issue.issue_id}: {issue.title}")
         return issue
 
-    def _issue_state(self, issue_id: str) -> str:
-        """Return the state of an issue, using cache when available."""
+    def _issue_state(self, issue_id: str) -> str | None:
+        """Return the state of an issue, or None if no issue file exists.
+
+        Uses the state cache when available. A missing issue is *not* cached,
+        so a file created later in the same process is still found.
+        """
         if issue_id in self._state_cache:
             return self._state_cache[issue_id]
-        path = self.find_issue_path(issue_id)
-        state = path.parent.name
-        self._state_cache[issue_id] = state
-        return state
+        for state in STATE_ORDER:
+            if self.issue_path(issue_id, state).exists():
+                self._state_cache[issue_id] = state
+                return state
+        return None
 
     def _build_state_cache(self) -> None:
         """Populate the state cache from all issue files on disk."""
@@ -453,14 +459,34 @@ class Tracker:
                 if not path.name.endswith(EVENT_SUFFIX):
                     self._state_cache[path.stem] = state
 
-    def dependency_closed(self, issue_id: str) -> bool:
-        """Return True if the named dependency issue is in a terminal state."""
-        return self._issue_state(issue_id) in TERMINAL_STATES
+    def dependency_closed(self, issue_id: str, dep_id: str) -> bool:
+        """Return True if *dep_id*, a dependency of *issue_id*, is in a terminal state.
+
+        A dependency with no issue file (after a bad merge or hand edit) is
+        treated as unresolved so the referencing issue is never reported as
+        ready; one warning per (issue, dep) pair is printed to stderr instead
+        of aborting every read command that touches readiness. ``fsck``
+        reports the same condition as a dangling dependency.
+        """
+        state = self._issue_state(dep_id)
+        if state is None:
+            key = (issue_id, dep_id)
+            if key not in self._warned_missing_deps:
+                self._warned_missing_deps.add(key)
+                print(
+                    col.warn(
+                        f"warning: {issue_id} depends on {dep_id}, which does "
+                        "not exist; treating as unresolved (run `gittoc fsck`)"
+                    ),
+                    file=sys.stderr,
+                )
+            return False
+        return state in TERMINAL_STATES
 
     def ready(self, issue: Issue) -> bool:
         """Return True if the issue is open and all its dependencies are closed."""
         return issue.state == "open" and all(
-            self.dependency_closed(dep_id) for dep_id in issue.deps
+            self.dependency_closed(issue.issue_id, dep_id) for dep_id in issue.deps
         )
 
     def ensure_claimable(self, issue: Issue) -> None:

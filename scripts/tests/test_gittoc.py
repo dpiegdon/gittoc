@@ -428,6 +428,62 @@ class TestDependenciesAndReady(GittocTestBase):
         with self.assertRaises(subprocess.CalledProcessError):
             run(["dep", issue1, issue2], self.repo)
 
+    def _inject_dangling_dep(self, issue_id: str, missing: str = "T-999") -> None:
+        """Hand-edit an open issue so it depends on a non-existent ticket."""
+        path = self.repo / ".git" / "gittoc" / "issues" / "open" / f"{issue_id}.json"
+        data = json.loads(path.read_text())
+        data["deps"] = [missing]
+        path.write_text(json.dumps(data, indent=2))
+
+    def test_dangling_dep_does_not_abort_read_commands(self) -> None:
+        """A dep with no issue file must not crash list/summary/unblocked/resume."""
+        run(["init"], self.repo)
+        issue1 = run(["new", "Broken", "-p", "1"], self.repo)
+        issue2 = run(["new", "Fine", "-p", "2"], self.repo)
+        self._inject_dangling_dep(issue1)
+
+        proc = subprocess.run(
+            [str(CLI), "list"],
+            cwd=str(self.repo),
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        self.assertIn(issue1, proc.stdout)
+        self.assertIn(issue2, proc.stdout)
+        # one warning naming both the referencing ticket and the missing dep
+        self.assertEqual(proc.stderr.count("warning:"), 1)
+        self.assertIn(f"{issue1} depends on T-999", proc.stderr)
+        self.assertIn("fsck", proc.stderr)
+
+        summary = json.loads(run(["summary", "-f", "json"], self.repo))
+        self.assertEqual(summary["open"], 2)
+        self.assertEqual(summary["ready"], 1)
+
+        ready = run(["unblocked"], self.repo)
+        self.assertIn(issue2, ready)
+        self.assertNotIn(issue1, ready)
+
+        resumed = json.loads(run(["resume", "-f", "json"], self.repo))
+        self.assertEqual(resumed["id"], issue2)
+
+        # fsck still reports the dangling dependency as an error
+        fsck = run_fail(["fsck"], self.repo)
+        self.assertNotEqual(fsck.returncode, 0)
+        self.assertIn("dangling dependency on T-999", fsck.stdout + fsck.stderr)
+
+    def test_dangling_dep_blocks_claim_with_clear_message(self) -> None:
+        run(["init"], self.repo)
+        issue1 = run(["new", "Broken"], self.repo)
+        self._inject_dangling_dep(issue1)
+        proc = run_fail(["claim", issue1, "--owner", "tester"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("cannot claim non-ready issue", proc.stderr)
+        self.assertIn(f"{issue1} depends on T-999", proc.stderr)
+        # claiming an unrelated healthy ticket still works
+        issue2 = run(["new", "Fine"], self.repo)
+        run(["claim", issue2, "--owner", "tester"], self.repo)
+
 
 class TestClaimWorkflow(GittocTestBase):
     def test_claim_and_show(self) -> None:
