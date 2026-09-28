@@ -8,5 +8,5 @@
   "owner": "user",
   "priority": 2,
   "title": "setup: refusal check misdetects a fresh vendored clone when run from inside it",
-  "updated_at": "2026-09-28T21:07:35+00:00"
+  "updated_at": "2026-09-28T21:08:31+00:00"
 }
