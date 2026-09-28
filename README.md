@@ -30,6 +30,11 @@ echo '.agents/skills/gittoc/' >> .git/info/exclude
 The tool stays local to your checkout — invisible to git, never pushed. Each
 collaborator who wants gittoc installs it themselves the same way.
 
+`setup` strips the vendored clone of its own `.git` and dev-only files. It
+refuses to run on anything that is not a pristine clone (local branches,
+uncommitted changes or stashes), so it cannot destroy a checkout you are
+developing gittoc in.
+
 
 ## Repository
 
