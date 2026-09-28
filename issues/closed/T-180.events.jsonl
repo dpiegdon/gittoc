@@ -1,3 +1,4 @@
 {"actor": "user", "at": "2026-09-28T21:01:40+00:00", "kind": "created", "ref": "main@cfe2b84", "text": "dedupe issue-state lookup: build find_issue_path and cycle check on _issue_state"}
 {"actor": "user", "at": "2026-09-28T21:10:01+00:00", "kind": "claimed", "ref": "main@c3d2c12", "text": "user"}
 {"actor": "user", "at": "2026-09-28T21:11:05+00:00", "kind": "closed", "ref": "main@14f6c5c", "text": ""}
+{"actor": "user", "at": "2026-09-28T21:11:06+00:00", "kind": "note", "ref": "main@14f6c5c", "text": "on main as fc3d5a6"}
