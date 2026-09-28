@@ -1,2 +1,3 @@
 {"actor": "user", "at": "2026-09-28T21:01:40+00:00", "kind": "created", "ref": "main@cfe2b84", "text": "explicit --state / claim / close on a no-op transition must still record the requested kind"}
 {"actor": "user", "at": "2026-09-28T21:05:17+00:00", "kind": "claimed", "ref": "main@142775a", "text": "user"}
+{"actor": "user", "at": "2026-09-28T21:06:59+00:00", "kind": "closed", "ref": "main@6f6d092", "text": ""}
