@@ -5,7 +5,8 @@
   "labels": [
     "bug"
   ],
+  "owner": "user",
   "priority": 2,
   "title": "new -d: validate dependencies before creating and committing the issue",
-  "updated_at": "2026-09-28T20:39:28+00:00"
+  "updated_at": "2026-09-28T20:40:57+00:00"
 }

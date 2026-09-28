@@ -1,1 +1,2 @@
 {"actor": "user", "at": "2026-09-28T20:39:28+00:00", "kind": "created", "ref": "main@41c0e7b", "text": "new -d: validate dependencies before creating and committing the issue"}
+{"actor": "user", "at": "2026-09-28T20:40:57+00:00", "kind": "claimed", "ref": "worktree-agent-a276c18d28d6aefea@22fd7b0", "text": "user"}
