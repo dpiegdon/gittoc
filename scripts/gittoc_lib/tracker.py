@@ -319,10 +319,7 @@ class Tracker:
     def write_issue(self, issue: Issue, previous_path: Path | None = None) -> Path:
         """Write the issue JSON to disk, removing the old path if it has moved."""
         path = self.issue_path(issue.issue_id, issue.state)
-        if previous_path and previous_path != path:
-            self.begin_write(path, previous_path)
-        else:
-            self.begin_write(path)
+        self.begin_write(*(p for p in (path, previous_path) if p is not None))
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
             json.dumps(issue.to_record(), indent=2, sort_keys=True) + "\n",
