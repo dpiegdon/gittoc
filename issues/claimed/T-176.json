@@ -5,7 +5,8 @@
   "labels": [
     "bug"
   ],
+  "owner": "user",
   "priority": 2,
   "title": "explicit --state / claim / close on a no-op transition must still record the requested kind",
-  "updated_at": "2026-09-28T21:01:40+00:00"
+  "updated_at": "2026-09-28T21:05:17+00:00"
 }
