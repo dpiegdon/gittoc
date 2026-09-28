@@ -6,7 +6,8 @@
     "bug",
     "ux"
   ],
+  "owner": "user",
   "priority": 3,
   "title": "resolve relative -F FILE paths against GIT_PREFIX under the git toc alias",
-  "updated_at": "2026-09-28T20:39:36+00:00"
+  "updated_at": "2026-09-28T20:40:58+00:00"
 }
