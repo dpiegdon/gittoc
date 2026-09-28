@@ -2631,6 +2631,25 @@ class TestEventRef(GittocTestBase):
         notes = run(["show", "T-1", "-n"], self.repo)
         self.assertRegex(notes, r"note#1 \([0-9a-f]+\) dev: a note")
 
+    def test_ref_on_branch_containing_at_sign_is_live(self) -> None:
+        """A branch name with '@' must not corrupt the surfaced commit hash."""
+        subprocess.run(
+            ["git", "checkout", "-q", "-b", "release@2024"],
+            cwd=self.repo,
+            check=True,
+            capture_output=True,
+        )
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["note", "T-1", "a note", "--actor", "dev"], self.repo)
+        shown = json.loads(run(["show", "T-1", "-a", "-f", "json"], self.repo))
+        self.assertTrue(
+            all(e["ref"].startswith("release@2024@") for e in shown["history"])
+        )
+        notes = run(["show", "T-1", "-n"], self.repo)
+        self.assertRegex(notes, r"note#1 \([0-9a-f]+\) dev: a note")
+        self.assertNotIn("?)", notes)
+
     def test_missing_objects_detects_orphan(self) -> None:
         run(["init"], self.repo)
         common = import_lib("common")
@@ -2671,6 +2690,9 @@ class TestRenderUnit(unittest.TestCase):
         self.assertEqual(common.ref_short_hash("main@abc1234"), "abc1234")
         self.assertEqual(common.ref_short_hash("abc1234"), "abc1234")
         self.assertEqual(common.ref_short_hash(""), "")
+        # branch names may contain "@"; only the last one separates the hash
+        self.assertEqual(common.ref_short_hash("release@2024@abc1234"), "abc1234")
+        self.assertEqual(common.ref_short_hash("a@b@c@abc1234"), "abc1234")
 
     def test_live_ref_rendered_without_marker(self) -> None:
         render = import_lib("render")

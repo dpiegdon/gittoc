@@ -209,7 +209,9 @@ def ref_short_hash(ref: str) -> str:
     """
     if not ref:
         return ""
-    return ref.split("@", 1)[1] if "@" in ref else ref
+    # Branch names may themselves contain "@" (only "@{" is forbidden), so
+    # the hash is whatever follows the *last* separator.
+    return ref.rsplit("@", 1)[-1]
 
 
 def missing_objects(repo: Path, candidates: Iterable[str]) -> set[str]:
