@@ -6,7 +6,8 @@
     "bug",
     "ux"
   ],
+  "owner": "user",
   "priority": 3,
   "title": "reject empty titles and empty inline notes",
-  "updated_at": "2026-09-28T20:39:29+00:00"
+  "updated_at": "2026-09-28T20:40:58+00:00"
 }
