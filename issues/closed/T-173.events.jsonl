@@ -1,3 +1,4 @@
 {"actor": "user", "at": "2026-09-28T20:39:36+00:00", "kind": "created", "ref": "main@41c0e7b", "text": "resolve relative -F FILE paths against GIT_PREFIX under the git toc alias"}
 {"actor": "user", "at": "2026-09-28T20:40:58+00:00", "kind": "claimed", "ref": "worktree-agent-a3531c2c234d491f0@22fd7b0", "text": "user"}
 {"actor": "user", "at": "2026-09-28T20:46:55+00:00", "kind": "note", "ref": "worktree-agent-a3531c2c234d491f0@2b94bb6", "text": "Fixed in worktree branch: resolve_text_input joins a non-stdin file path onto $GIT_PREFIX (empty when unset, so direct invocations are unchanged; absolute paths are unaffected by Path join). Tests: TestFileAndStdinInput.test_relative_file_resolved_against_git_prefix (same-named file at top-level must not be read) and test_absolute_file_unaffected_by_git_prefix. Full suite green (162 tests)."}
+{"actor": "user", "at": "2026-09-28T20:49:16+00:00", "kind": "closed", "ref": "main@62b5e9e", "text": ""}
