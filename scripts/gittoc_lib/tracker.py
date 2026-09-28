@@ -673,7 +673,7 @@ class Tracker:
             updated_at=now_utc(),
         )
         event_kind, event_text, message = self._transition_event(
-            issue, updated, event_text
+            issue, updated, state, event_text
         )
         self.events.move_file(updated.issue_id, updated.state, path)
         self.write_issue(updated, previous_path=path)
@@ -683,21 +683,26 @@ class Tracker:
 
     @staticmethod
     def _transition_event(
-        before: Issue, after: Issue, event_text: str
+        before: Issue, after: Issue, requested_state: str | None, event_text: str
     ) -> tuple[str, str, str]:
         """Return (event kind, event text, commit message) for an issue change.
 
-        Terminal and claim transitions get their own kind and commit message;
-        a (re-)claim also records the owner as the event text, mirroring the
-        ``claim`` command. Everything else is a plain ``updated`` event.
+        An explicitly requested ``closed``/``rejected``/``claimed`` state gets
+        its own kind and commit message even when the issue was already in
+        that state, so ``close``, ``reject`` and a same-owner re-``claim``
+        keep recording what was asked for. A (re-)claim records the owner as
+        the event text, mirroring the ``claim`` command, and an owner change
+        on a claimed issue counts as a claim. Everything else is a plain
+        ``updated`` event.
         """
         issue_id = after.issue_id
-        transitioned = after.state != before.state
-        if transitioned and after.state == "closed":
+        if requested_state == "closed":
             return "closed", "", f"Close issue {issue_id}"
-        if transitioned and after.state == "rejected":
+        if requested_state == "rejected":
             return "rejected", "", f"Reject issue {issue_id}"
-        if after.state == "claimed" and (transitioned or after.owner != before.owner):
+        if requested_state == "claimed" or (
+            after.state == "claimed" and after.owner != before.owner
+        ):
             return "claimed", after.owner, f"Claim issue {issue_id} for {after.owner}"
         return "updated", event_text, f"Update issue {issue_id}"
 

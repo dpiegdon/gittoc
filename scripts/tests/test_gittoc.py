@@ -782,6 +782,22 @@ class TestUpdate(GittocTestBase):
         self.assertIn("Close issue T-1", run(["log"], self.repo))
         self.assertIn("closed=1", run(["summary"], self.repo))
 
+    def test_noop_close_and_reclaim_keep_their_event_kind(self) -> None:
+        """Closing a closed ticket or re-claiming by the same owner still records
+        the requested kind, not a bare 'updated' event (T-176)."""
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["close", "T-1"], self.repo)
+        run(["close", "T-1"], self.repo)
+        self.assertEqual(self._history_kinds("T-1"), ["created", "closed", "closed"])
+        run(["new", "Other"], self.repo)
+        run(["claim", "T-2", "--owner", "alice"], self.repo)
+        run(["claim", "T-2", "--owner", "alice"], self.repo)
+        self.assertEqual(self._history_kinds("T-2"), ["created", "claimed", "claimed"])
+        log = run(["log"], self.repo)
+        self.assertEqual(log.count("Claim issue T-2 for alice"), 2)
+        self.assertNotIn("Update issue T-2", log)
+
     def test_update_state_rejected_records_rejected_event(self) -> None:
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)
@@ -800,18 +816,19 @@ class TestUpdate(GittocTestBase):
         self.assertIn("Claim issue T-1 for tester", run(["log"], self.repo))
 
     def test_update_field_only_records_updated_event(self) -> None:
-        """Non-transition edits, including on a closed ticket, stay 'updated'."""
+        """Field edits without a requested state stay 'updated', even on a closed
+        ticket; an explicit --state closed records 'closed' like `close` does."""
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)
         run(["close", "T-1"], self.repo)
         run(["update", "T-1", "--title", "Renamed"], self.repo)
         run(["update", "T-1", "--state", "closed", "-p", "2"], self.repo)
         self.assertEqual(
-            self._history_kinds("T-1"), ["created", "closed", "updated", "updated"]
+            self._history_kinds("T-1"), ["created", "closed", "updated", "closed"]
         )
         log = run(["log"], self.repo)
-        self.assertEqual(log.count("Close issue T-1"), 1)
-        self.assertEqual(log.count("Update issue T-1"), 2)
+        self.assertEqual(log.count("Close issue T-1"), 2)
+        self.assertEqual(log.count("Update issue T-1"), 1)
 
     def test_update_alias(self) -> None:
         """The 'up' alias maps to the 'update' command."""
