@@ -56,15 +56,18 @@ class EventLog:
         if not previous_event.exists():
             return
         target = self.path(issue_id, new_state)
+        if previous_event == target:
+            return
+        self.tracker.begin_write(previous_event, target)
         target.parent.mkdir(parents=True, exist_ok=True)
-        if previous_event != target:
-            previous_event.rename(target)
+        previous_event.rename(target)
 
     def append(
         self, issue: Issue, kind: str, text: str = "", actor: str | None = None
     ) -> None:
         """Append a timestamped event entry to the issue's event log."""
         path = self.path(issue.issue_id, issue.state)
+        self.tracker.begin_write(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         entry = {
             "actor": actor or default_owner(),

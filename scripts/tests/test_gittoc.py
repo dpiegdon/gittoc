@@ -732,6 +732,88 @@ class TestWorktreeIntegrity(GittocTestBase):
         self.assertIn(str(self.repo), worktree_entry)
 
 
+class TestStaleTracker(GittocTestBase):
+    """Optimistic locking: a lost race never leaves partial state in the worktree."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        run(["init"], self.repo)
+        run(["new", "host issue"], self.repo)
+        self.checkout = self.repo / ".git" / "gittoc"
+        tracker_mod = import_lib("tracker")
+        self.StaleTrackerError = tracker_mod.StaleTrackerError
+        self.tracker = tracker_mod.Tracker(self.repo, self.checkout)
+
+    def tracker_git(self, *args: str) -> str:
+        return subprocess.run(
+            ["git", "-C", str(self.checkout), *args],
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+
+    def event_texts(self, state: str = "open") -> list[str]:
+        path = self.checkout / "issues" / state / "T-1.events.jsonl"
+        if not path.exists():
+            return []
+        return [
+            json.loads(line)["text"]
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+
+    def test_stale_detected_before_anything_is_written(self) -> None:
+        # Another process commits between open() and our write.
+        run(["note", "T-1", "theirs"], self.repo)
+        with self.assertRaises(self.StaleTrackerError):
+            self.tracker.add_note("T-1", "mine")
+        self.assertEqual(self.tracker_git("status", "--porcelain"), "")
+        self.assertEqual(self.event_texts(), ["host issue", "theirs"])
+        # The advised re-run applies the note exactly once.
+        run(["note", "T-1", "mine"], self.repo)
+        self.assertEqual(self.event_texts(), ["host issue", "theirs", "mine"])
+
+    def _commit_between_write_and_commit(self) -> None:
+        """Make the tracker move under us after our files are written."""
+        original = self.tracker.events.append
+
+        def append_then_race(*args, **kwargs):
+            original(*args, **kwargs)
+            self.tracker_git("commit", "-q", "--allow-empty", "-m", "other writer")
+
+        self.tracker.events.append = append_then_race  # type: ignore[method-assign]
+
+    def test_lost_race_after_note_write_is_rolled_back(self) -> None:
+        self._commit_between_write_and_commit()
+        with self.assertRaises(self.StaleTrackerError):
+            self.tracker.add_note("T-1", "mine")
+        self.assertEqual(self.tracker_git("status", "--porcelain"), "")
+        self.assertEqual(self.event_texts(), ["host issue"])
+        # A later unrelated commit must not sweep in a leftover note line.
+        run(["note", "T-1", "later"], self.repo)
+        self.assertEqual(self.event_texts(), ["host issue", "later"])
+
+    def test_lost_race_after_state_move_is_rolled_back(self) -> None:
+        self._commit_between_write_and_commit()
+        with self.assertRaises(self.StaleTrackerError):
+            self.tracker.update_issue("T-1", state="blocked")
+        self.assertEqual(self.tracker_git("status", "--porcelain"), "")
+        issues = self.checkout / "issues"
+        self.assertTrue((issues / "open" / "T-1.json").exists())
+        self.assertTrue((issues / "open" / "T-1.events.jsonl").exists())
+        self.assertFalse((issues / "blocked" / "T-1.json").exists())
+        self.assertFalse((issues / "blocked" / "T-1.events.jsonl").exists())
+        self.assertEqual(self.event_texts(), ["host issue"])
+
+    def test_lost_race_after_create_is_rolled_back(self) -> None:
+        self._commit_between_write_and_commit()
+        with self.assertRaises(self.StaleTrackerError):
+            self.tracker.create_issue("ghost", "", [], 3)
+        self.assertEqual(self.tracker_git("status", "--porcelain"), "")
+        self.assertFalse((self.checkout / "issues" / "open" / "T-2.json").exists())
+        self.assertEqual(run(["new", "real"], self.repo), "T-2")
+
+
 class TestExternalWorktree(GittocTestBase):
     """Verify gittoc works from git linked worktrees (created with `git worktree add`)."""
 

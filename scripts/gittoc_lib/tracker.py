@@ -48,6 +48,8 @@ class Tracker:
         self.checkout = checkout
         self.base_head = self.head()
         self._state_cache: dict[str, str] = {}
+        # Worktree paths written by the in-flight mutation (see begin_write).
+        self._pending: list[Path] = []
         self.events = EventLog(self)
         self.remote = RemoteSync(self)
 
@@ -206,6 +208,45 @@ class Tracker:
                 "tracker changed during this command; re-run your command to retry"
             )
 
+    def begin_write(self, *paths: Path) -> None:
+        """Gate a worktree write: check staleness first, then record the paths.
+
+        Every writer (issue JSON, event log) calls this before touching disk.
+        The staleness check runs before the *first* write of a mutation, so a
+        tracker that another process committed to since ``open()`` is detected
+        before anything lands in the shared worktree. The recorded paths let
+        ``commit_if_needed`` roll the mutation back if the final pre-commit
+        check loses the race, so a stale error never leaks partial state.
+        """
+        if not self._pending:
+            self.ensure_not_stale()
+        self._pending.extend(paths)
+
+    def discard_pending(self) -> None:
+        """Restore every path recorded by begin_write to its HEAD content.
+
+        Tracked paths are checked out from HEAD (which also recreates files the
+        mutation deleted or moved); paths unknown to git are removed. Only the
+        paths this mutation touched are reverted, so another writer's
+        uncommitted files in the shared worktree are left alone.
+        """
+        paths = list(dict.fromkeys(self._pending))
+        self._pending.clear()
+        if not paths:
+            return
+        rel = [str(path.relative_to(self.checkout)) for path in paths]
+        listed = run_git(["ls-files", "--", *rel], cwd=self.checkout).stdout
+        tracked = {line for line in listed.splitlines() if line}
+        restore = [r for r in rel if r in tracked]
+        if restore:
+            run_git(["checkout", "-q", "HEAD", "--", *restore], cwd=self.checkout)
+        for r in rel:
+            if r not in tracked:
+                target = self.checkout / r
+                if target.exists():
+                    target.unlink()
+        self._state_cache.clear()
+
     def issues_root(self) -> Path:
         """Return the path to the issues root directory in the tracker worktree."""
         return self.checkout / ISSUES_ROOT
@@ -235,18 +276,30 @@ class Tracker:
         """Stage and commit any pending changes to the issues tree, if any exist."""
         proc = run_git(["status", "--porcelain", "--", "issues"], cwd=self.checkout)
         if not proc.stdout.strip():
+            self._pending.clear()
             return
-        self.ensure_not_stale()
+        try:
+            self.ensure_not_stale()
+        except StaleTrackerError:
+            # Lost the race after writing: undo our files so the next writer
+            # (or our own re-run) does not sweep them into an unrelated commit.
+            self.discard_pending()
+            raise
         run_git(["add", "issues"], cwd=self.checkout)
         commit_actor = actor or default_owner()
         run_git(
             ["commit", "-q", "-m", f"{message} ({commit_actor})"], cwd=self.checkout
         )
         self.base_head = self.head()
+        self._pending.clear()
 
     def write_issue(self, issue: Issue, previous_path: Path | None = None) -> Path:
         """Write the issue JSON to disk, removing the old path if it has moved."""
         path = self.issue_path(issue.issue_id, issue.state)
+        if previous_path and previous_path != path:
+            self.begin_write(path, previous_path)
+        else:
+            self.begin_write(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
             json.dumps(issue.to_record(), indent=2, sort_keys=True) + "\n",
