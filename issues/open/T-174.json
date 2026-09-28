@@ -1,0 +1,12 @@
+{
+  "body": "commit_if_needed runs `git add issues`, so files another process has written but not yet committed get swept into this commit under the wrong message/actor. The T-165 rollback only covers the loser. Stage only the paths recorded by begin_write.",
+  "created_at": "2026-09-28T21:01:39+00:00",
+  "id": "T-174",
+  "labels": [
+    "bug",
+    "reliability"
+  ],
+  "priority": 1,
+  "title": "commit_if_needed stages the whole issues tree, sweeping concurrent writers' files",
+  "updated_at": "2026-09-28T21:01:39+00:00"
+}
