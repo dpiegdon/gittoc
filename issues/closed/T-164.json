@@ -9,5 +9,5 @@
   "owner": "user",
   "priority": 1,
   "title": "setup: refuse to run inside the gittoc dev checkout (deletes .git)",
-  "updated_at": "2026-09-28T20:41:04+00:00"
+  "updated_at": "2026-09-28T20:46:34+00:00"
 }
