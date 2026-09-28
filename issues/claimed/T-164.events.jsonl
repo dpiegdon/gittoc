@@ -1,2 +1,3 @@
 {"actor": "user", "at": "2026-09-28T20:39:28+00:00", "kind": "created", "ref": "main@41c0e7b", "text": "setup: refuse to run inside the gittoc dev checkout (deletes .git)"}
 {"actor": "user", "at": "2026-09-28T20:41:04+00:00", "kind": "claimed", "ref": "worktree-agent-a36faad7bc425edc5@22fd7b0", "text": "user"}
+{"actor": "user", "at": "2026-09-28T20:43:54+00:00", "kind": "note", "ref": "worktree-agent-a36faad7bc425edc5@c93bc98", "text": "Fixed in scripts/setup: GIT_ROOTDIR is resolved (and validated) before the rm loop; setup now exits 1 when the gittoc dir is/contains the git top-level or lies outside it. New TestSetupScript class (3 tests) covers vendored install, dev-checkout refusal (from root and subdir), and non-git refusal. scripts/dev/check: 160 tests OK."}
