@@ -5,7 +5,8 @@
   "labels": [
     "ux"
   ],
+  "owner": "user",
   "priority": 4,
   "title": "cmd_new: validate title and dep ids before auto-pull",
-  "updated_at": "2026-09-28T21:01:40+00:00"
+  "updated_at": "2026-09-28T21:08:31+00:00"
 }
