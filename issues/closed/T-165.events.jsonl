@@ -2,3 +2,4 @@
 {"actor": "user", "at": "2026-09-28T20:40:57+00:00", "kind": "claimed", "ref": "worktree-agent-a276c18d28d6aefea@22fd7b0", "text": "user"}
 {"actor": "user", "at": "2026-09-28T20:45:24+00:00", "kind": "note", "ref": "worktree-agent-a276c18d28d6aefea@fec6340", "text": "Fixed on worktree branch: Tracker.begin_write gates every write (write_issue, EventLog.append/move_file) with ensure_not_stale before the first write and records touched paths; commit_if_needed calls discard_pending (git checkout HEAD for tracked paths, unlink for untracked) on a stale failure. Tests: TestStaleTracker (4 cases: pre-write detection + note/state-move/create rollback). scripts/dev/check: all green, 161 tests."}
 {"actor": "user", "at": "2026-09-28T20:48:34+00:00", "kind": "closed", "ref": "main@00e6513", "text": ""}
+{"actor": "user", "at": "2026-09-28T20:48:35+00:00", "kind": "note", "ref": "main@00e6513", "text": "cherry-picked to main as 4febda0"}
