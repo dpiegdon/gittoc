@@ -1,3 +1,4 @@
 {"actor": "user", "at": "2026-09-28T20:39:29+00:00", "kind": "created", "ref": "main@41c0e7b", "text": "reject empty titles and empty inline notes"}
 {"actor": "user", "at": "2026-09-28T20:40:58+00:00", "kind": "claimed", "ref": "worktree-agent-a3531c2c234d491f0@22fd7b0", "text": "user"}
 {"actor": "user", "at": "2026-09-28T20:45:19+00:00", "kind": "note", "ref": "worktree-agent-a3531c2c234d491f0@351514d", "text": "Fixed in worktree branch: common.validate_title() (rejects empty/whitespace-only, message \"title must not be empty\") called from Tracker.create_issue and update_issue; resolve_text_input now applies the allow_empty check to inline text too and treats whitespace-only as empty for notes. Bodies unchanged. Tests: TestFileAndStdinInput.test_empty_inline_note_rejected / test_empty_title_rejected. Full suite green (160 tests)."}
+{"actor": "user", "at": "2026-09-28T20:49:16+00:00", "kind": "closed", "ref": "main@62b5e9e", "text": ""}
