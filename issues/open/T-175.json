@@ -1,0 +1,12 @@
+{
+  "body": "discard_pending uses git ls-files (index) but restores via git checkout HEAD -- path; a path staged but absent from HEAD makes checkout fail, CalledProcessError masks StaleTrackerError and the partial write stays. Use git ls-tree HEAD for the tracked set.",
+  "created_at": "2026-09-28T21:01:40+00:00",
+  "id": "T-175",
+  "labels": [
+    "bug",
+    "reliability"
+  ],
+  "priority": 2,
+  "title": "discard_pending: decide trackedness from HEAD, not the index",
+  "updated_at": "2026-09-28T21:01:40+00:00"
+}
