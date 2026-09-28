@@ -2,3 +2,4 @@
 {"actor": "user", "at": "2026-09-28T20:40:57+00:00", "kind": "claimed", "ref": "worktree-agent-a276c18d28d6aefea@22fd7b0", "text": "user"}
 {"actor": "user", "at": "2026-09-28T20:46:59+00:00", "kind": "note", "ref": "worktree-agent-a276c18d28d6aefea@006b94c", "text": "Fixed on worktree branch: create_issue(deps=...) validates each dep exists before any write (a fresh issue cannot form a cycle), writes deps into the JSON, and appends 'created' then 'dependency <ids>' events in one commit, matching what set_dependencies records. cmd_new no longer calls set_dependencies. Tests: test_create_with_deps_is_one_commit_with_dependency_event, test_create_with_missing_dep_creates_nothing. scripts/dev/check all green, 163 tests."}
 {"actor": "user", "at": "2026-09-28T20:48:34+00:00", "kind": "closed", "ref": "main@00e6513", "text": ""}
+{"actor": "user", "at": "2026-09-28T20:48:35+00:00", "kind": "note", "ref": "main@00e6513", "text": "cherry-picked to main as 00e6513"}
