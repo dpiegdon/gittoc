@@ -202,6 +202,32 @@ class TestSetupScript(GittocTestBase):
         proc = self.run_setup(gittoc_dir, self.repo)
         self.assertEqual(proc.returncode, 0, proc.stderr)
 
+    def test_works_without_gnu_realpath(self) -> None:
+        """setup must not depend on GNU `realpath --relative-to` (T-172)."""
+        shim_dir = Path(self.tempdir.name) / "bsd-bin"
+        shim_dir.mkdir()
+        shim = shim_dir / "realpath"
+        shim.write_text(
+            "#!/bin/sh\necho 'realpath: illegal option -- -' >&2\nexit 1\n",
+            encoding="utf-8",
+        )
+        shim.chmod(0o755)
+        env = dict(os.environ)
+        env["PATH"] = f"{shim_dir}{os.pathsep}{env.get('PATH', '')}"
+        gittoc_dir = self.vendor_tree(self.repo / self.VENDOR_REL)
+        proc = self.run_setup(gittoc_dir, self.repo, env=env)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        alias = subprocess.run(
+            ["git", "config", "alias.toc"],
+            cwd=self.repo,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+        self.assertEqual(alias, f"!./{self.VENDOR_REL.as_posix()}/scripts/gittoc")
+        link = self.repo / ".claude" / "skills" / "gittoc"
+        self.assertTrue((link / "SKILL.md").exists())
+
     def test_refuses_to_run_inside_gittoc_checkout(self) -> None:
         """Running setup in the gittoc dev repo itself must not delete .git (T-164)."""
         dev = Path(self.tempdir.name) / "gittoc-dev"

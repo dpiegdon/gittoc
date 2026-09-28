@@ -35,7 +35,10 @@ case "$GITTOC_DIR" in
 		exit 1
 		;;
 esac
-GITTOC_DIR_REL="$(realpath --relative-to="$GIT_ROOTDIR" "$GITTOC_DIR")"
+# Both paths are physical (pwd -P / rev-parse) and GITTOC_DIR is known to be
+# below GIT_ROOTDIR, so plain POSIX prefix stripping gives the relative path
+# without GNU-only `realpath --relative-to` (absent on macOS/BSD).
+GITTOC_DIR_REL="${GITTOC_DIR#"$GIT_ROOTDIR"/}"
 
 # remove unneeded files that may befuddle agents or users
 # (scripts/dev is the dev-only lint/test pipeline + its venv; installs don't need it)
