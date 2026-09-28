@@ -1,0 +1,12 @@
+{
+  "body": "resolve_text_input enforces allow_empty only on the -F path; inline '' is accepted. create_issue/update_issue do not validate the title. Apply the check to inline text and reject blank/whitespace titles.",
+  "created_at": "2026-09-28T20:39:29+00:00",
+  "id": "T-171",
+  "labels": [
+    "bug",
+    "ux"
+  ],
+  "priority": 3,
+  "title": "reject empty titles and empty inline notes",
+  "updated_at": "2026-09-28T20:39:29+00:00"
+}
