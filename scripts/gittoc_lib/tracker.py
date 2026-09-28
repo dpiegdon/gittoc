@@ -696,10 +696,17 @@ class Tracker:
         ``updated`` event.
         """
         issue_id = after.issue_id
+        # Field edits made alongside a terminal transition must stay visible
+        # in the event log, so keep the caller's text when any changed.
+        fields_changed = any(
+            getattr(before, field) != getattr(after, field)
+            for field in ("title", "body", "labels", "priority")
+        )
+        text = event_text if fields_changed else ""
         if requested_state == "closed":
-            return "closed", "", f"Close issue {issue_id}"
+            return "closed", text, f"Close issue {issue_id}"
         if requested_state == "rejected":
-            return "rejected", "", f"Reject issue {issue_id}"
+            return "rejected", text, f"Reject issue {issue_id}"
         if requested_state == "claimed" or (
             after.state == "claimed" and after.owner != before.owner
         ):

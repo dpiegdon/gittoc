@@ -798,6 +798,22 @@ class TestUpdate(GittocTestBase):
         self.assertEqual(log.count("Claim issue T-2 for alice"), 2)
         self.assertNotIn("Update issue T-2", log)
 
+    def test_close_with_field_edits_keeps_event_text(self) -> None:
+        """`update --state closed` plus field edits records both (T-177)."""
+        run(["init"], self.repo)
+        run(["new", "Task"], self.repo)
+        run(["update", "T-1", "--state", "closed", "--title", "Renamed"], self.repo)
+        shown = json.loads(run(["show", "T-1", "-a", "-f", "json"], self.repo))
+        closed = [e for e in shown["history"] if e["kind"] == "closed"]
+        self.assertEqual(len(closed), 1)
+        self.assertEqual(closed[0]["text"], "fields updated")
+        # a plain close still has empty text
+        run(["new", "Other"], self.repo)
+        run(["close", "T-2"], self.repo)
+        shown = json.loads(run(["show", "T-2", "-a", "-f", "json"], self.repo))
+        closed = [e for e in shown["history"] if e["kind"] == "closed"]
+        self.assertEqual(closed[0]["text"], "")
+
     def test_update_state_rejected_records_rejected_event(self) -> None:
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)
