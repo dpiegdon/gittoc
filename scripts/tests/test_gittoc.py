@@ -957,6 +957,17 @@ class TestStaleTracker(GittocTestBase):
         run(["note", "T-1", "later"], self.repo)
         self.assertEqual(self.event_texts(), ["host issue", "later"])
 
+    def test_commit_stages_only_own_paths(self) -> None:
+        """Another writer's uncommitted files must not be swept into our commit (T-174)."""
+        stray = self.checkout / "issues" / "open" / "T-9.json"
+        stray.write_text('{"id": "T-9", "title": "in flight", "created_at": "x"}\n')
+        run(["note", "T-1", "mine"], self.repo)
+        committed = self.tracker_git("show", "--name-only", "--format=", "HEAD")
+        self.assertEqual(committed.splitlines(), ["issues/open/T-1.events.jsonl"])
+        self.assertEqual(
+            self.tracker_git("status", "--porcelain"), "?? issues/open/T-9.json"
+        )
+
     def test_lost_race_after_state_move_is_rolled_back(self) -> None:
         self._commit_between_write_and_commit()
         with self.assertRaises(self.StaleTrackerError):

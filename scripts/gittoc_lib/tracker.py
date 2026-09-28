@@ -216,9 +216,9 @@ class Tracker:
         Every writer (issue JSON, event log) calls this before touching disk.
         The staleness check runs before the *first* write of a mutation, so a
         tracker that another process committed to since ``open()`` is detected
-        before anything lands in the shared worktree. The recorded paths let
-        ``commit_if_needed`` roll the mutation back if the final pre-commit
-        check loses the race, so a stale error never leaks partial state.
+        before anything lands in the shared worktree. The recorded paths are
+        the only ones ``commit_if_needed`` stages, and they let it roll the
+        mutation back if the final pre-commit check loses the race.
         """
         if not self._pending:
             self.ensure_not_stale()
@@ -232,11 +232,10 @@ class Tracker:
         paths this mutation touched are reverted, so another writer's
         uncommitted files in the shared worktree are left alone.
         """
-        paths = list(dict.fromkeys(self._pending))
+        rel = self._pending_rel()
         self._pending.clear()
-        if not paths:
+        if not rel:
             return
-        rel = [str(path.relative_to(self.checkout)) for path in paths]
         listed = run_git(["ls-files", "--", *rel], cwd=self.checkout).stdout
         tracked = {line for line in listed.splitlines() if line}
         restore = [r for r in rel if r in tracked]
@@ -274,9 +273,25 @@ class Tracker:
                 return path
         raise SystemExit(f"issue not found: {issue_id}")
 
+    def _pending_rel(self) -> list[str]:
+        """Return the unique worktree-relative paths recorded by begin_write."""
+        return [
+            str(path.relative_to(self.checkout))
+            for path in dict.fromkeys(self._pending)
+        ]
+
     def commit_if_needed(self, message: str, actor: str | None = None) -> None:
-        """Stage and commit any pending changes to the issues tree, if any exist."""
-        proc = run_git(["status", "--porcelain", "--", "issues"], cwd=self.checkout)
+        """Stage and commit the paths this mutation wrote, if any changed.
+
+        Only the paths recorded by ``begin_write`` are staged. The shared
+        worktree may hold another process's not-yet-committed files, and
+        staging the whole ``issues`` tree would sweep those into this commit
+        under the wrong message and actor.
+        """
+        rel = self._pending_rel()
+        if not rel:
+            return
+        proc = run_git(["status", "--porcelain", "--", *rel], cwd=self.checkout)
         if not proc.stdout.strip():
             self._pending.clear()
             return
@@ -287,7 +302,7 @@ class Tracker:
             # (or our own re-run) does not sweep them into an unrelated commit.
             self.discard_pending()
             raise
-        run_git(["add", "issues"], cwd=self.checkout)
+        run_git(["add", "-A", "--", *rel], cwd=self.checkout)
         commit_actor = actor or default_owner()
         run_git(
             ["commit", "-q", "-m", f"{message} ({commit_actor})"], cwd=self.checkout
