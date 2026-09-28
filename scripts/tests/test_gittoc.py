@@ -132,6 +132,107 @@ class TestInitAndRemote(GittocTestBase):
         self.assertFalse(remote_status["remote_branch_exists"])
 
 
+class TestSetupScript(GittocTestBase):
+    """End-to-end tests for the vendored-install script ``scripts/setup``.
+
+    The script deletes dev-only files (including ``.git``) from the gittoc
+    directory it lives in, so every test works on a throwaway copy of this
+    repository's tree with a *fake* ``.git`` directory standing in for a
+    fresh ``git clone``.
+    """
+
+    VENDOR_REL = Path(".agents") / "skills" / "gittoc"
+
+    def vendor_tree(self, target: Path) -> Path:
+        """Copy the gittoc source tree to target with a fake .git directory."""
+        shutil.copytree(
+            ROOT.parent,
+            target,
+            ignore=shutil.ignore_patterns(
+                ".git", ".claude", "dev", "__pycache__", ".pytest_cache", "*.swp"
+            ),
+        )
+        (target / ".git").mkdir()
+        (target / ".git" / "MARKER").write_text("fake clone\n", encoding="utf-8")
+        return target
+
+    def run_setup(
+        self, gittoc_dir: Path, cwd: Path, env: dict[str, str] | None = None
+    ) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [str(gittoc_dir / "scripts" / "setup")],
+            cwd=str(cwd),
+            text=True,
+            capture_output=True,
+            check=False,
+            env=env,
+        )
+
+    def test_vendored_install(self) -> None:
+        gittoc_dir = self.vendor_tree(self.repo / self.VENDOR_REL)
+        proc = self.run_setup(gittoc_dir, self.repo)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        # dev-only files are gone, the vendored tool itself is intact
+        self.assertFalse((gittoc_dir / ".git").exists())
+        self.assertFalse((gittoc_dir / "AGENTS.md").exists())
+        self.assertTrue((gittoc_dir / "scripts" / "gittoc").exists())
+        # the host repo's own .git is untouched
+        self.assertTrue((self.repo / ".git").is_dir())
+        alias = subprocess.run(
+            ["git", "config", "alias.toc"],
+            cwd=self.repo,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+        self.assertEqual(alias, f"!./{self.VENDOR_REL.as_posix()}/scripts/gittoc")
+        link = self.repo / ".claude" / "skills" / "gittoc"
+        self.assertTrue(link.is_symlink())
+        self.assertTrue((link / "SKILL.md").exists())
+        # the tracker was initialized and works through the alias
+        out = subprocess.run(
+            ["git", "toc", "summary"],
+            cwd=self.repo,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout
+        self.assertIn("open=0", out)
+        # idempotent: a second run succeeds and changes nothing
+        proc = self.run_setup(gittoc_dir, self.repo)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+    def test_refuses_to_run_inside_gittoc_checkout(self) -> None:
+        """Running setup in the gittoc dev repo itself must not delete .git (T-164)."""
+        dev = Path(self.tempdir.name) / "gittoc-dev"
+        self.vendor_tree(dev)
+        shutil.rmtree(dev / ".git")
+        subprocess.run(["git", "init"], cwd=dev, check=True, capture_output=True)
+        proc = self.run_setup(dev, dev)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("refusing to run setup inside the gittoc repository", proc.stderr)
+        self.assertTrue((dev / ".git").is_dir())
+        self.assertTrue((dev / "AGENTS.md").exists())
+        # the repository is still a working git repository
+        subprocess.run(["git", "status"], cwd=dev, check=True, capture_output=True)
+        # ...also when invoked from a subdirectory of the dev checkout
+        proc = self.run_setup(dev, dev / "scripts")
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertTrue((dev / ".git").is_dir())
+
+    def test_refuses_outside_git_repo(self) -> None:
+        plain = Path(self.tempdir.name) / "plain"
+        plain.mkdir()
+        gittoc_dir = self.vendor_tree(plain / "gittoc")
+        env = dict(os.environ)
+        env["GIT_CEILING_DIRECTORIES"] = self.tempdir.name
+        proc = self.run_setup(gittoc_dir, plain, env=env)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("not inside a git repository", proc.stderr)
+        self.assertTrue((gittoc_dir / ".git" / "MARKER").exists())
+        self.assertTrue((gittoc_dir / "AGENTS.md").exists())
+
+
 class TestCreateAndList(GittocTestBase):
     def test_create_issues(self) -> None:
         run(["init"], self.repo)

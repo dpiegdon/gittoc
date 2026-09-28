@@ -12,7 +12,30 @@
 #   --autopush    enable auto-push/pull on every mutating command
 #                 (git config gittoc.autopush true)
 
-GITTOC_DIR="$(cd "$(dirname "$0")/../" && pwd)"
+GITTOC_DIR="$(cd "$(dirname "$0")/../" && pwd -P)"
+
+# identify paths in relation to parent git repo -- BEFORE deleting anything,
+# so that running setup inside the gittoc development checkout itself (where
+# the host repo *is* the gittoc repo) cannot wipe that repository's .git.
+if ! GIT_ROOTDIR="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+	echo "error: not inside a git repository; run setup from the root of the host repo" >&2
+	exit 1
+fi
+case "$GIT_ROOTDIR" in
+	"$GITTOC_DIR"|"$GITTOC_DIR"/*)
+		echo "error: refusing to run setup inside the gittoc repository itself ($GITTOC_DIR)" >&2
+		echo "       setup is for vendored installs; run it from the root of the host repo" >&2
+		exit 1
+		;;
+esac
+case "$GITTOC_DIR" in
+	"$GIT_ROOTDIR"/*) ;;
+	*)
+		echo "error: gittoc directory $GITTOC_DIR is not inside the host repo $GIT_ROOTDIR" >&2
+		exit 1
+		;;
+esac
+GITTOC_DIR_REL="$(realpath --relative-to="$GIT_ROOTDIR" "$GITTOC_DIR")"
 
 # remove unneeded files that may befuddle agents or users
 # (scripts/dev is the dev-only lint/test pipeline + its venv; installs don't need it)
@@ -21,10 +44,6 @@ for F in AGENTS.md .git assets/gittoc_logo.png scripts/dev .isort.cfg; do
 		rm -Rf "$GITTOC_DIR/$F"
 	fi
 done
-
-# identify paths in relation to parent git repo
-GIT_ROOTDIR="$(git rev-parse --show-toplevel)"
-GITTOC_DIR_REL="$(realpath --relative-to="$GIT_ROOTDIR" "$GITTOC_DIR")"
 
 # create `git toc` alias
 git config alias.toc >/dev/null 2>&1 || git config alias.toc "!./$GITTOC_DIR_REL/scripts/gittoc"
