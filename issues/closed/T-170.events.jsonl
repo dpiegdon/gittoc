@@ -2,3 +2,4 @@
 {"actor": "user", "at": "2026-09-28T20:40:57+00:00", "kind": "claimed", "ref": "worktree-agent-a00fd4b0c10ad11d1@22fd7b0", "text": "user"}
 {"actor": "user", "at": "2026-09-28T20:43:45+00:00", "kind": "note", "ref": "worktree-agent-a00fd4b0c10ad11d1@0cbff8e", "text": "ref_short_hash now uses rsplit('@', 1) so a branch like release@2024 yields the real hash. Unit test extended plus an e2e test on a branch named release@2024 (TestEventRefs... test_ref_on_branch_containing_at_sign_is_live). Full scripts/dev/check green (158 tests)."}
 {"actor": "user", "at": "2026-09-28T20:50:18+00:00", "kind": "closed", "ref": "main@cfe2b84", "text": ""}
+{"actor": "user", "at": "2026-09-28T20:50:19+00:00", "kind": "note", "ref": "main@cfe2b84", "text": "cherry-picked to main as e71f2f4"}
