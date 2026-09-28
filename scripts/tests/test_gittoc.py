@@ -968,6 +968,15 @@ class TestStaleTracker(GittocTestBase):
             self.tracker_git("status", "--porcelain"), "?? issues/open/T-9.json"
         )
 
+    def test_discard_pending_handles_staged_but_uncommitted_path(self) -> None:
+        """A path in the index but not in HEAD is removed, not checked out (T-175)."""
+        new_file = self.checkout / "issues" / "open" / "T-7.json"
+        self.tracker.begin_write(new_file)
+        new_file.write_text('{"id": "T-7", "title": "x", "created_at": "x"}\n')
+        self.tracker_git("add", "--", "issues/open/T-7.json")
+        self.tracker.discard_pending()
+        self.assertFalse(new_file.exists())
+
     def test_lost_race_after_state_move_is_rolled_back(self) -> None:
         self._commit_between_write_and_commit()
         with self.assertRaises(self.StaleTrackerError):

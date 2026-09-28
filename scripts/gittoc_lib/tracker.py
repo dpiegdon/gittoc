@@ -227,8 +227,9 @@ class Tracker:
     def discard_pending(self) -> None:
         """Restore every path recorded by begin_write to its HEAD content.
 
-        Tracked paths are checked out from HEAD (which also recreates files the
-        mutation deleted or moved); paths unknown to git are removed. Only the
+        Paths present in HEAD are checked out from it (which also recreates
+        files the mutation deleted or moved); paths absent from HEAD, even if
+        staged, are removed. Only the
         paths this mutation touched are reverted, so another writer's
         uncommitted files in the shared worktree are left alone.
         """
@@ -236,7 +237,12 @@ class Tracker:
         self._pending.clear()
         if not rel:
             return
-        listed = run_git(["ls-files", "--", *rel], cwd=self.checkout).stdout
+        # Decide "tracked" against HEAD, not the index: a path another process
+        # staged but has not committed is absent from HEAD, and checking it
+        # out from HEAD would fail. Such paths are simply removed.
+        listed = run_git(
+            ["ls-tree", "--name-only", "HEAD", "--", *rel], cwd=self.checkout
+        ).stdout
         tracked = {line for line in listed.splitlines() if line}
         restore = [r for r in rel if r in tracked]
         if restore:
