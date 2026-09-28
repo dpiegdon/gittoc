@@ -1,3 +1,4 @@
 {"actor": "user", "at": "2026-09-28T20:39:29+00:00", "kind": "created", "ref": "main@41c0e7b", "text": "setup: replace GNU-only 'realpath --relative-to' with a portable relpath"}
 {"actor": "user", "at": "2026-09-28T20:41:04+00:00", "kind": "claimed", "ref": "worktree-agent-a36faad7bc425edc5@22fd7b0", "text": "user"}
 {"actor": "user", "at": "2026-09-28T20:45:07+00:00", "kind": "note", "ref": "worktree-agent-a36faad7bc425edc5@7cc3c5b", "text": "Fixed in scripts/setup: GITTOC_DIR_REL is now \"${GITTOC_DIR#\"$GIT_ROOTDIR\"/}\" (pure POSIX; both paths physical, containment already validated by the T-164 guard). Test test_works_without_gnu_realpath puts a failing realpath shim first on PATH. scripts/dev/check: 161 tests OK."}
+{"actor": "user", "at": "2026-09-28T20:46:34+00:00", "kind": "closed", "ref": "main@940ea4b", "text": ""}
