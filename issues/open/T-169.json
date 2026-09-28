@@ -1,0 +1,12 @@
+{
+  "body": "note_count indexes entry['kind'] and entries() calls entry.get() on whatever json.loads returned. A valid-JSON non-object or an object without 'kind' (conditions fsck reports) crashes list/show/resume with a traceback. Guard with isinstance(entry, dict).",
+  "created_at": "2026-09-28T20:39:28+00:00",
+  "id": "T-169",
+  "labels": [
+    "bug",
+    "reliability"
+  ],
+  "priority": 3,
+  "title": "event log: skip non-object or kind-less JSON lines instead of crashing",
+  "updated_at": "2026-09-28T20:39:28+00:00"
+}
