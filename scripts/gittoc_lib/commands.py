@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -118,8 +119,12 @@ def resolve_text_input(
     if file_arg == "-":
         text = sys.stdin.read()
     else:
+        # Under the `git toc` alias, git runs us from the repo top-level and
+        # exports the invoking subdirectory as GIT_PREFIX; a relative path
+        # must be resolved against that, not against our cwd.
+        file_path = Path(os.environ.get("GIT_PREFIX", "")) / file_arg
         try:
-            text = Path(file_arg).read_text(encoding="utf-8")
+            text = file_path.read_text(encoding="utf-8")
         except OSError as exc:
             raise SystemExit(f"cannot read {what} from {file_arg}: {exc}") from exc
     if text.endswith("\n"):

@@ -2568,6 +2568,36 @@ class TestFileAndStdinInput(GittocTestBase):
         self.assertEqual(notes[0]["text"], "one trailing")
         self.assertEqual(notes[1]["text"], "two trailing\n")
 
+    def _run_with_git_prefix(self, args: list[str], prefix: str) -> None:
+        """Run the CLI the way the `git toc` alias does: cwd at the repo
+        top-level with GIT_PREFIX naming the invoking subdirectory."""
+        env = {**__import__("os").environ, "GIT_PREFIX": prefix}
+        subprocess.run(
+            [str(CLI), *args],
+            cwd=str(self.repo),
+            text=True,
+            capture_output=True,
+            check=True,
+            env=env,
+        )
+
+    def test_relative_file_resolved_against_git_prefix(self) -> None:
+        sub = self.repo / "sub"
+        sub.mkdir()
+        (sub / "body.md").write_text("from subdir", encoding="utf-8")
+        # a same-named file at the top-level must NOT be picked up
+        (self.repo / "body.md").write_text("from top-level", encoding="utf-8")
+        self._run_with_git_prefix(["note", "T-1", "-F", "body.md"], "sub/")
+        data = json.loads(run(["show", "T-1", "-n", "-f", "json"], self.repo))
+        self.assertEqual(data["recent_notes"][0]["text"], "from subdir")
+
+    def test_absolute_file_unaffected_by_git_prefix(self) -> None:
+        abs_file = self.repo / "abs.md"
+        abs_file.write_text("absolute", encoding="utf-8")
+        self._run_with_git_prefix(["note", "T-1", "-F", str(abs_file)], "sub/")
+        data = json.loads(run(["show", "T-1", "-n", "-f", "json"], self.repo))
+        self.assertEqual(data["recent_notes"][0]["text"], "absolute")
+
     def test_shell_metacharacters_roundtrip(self) -> None:
         payload = "see `type IS NOT 'x'` and $(whoami); cost $5 and ! history"
         meta_file = self.repo / "meta.txt"
