@@ -1,0 +1,11 @@
+{
+  "body": "Without GITTOC_OWNER every agent action is attributed to $USER, the human. Add a rule to the SKILL.md lifecycle: set GITTOC_OWNER to the agent's name before any mutating command. Include the same line in the AGENTS.md stanza setup prints (T-189).",
+  "created_at": "2026-10-05T22:08:49+00:00",
+  "id": "T-192",
+  "labels": [
+    "docs"
+  ],
+  "priority": 2,
+  "title": "SKILL.md and setup output: tell agents to set GITTOC_OWNER to their own name",
+  "updated_at": "2026-10-05T22:08:49+00:00"
+}
