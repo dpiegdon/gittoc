@@ -1,0 +1,12 @@
+{
+  "body": "claim takes several ids; close and reject take one. Make them consistent (all-or-nothing like multi-claim).",
+  "created_at": "2026-10-05T21:22:00+00:00",
+  "id": "T-187",
+  "labels": [
+    "feature",
+    "ux"
+  ],
+  "priority": 4,
+  "title": "close/reject: accept multiple ticket ids like claim does",
+  "updated_at": "2026-10-05T21:22:00+00:00"
+}
