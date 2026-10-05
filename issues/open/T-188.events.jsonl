@@ -1,1 +1,2 @@
 {"actor": "user", "at": "2026-10-05T21:22:00+00:00", "kind": "created", "ref": "main@0ad3b5a", "text": "attribute agent actions to the agent, not $USER, when GITTOC_OWNER is unset"}
+{"actor": "user", "at": "2026-10-05T22:08:48+00:00", "kind": "note", "ref": "main@8498518", "text": "won't-do: gittoc is not Claude-only, so no harness detection. Agents are told to set GITTOC_OWNER instead (T-192)."}
