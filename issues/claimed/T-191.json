@@ -4,6 +4,7 @@
   "labels": [
     "docs"
   ],
+  "owner": "user",
   "priority": 3,
   "title": "README: drop the local-only install instructions",
   "updated_at": "2026-10-05T21:47:17+00:00"
