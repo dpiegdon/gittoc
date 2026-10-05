@@ -1,0 +1,12 @@
+{
+  "body": ".git/gittoc/.git is a gitfile with an absolute path into .git/worktrees/gittoc, so after moving the host repo every command fails with 'fatal: not a git repository: <old path>'. Tracker._ensure_worktree could detect the broken gitfile and run `git worktree repair` (or re-attach) automatically.",
+  "created_at": "2026-10-05T21:22:01+00:00",
+  "id": "T-190",
+  "labels": [
+    "bug",
+    "reliability"
+  ],
+  "priority": 3,
+  "title": "tracker worktree breaks when the repository directory is moved",
+  "updated_at": "2026-10-05T21:22:01+00:00"
+}
