@@ -8,5 +8,5 @@
   ],
   "priority": 2,
   "title": "attribute agent actions to the agent, not $USER, when GITTOC_OWNER is unset",
-  "updated_at": "2026-10-05T21:22:00+00:00"
+  "updated_at": "2026-10-05T22:08:48+00:00"
 }
