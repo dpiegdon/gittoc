@@ -18,17 +18,8 @@ To do that, execute in root of your repo:
 mkdir -p .agents/skills/ && git clone --depth=1 https://github.com/dpiegdon/gittoc .agents/skills/gittoc && ./.agents/skills/gittoc/scripts/setup
 ```
 
-### Local-only install (shared repos)
-
-If you want to use gittoc on a project without committing the tool upstream,
-exclude it from git tracking:
-
-```bash
-echo '.agents/skills/gittoc/' >> .git/info/exclude
-```
-
-The tool stays local to your checkout — invisible to git, never pushed. Each
-collaborator who wants gittoc installs it themselves the same way.
+Commit the vendored copy together with your project, so every checkout and
+every linked worktree carries the tool.
 
 `setup` strips the vendored clone of its own `.git` and dev-only files. It
 refuses to run on anything that is not a pristine clone (local branches,
