@@ -1,0 +1,10 @@
+{
+  "created_at": "2026-10-05T21:47:17+00:00",
+  "id": "T-191",
+  "labels": [
+    "docs"
+  ],
+  "priority": 3,
+  "title": "README: drop the local-only install instructions",
+  "updated_at": "2026-10-05T21:47:17+00:00"
+}
