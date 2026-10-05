@@ -1,6 +1,6 @@
 ---
 name: gittoc
-description: Git-repository-specific ticket system. Use when work spans multiple turns or sessions and needs a repo-local issue tracker with dependencies, ready-task discovery, and git history, without external services or nonstandard dependencies.
+description: Repo-local ticket and task tracker stored in git. Use whenever work needs tracking - tickets, issues, backlog, TODOs, planning, resuming earlier work, dependencies between tasks, or hand-offs between sessions and agents - without external services or nonstandard dependencies.
 license: MIT. LICENSE.txt has complete terms.
 compatibility: Requires python 3.9+ and git.
 metadata:
@@ -25,7 +25,11 @@ Do not use it for one-off work that can be completed in a single short turn.
 
 ## Lifecycle
 
-Every tracked piece of work goes through these steps, in this order:
+First set your identity: `export GITTOC_OWNER=<your agent name>` (for example
+`claude`). Without it every claim, note and close is attributed to `$USER`,
+the human running the session.
+
+Every tracked piece of work then goes through these steps, in this order:
 
 1. `gittoc resume` — see what is claimed, ready, or in progress before starting
 2. `gittoc claim T-n` — before changing anything

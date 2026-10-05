@@ -198,6 +198,10 @@ class TestSetupScript(GittocTestBase):
             check=True,
         ).stdout
         self.assertIn("open=0", out)
+        # it tells the installer how to make agents pick the tracker up
+        self.assertIn("AGENTS.md / CLAUDE.md", proc.stdout)
+        self.assertIn("GITTOC_OWNER", proc.stdout)
+        self.assertIn(f"{self.VENDOR_REL.as_posix()}/SKILL.md", proc.stdout)
         # idempotent: a second run succeeds and changes nothing
         proc = self.run_setup(gittoc_dir, self.repo)
         self.assertEqual(proc.returncode, 0, proc.stderr)

@@ -19,7 +19,9 @@ mkdir -p .agents/skills/ && git clone --depth=1 https://github.com/dpiegdon/gitt
 ```
 
 Commit the vendored copy together with your project, so every checkout and
-every linked worktree carries the tool.
+every linked worktree carries the tool. `setup` ends by printing a short
+paragraph for your `AGENTS.md` / `CLAUDE.md`; add it, so agents treat the
+tracker as mandatory rather than optional.
 
 `setup` strips the vendored clone of its own `.git` and dev-only files. It
 refuses to run on anything that is not a pristine clone (local branches,
