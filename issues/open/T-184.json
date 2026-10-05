@@ -1,0 +1,11 @@
+{
+  "body": "setup writes alias.toc as '!./<rel>/scripts/gittoc'. Shell aliases run from the current worktree's top-level, and a local-only (info/exclude) vendored copy does not exist in a linked worktree, so the alias fails there although the CLI itself works via git-common-dir. Resolve the main worktree at run time (git worktree list --porcelain, first line) and keep the path relative so the repo stays movable. Upgrade an existing old-form alias in place; leave custom aliases alone.",
+  "created_at": "2026-10-05T21:22:00+00:00",
+  "id": "T-184",
+  "labels": [
+    "bug"
+  ],
+  "priority": 2,
+  "title": "git toc alias breaks in linked worktrees of local-only installs",
+  "updated_at": "2026-10-05T21:22:00+00:00"
+}
