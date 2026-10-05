@@ -6,7 +6,8 @@
     "feature",
     "ux"
   ],
+  "owner": "user",
   "priority": 4,
   "title": "close/reject: accept multiple ticket ids like claim does",
-  "updated_at": "2026-10-05T21:22:00+00:00"
+  "updated_at": "2026-10-05T22:08:49+00:00"
 }
