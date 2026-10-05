@@ -1,0 +1,12 @@
+{
+  "body": "A skill only fires when the agent judges it relevant. Proposal: (1) add the words agents see in prompts (tickets, backlog, TODO, track work, resume) to the SKILL.md description; (2) have setup print a two-line stanza for the host's AGENTS.md / CLAUDE.md telling agents to use gittoc for all task tracking. Owner decision whether setup should also offer to append it.",
+  "created_at": "2026-10-05T21:22:00+00:00",
+  "id": "T-189",
+  "labels": [
+    "docs",
+    "human"
+  ],
+  "priority": 3,
+  "title": "adoption: trigger words in SKILL.md description; setup prints an AGENTS.md/CLAUDE.md stanza",
+  "updated_at": "2026-10-05T21:22:00+00:00"
+}
