@@ -31,7 +31,8 @@ Every tracked piece of work goes through these steps, in this order:
 2. `gittoc claim T-n` — before changing anything
 3. work, and `gittoc note T-n '…'` findings and decisions worth keeping
 4. `git commit` with `(T-n)` in the message
-5. `gittoc close T-n` — after the commit, so the close event points at it
+5. `gittoc close T-n -n 'what was verified'` — after the commit, so the close
+   event points at it
 
 Only close a ticket whose work is complete. If part remains, note what is
 left, or move the remainder to a new ticket (`split-of: T-n`) and close only
@@ -133,8 +134,8 @@ Use `--help` on any command for full argument documentation.
 - `note` / `n` `T-1 "context"` — append a durable note
 - `note T-1 -F FILE` / `note T-1 -F -` — read note text from a file or stdin
 - `new`/`update` `-F FILE` — read body from a file or stdin (alternative to `-b`)
-- `close T-1` — close as done
-- `reject T-1` — close and reject ticket as won't-do
+- `close T-1 [T-2 …]` — close as done; `-n 'why'` or `-F FILE` records the reason in the close event
+- `reject T-1 [T-2 …]` — close as won't-do; takes `-n` / `-F` like close
 
 **Remote sync**
 - `init` — create tracker branch / attach worktree; auto-configures `gittoc.remote` if inferable
@@ -159,8 +160,8 @@ gittoc dep T-3 T-1   # T-3 depends on T-1 (T-1 must complete first)
 Finishing:
 
 ```bash
-git commit ...        # commit the fix FIRST
-gittoc close T-1      # then close — the close event stamps the fix commit
+git commit ...                         # commit the fix FIRST
+gittoc close T-1 -n 'tests pass'       # then close — the event stamps the fix commit
 ```
 
 Every event records the code repo's HEAD at event time, and `show`/`resume`

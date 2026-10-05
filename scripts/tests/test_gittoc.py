@@ -892,6 +892,25 @@ class TestUpdate(GittocTestBase):
         self.assertIn("T-99", proc.stderr)
         self.assertIn("open=1", run(["summary"], self.repo))
 
+    def test_close_and_reject_with_note(self) -> None:
+        """-n / -F put the reason into the close or reject event (T-186)."""
+        run(["init"], self.repo)
+        for title in ("a", "b", "c"):
+            run(["new", title], self.repo)
+        run(["close", "T-1", "-n", "verified by the suite"], self.repo)
+        run(["reject", "T-2", "-F", "-"], self.repo, stdin="out of scope\n")
+        proc = run_fail(["close", "T-3", "-n", "   "], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("note text is empty", proc.stderr)
+        for issue_id, kind, text in (
+            ("T-1", "closed", "verified by the suite"),
+            ("T-2", "rejected", "out of scope"),
+        ):
+            shown = json.loads(run(["show", issue_id, "-a", "-f", "json"], self.repo))
+            events = [e for e in shown["history"] if e["kind"] == kind]
+            self.assertEqual([e["text"] for e in events], [text])
+        self.assertIn("open=1", run(["summary"], self.repo))
+
     def test_update_state_rejected_records_rejected_event(self) -> None:
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)

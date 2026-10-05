@@ -476,16 +476,16 @@ def cmd_update(args: argparse.Namespace) -> int:
                 labels.append(label)
         if remove_labels:
             labels = [label for label in labels if label not in remove_labels]
-    has_changes = any(
+    fields_given = any(
         [
             args.title is not None,
             body is not None,
-            state is not None,
             args.owner is not None,
             labels is not None,
             args.priority is not None,
         ]
     )
+    has_changes = fields_given or state is not None
     if not has_changes:
         print("no fields to update", file=sys.stderr)
         return 1
@@ -497,7 +497,9 @@ def cmd_update(args: argparse.Namespace) -> int:
         owner=args.owner,
         labels=labels,
         priority=args.priority,
-        event_text="fields updated",
+        # Only a field change is worth a text; a bare --state change records
+        # the transition kind alone, exactly like close/reject/claim do.
+        event_text="fields updated" if fields_given else "",
     )
     print(issue.issue_id)
     _auto_push(tracker)
@@ -550,6 +552,7 @@ def cmd_grep(args: argparse.Namespace) -> int:
 
 def _finish_issues(args: argparse.Namespace, state: str) -> int:
     """Move one or more issues to a terminal state, all-or-nothing like claim."""
+    note = resolve_text_input(args.note, args.file, what="note text", allow_empty=False)
     tracker = Tracker.open()
     _auto_pull(tracker)
     actor = args.actor or default_owner()
@@ -558,7 +561,9 @@ def _finish_issues(args: argparse.Namespace, state: str) -> int:
     for issue_id in issue_ids:
         tracker.load_issue(issue_id)
     issues = [
-        tracker.update_issue(issue_id, state=state, event_actor=actor)
+        tracker.update_issue(
+            issue_id, state=state, event_text=note or "", event_actor=actor
+        )
         for issue_id in issue_ids
     ]
     print_issues(issues, tracker, args.format)

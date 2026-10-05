@@ -121,6 +121,8 @@ gittoc update T-42 -L task,docs      # replace all labels
 gittoc dep T-42 T-7                 # T-42 blocked by T-7
 gittoc dep T-42 T-7 --remove        # remove dependency
 gittoc close T-42
+gittoc close T-42 -n "verified"     # record why in the close event
+gittoc close T-42,T-43              # several at once (also: reject)
 gittoc reject T-42                  # mark as won't-do
 
 # inspecting tickets

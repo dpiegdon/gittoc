@@ -119,6 +119,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="ticket(s) to close, e.g. T-42,T-43 or T-42 T-43",
     )
     close_parser.add_argument(
+        "-n",
+        "--note",
+        help="record why in the close event (same as a separate note)",
+    )
+    close_parser.add_argument(
+        "-F",
+        "--file",
+        metavar="FILE",
+        help="read the note from FILE, or '-' for stdin",
+    )
+    close_parser.add_argument(
         "--actor",
         help="override actor name (default: $GITTOC_OWNER or $USER)",
     )
@@ -361,6 +372,17 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="+",
         metavar="issue_id",
         help="ticket(s) to reject, e.g. T-42,T-43 or T-42 T-43",
+    )
+    reject_parser.add_argument(
+        "-n",
+        "--note",
+        help="record why in the reject event (same as a separate note)",
+    )
+    reject_parser.add_argument(
+        "-F",
+        "--file",
+        metavar="FILE",
+        help="read the note from FILE, or '-' for stdin",
     )
     reject_parser.add_argument(
         "--actor",

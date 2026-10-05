@@ -686,20 +686,16 @@ class Tracker:
         keep recording what was asked for. A (re-)claim records the owner as
         the event text, mirroring the ``claim`` command, and an owner change
         on a claimed issue counts as a claim. Everything else is a plain
-        ``updated`` event.
+        ``updated`` event. *event_text* is recorded on every kind except
+        ``claimed``.
         """
         issue_id = after.issue_id
-        # Field edits made alongside a terminal transition must stay visible
-        # in the event log, so keep the caller's text when any changed.
-        fields_changed = any(
-            getattr(before, field) != getattr(after, field)
-            for field in ("title", "body", "labels", "priority")
-        )
-        text = event_text if fields_changed else ""
+        # The caller's text rides along on terminal transitions: a close note,
+        # or "fields updated" when update changed fields in the same call.
         if requested_state == "closed":
-            return "closed", text, f"Close issue {issue_id}"
+            return "closed", event_text, f"Close issue {issue_id}"
         if requested_state == "rejected":
-            return "rejected", text, f"Reject issue {issue_id}"
+            return "rejected", event_text, f"Reject issue {issue_id}"
         if requested_state == "claimed" or (
             after.state == "claimed" and after.owner != before.owner
         ):
