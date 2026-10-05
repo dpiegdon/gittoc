@@ -112,7 +112,12 @@ def build_parser() -> argparse.ArgumentParser:
         description="Mark a ticket as closed (work complete). "
         "Use reject instead for tickets that won't be done.",
     )
-    close_parser.add_argument("issue_id", help="ticket to close, e.g. T-42")
+    close_parser.add_argument(
+        "issue_ids",
+        nargs="+",
+        metavar="issue_id",
+        help="ticket(s) to close, e.g. T-42,T-43 or T-42 T-43",
+    )
     close_parser.add_argument(
         "--actor",
         help="override actor name (default: $GITTOC_OWNER or $USER)",
@@ -351,7 +356,12 @@ def build_parser() -> argparse.ArgumentParser:
         description="Mark a ticket as rejected (won't fix, out of scope, abandoned). "
         "Use close instead when work is actually complete.",
     )
-    reject_parser.add_argument("issue_id", help="ticket to reject, e.g. T-42")
+    reject_parser.add_argument(
+        "issue_ids",
+        nargs="+",
+        metavar="issue_id",
+        help="ticket(s) to reject, e.g. T-42,T-43 or T-42 T-43",
+    )
     reject_parser.add_argument(
         "--actor",
         help="override actor name (default: $GITTOC_OWNER or $USER)",

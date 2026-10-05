@@ -706,10 +706,6 @@ class Tracker:
             return "claimed", after.owner, f"Claim issue {issue_id} for {after.owner}"
         return "updated", event_text, f"Update issue {issue_id}"
 
-    def reject_issue(self, issue_id: str, *, actor: str | None = None) -> Issue:
-        """Move an issue to the rejected state (won't-do / abandoned)."""
-        return self.update_issue(issue_id, state="rejected", event_actor=actor)
-
     def _resolve_deps(
         self, dep_ids: list[str], *, issue_id: str | None = None
     ) -> list[str]:

@@ -872,6 +872,26 @@ class TestUpdate(GittocTestBase):
         closed = [e for e in shown["history"] if e["kind"] == "closed"]
         self.assertEqual(closed[0]["text"], "")
 
+    def test_multi_id_close_and_reject(self) -> None:
+        """close and reject take several ids, like claim (T-187)."""
+        run(["init"], self.repo)
+        for title in ("a", "b", "c", "d"):
+            run(["new", title], self.repo)
+        out = run(["close", "T-1,T-2"], self.repo)
+        self.assertIn("T-1", out)
+        self.assertIn("T-2", out)
+        run(["reject", "T-3", "T-4"], self.repo)
+        self.assertIn("closed=2 rejected=2", run(["summary"], self.repo))
+        self.assertEqual(self._history_kinds("T-4"), ["created", "rejected"])
+
+    def test_multi_id_close_missing_id_closes_none(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "a"], self.repo)
+        proc = run_fail(["close", "T-1", "T-99"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("T-99", proc.stderr)
+        self.assertIn("open=1", run(["summary"], self.repo))
+
     def test_update_state_rejected_records_rejected_event(self) -> None:
         run(["init"], self.repo)
         run(["new", "Task"], self.repo)

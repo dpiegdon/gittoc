@@ -365,14 +365,8 @@ def cmd_labels(args: argparse.Namespace) -> int:
 
 
 def cmd_reject(args: argparse.Namespace) -> int:
-    """Reject an issue (mark as won't-do / abandoned) and print confirmation."""
-    tracker = Tracker.open()
-    _auto_pull(tracker)
-    actor = args.actor or default_owner()
-    issue = tracker.reject_issue(args.issue_id, actor=actor)
-    print_issues([issue], tracker, args.format)
-    _auto_push(tracker)
-    return 0
+    """Reject one or more issues (won't-do / abandoned) and print confirmation."""
+    return _finish_issues(args, "rejected")
 
 
 def cmd_summary(args: argparse.Namespace) -> int:
@@ -554,15 +548,27 @@ def cmd_grep(args: argparse.Namespace) -> int:
     return result.returncode
 
 
-def cmd_close(args: argparse.Namespace) -> int:
-    """Mark an issue as closed (done) and print confirmation."""
+def _finish_issues(args: argparse.Namespace, state: str) -> int:
+    """Move one or more issues to a terminal state, all-or-nothing like claim."""
     tracker = Tracker.open()
     _auto_pull(tracker)
     actor = args.actor or default_owner()
-    issue = tracker.update_issue(args.issue_id, state="closed", event_actor=actor)
-    print_issues([issue], tracker, args.format)
+    issue_ids = parse_issue_ids(args.issue_ids)
+    # Validate every id up front so a missing one aborts before any commit.
+    for issue_id in issue_ids:
+        tracker.load_issue(issue_id)
+    issues = [
+        tracker.update_issue(issue_id, state=state, event_actor=actor)
+        for issue_id in issue_ids
+    ]
+    print_issues(issues, tracker, args.format)
     _auto_push(tracker)
     return 0
+
+
+def cmd_close(args: argparse.Namespace) -> int:
+    """Mark one or more issues as closed (done) and print confirmation."""
+    return _finish_issues(args, "closed")
 
 
 def cmd_log(args: argparse.Namespace) -> int:
