@@ -1,0 +1,11 @@
+{
+  "body": "Feedback from a host project: the workflow reads as optional because it sits below the command reference; partly-done tickets were closed with 'done (part)' notes; ticket titles/bodies lacked guidance. Add a short lifecycle checklist near the top, a rule never to close incomplete work (note what is left or split-of), and one-sentence guidance on titles and bodies. No fixed body template.",
+  "created_at": "2026-10-05T21:22:00+00:00",
+  "id": "T-185",
+  "labels": [
+    "docs"
+  ],
+  "priority": 2,
+  "title": "SKILL.md: mandatory lifecycle at top, partial-work rule, ticket-writing guidance",
+  "updated_at": "2026-10-05T21:22:00+00:00"
+}
