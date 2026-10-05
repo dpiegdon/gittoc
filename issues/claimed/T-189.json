@@ -6,7 +6,8 @@
     "docs",
     "human"
   ],
+  "owner": "user",
   "priority": 3,
   "title": "adoption: trigger words in SKILL.md description; setup prints an AGENTS.md/CLAUDE.md stanza",
-  "updated_at": "2026-10-05T21:22:00+00:00"
+  "updated_at": "2026-10-05T22:08:49+00:00"
 }
