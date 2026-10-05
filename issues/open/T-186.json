@@ -1,0 +1,11 @@
+{
+  "body": "Closing and explaining the close are one act; today it takes two commands. Add -n/--note (and -F) to close and reject so the text lands in the closed/rejected event. No --commit override; refs stay automatic.",
+  "created_at": "2026-10-05T21:22:00+00:00",
+  "id": "T-186",
+  "labels": [
+    "feature"
+  ],
+  "priority": 3,
+  "title": "close: accept --note to record the reason in the close event",
+  "updated_at": "2026-10-05T21:22:00+00:00"
+}
