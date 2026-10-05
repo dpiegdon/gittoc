@@ -1,0 +1,12 @@
+{
+  "body": "In a Claude Code session GITTOC_OWNER is unset, USER is the human, and CLAUDECODE=1 plus CLAUDE_CODE_* are present, so every agent action is attributed to the human. Proposal: when GITTOC_OWNER is unset and an agent harness is detectable, default the owner to the agent name; otherwise fall back to USER and warn once in non-interactive sessions. Needs owner decision on detection per agent (claude, github, openai, opencode).",
+  "created_at": "2026-10-05T21:22:00+00:00",
+  "id": "T-188",
+  "labels": [
+    "feature",
+    "human"
+  ],
+  "priority": 2,
+  "title": "attribute agent actions to the agent, not $USER, when GITTOC_OWNER is unset",
+  "updated_at": "2026-10-05T21:22:00+00:00"
+}
