@@ -5,6 +5,7 @@
   "labels": [
     "docs"
   ],
+  "owner": "user",
   "priority": 2,
   "title": "SKILL.md and setup output: tell agents to set GITTOC_OWNER to their own name",
   "updated_at": "2026-10-05T22:08:49+00:00"
