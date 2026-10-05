@@ -23,12 +23,34 @@ Use this skill when:
 
 Do not use it for one-off work that can be completed in a single short turn.
 
+## Lifecycle
+
+Every tracked piece of work goes through these steps, in this order:
+
+1. `gittoc resume` — see what is claimed, ready, or in progress before starting
+2. `gittoc claim T-n` — before changing anything
+3. work, and `gittoc note T-n '…'` findings and decisions worth keeping
+4. `git commit` with `(T-n)` in the message
+5. `gittoc close T-n` — after the commit, so the close event points at it
+
+Only close a ticket whose work is complete. If part remains, note what is
+left, or move the remainder to a new ticket (`split-of: T-n`) and close only
+what is done.
+
 ## Operating rules
 
 - Prefer the CLI over reading the hidden tracker checkout directly.
 - Keep tickets concise — store only durable task state, not long design notes.
 - Use dependencies to model blocking relationships.
 - Commit tracker changes with the code they describe when practical.
+
+## Writing tickets
+
+- The title states the problem or the action plainly; one concern per ticket.
+- The body holds what a later session needs to resume cold: the problem, where
+  it is, the evidence, and the proposed fix. Prose, not a form.
+- Notes record why, what was tried, and what was verified; they are the audit
+  trail that survives compaction and hand-offs.
 
 ## Storage model
 
@@ -124,19 +146,7 @@ Use `--help` on any command for full argument documentation.
   every mutating command will then pull before and push after the local write.
   Non-trivial pull merges automatically run `fsck` against the changed tracker files.
 
-## Recommended workflow
-
-At the start of multi-step work:
-
-```bash
-gittoc resume
-```
-
-Beginning a task:
-
-```bash
-gittoc claim T-1
-```
+## Workflow details
 
 When new follow-up work appears:
 
