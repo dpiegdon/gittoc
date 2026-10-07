@@ -36,7 +36,9 @@ Every tracked piece of work then goes through these steps, in this order:
 3. work, and `gittoc note T-n '…'` findings and decisions worth keeping
 4. `git commit` with `(T-n)` in the message
 5. `gittoc close T-n -n 'what was verified'` — after the commit, so the close
-   event points at it
+   event points at it. On a branch that will be rebased or squashed, close
+   after the merge, from the branch that keeps the commit; otherwise the
+   stamped ref dies with the rebase and shows as `(abc1234?)`.
 
 Only close a ticket whose work is complete. If part remains, note what is
 left, or move the remainder to a new ticket (`split-of: T-n`) and close only
