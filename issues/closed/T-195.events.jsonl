@@ -1,2 +1,3 @@
 {"actor": "user", "at": "2026-10-07T18:48:27+00:00", "kind": "created", "ref": "main@45b93ca", "text": "claim must refuse a ticket claimed by someone else unless --take is given"}
 {"actor": "user", "at": "2026-10-07T18:52:25+00:00", "kind": "claimed", "ref": "main@45b93ca", "text": "user"}
+{"actor": "user", "at": "2026-10-07T18:52:46+00:00", "kind": "closed", "ref": "main@ffce9b9", "text": "claim refuses foreign-held tickets; --take transfers; update path unchanged"}
