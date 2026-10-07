@@ -101,14 +101,14 @@ Use `--help` on any command for full argument documentation.
 ```bash
 # backlog overview
 gittoc summary
-gittoc list
+gittoc list                         # live tickets: open, claimed, blocked
 gittoc list -l bug                  # filter by label
 gittoc list -l feature,ux           # AND of multiple labels (comma-separated)
-gittoc list -a                      # all states
-gittoc list -s claimed,blocked      # specific states (comma-separated)
-gittoc labels                       # all labels in use with counts
+gittoc list -a                      # all states, including closed/rejected
+gittoc list -s open                 # specific states (comma-separated)
+gittoc labels                       # labels on live tickets with counts
 gittoc unblocked                    # only tickets with no blockers
-gittoc grep "pattern"               # search ticket files
+gittoc grep "pattern"               # search live ticket files
 
 # working with tickets
 gittoc new "short title" -p 2 -b "longer context" -l bug

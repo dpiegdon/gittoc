@@ -365,6 +365,31 @@ class TestCreateAndList(GittocTestBase):
         # Re-running with a valid dep mints T-2, not a duplicate-skipping T-3.
         self.assertEqual(run(["new", "Dependent task", "-d", "T-1"], self.repo), "T-2")
 
+    def test_list_labels_grep_default_to_live_states(self) -> None:
+        """The default scope is everything not closed or rejected (T-193)."""
+        run(["init"], self.repo)
+        run(["new", "open one", "-l", "x"], self.repo)
+        run(["new", "claimed one", "-l", "x"], self.repo)
+        run(["new", "blocked one", "-l", "x"], self.repo)
+        run(["new", "closed one", "-l", "x"], self.repo)
+        run(["new", "rejected one", "-l", "x"], self.repo)
+        run(["claim", "T-2", "--owner", "tester"], self.repo)
+        run(["update", "T-3", "--state", "blocked"], self.repo)
+        run(["close", "T-4"], self.repo)
+        run(["reject", "T-5"], self.repo)
+        listed = run(["list"], self.repo)
+        for issue_id in ("T-1", "T-2", "T-3"):
+            self.assertIn(issue_id, listed)
+        for issue_id in ("T-4", "T-5"):
+            self.assertNotIn(issue_id, listed)
+        self.assertIn("T-1", run(["list", "-s", "open"], self.repo))
+        self.assertNotIn("T-2", run(["list", "-s", "open"], self.repo))
+        label_rows = [line.split() for line in run(["labels"], self.repo).splitlines()]
+        self.assertIn(["x", "3"], label_rows)
+        found = run(["grep", "one"], self.repo)
+        self.assertIn("T-3", found)
+        self.assertNotIn("T-4", found)
+
     def test_list_alias_and_compact(self) -> None:
         run(["init"], self.repo)
         run(["new", "High priority task", "-p", "1"], self.repo)

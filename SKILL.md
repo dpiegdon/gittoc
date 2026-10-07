@@ -115,12 +115,12 @@ Use `--help` on any command for full argument documentation.
 
 **Backlog**
 - `summary` / `sum` — ticket counts by state
-- `list` / `l` — open tickets by priority; `-a` for all states
-- `list -s claimed,blocked` — filter by state (comma-separated)
+- `list` / `l` — live tickets (open, claimed, blocked) by priority; `-a` for all states
+- `list -s open` — specific states (comma-separated)
 - `list -l bug` / `list -l feature,ux` — filter by label (AND; comma-separated)
 - `unblocked` / `ubl` — only tickets with no unmet dependencies
-- `labels` / `labels -a` — all labels in use with counts
-- `grep` / `g` `PATTERN [-i] [-n]` — search open ticket files; `-a` for all states, `-s closed,rejected` for specific
+- `labels` / `labels -a` — labels on live tickets with counts; `-a` includes closed/rejected
+- `grep` / `g` `PATTERN [-i] [-n]` — search live ticket files; `-a` for all states, `-s closed,rejected` for specific
 - `list --sort=id` — chronological order instead of priority
 
 **Working with tickets**

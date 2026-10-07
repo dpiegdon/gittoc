@@ -183,7 +183,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--state",
         action="append",
         metavar="STATE",
-        help="search this state (repeatable, comma-separated; default: open)",
+        help="search this state (repeatable, comma-separated; "
+        "default: open,claimed,blocked)",
     )
     grep_parser.add_argument(
         "-a",
@@ -217,7 +218,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-a",
         "--all",
         action="store_true",
-        help="include closed tickets (default: open only)",
+        help="include closed and rejected tickets (default: live tickets only)",
     )
     add_text_format_argument(labels_parser)
     labels_parser.set_defaults(func=cmd_labels)
@@ -227,14 +228,16 @@ def build_parser() -> argparse.ArgumentParser:
         aliases=["l"],
         help="list issues ordered by priority",
         description="List tickets sorted by priority (1=highest). "
-        "Defaults to open tickets only; use -s or -a to include other states.",
+        "Defaults to live tickets (open, claimed, blocked); use -s for specific "
+        "states or -a for everything.",
     )
     list_parser.add_argument(
         "-s",
         "--state",
         action="append",
         metavar="STATE",
-        help="include this state (repeatable, comma-separated; default: open)",
+        help="include this state (repeatable, comma-separated; "
+        "default: open,claimed,blocked)",
     )
     list_parser.add_argument(
         "-l",

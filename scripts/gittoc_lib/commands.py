@@ -12,6 +12,7 @@ from typing import cast
 
 from . import colors as col
 from .common import (
+    ACTIVE_STATES,
     STATE_ORDER,
     STATE_SET,
     TRACKER_BRANCH,
@@ -283,7 +284,7 @@ def cmd_list(args: argparse.Namespace) -> int:
     if args.all:
         states = STATE_ORDER
     else:
-        states = parse_states(args.state) or ("open",)
+        states = parse_states(args.state) or ACTIVE_STATES
     issues = tracker.list_issues(states)
     if args.label:
         required = set(parse_labels(args.label))
@@ -336,7 +337,7 @@ def cmd_claim(args: argparse.Namespace) -> int:
 def cmd_labels(args: argparse.Namespace) -> int:
     """List all labels in use, with counts, across open (or all) tickets."""
     tracker = Tracker.open()
-    states = STATE_ORDER if args.all else ("open",)
+    states = STATE_ORDER if args.all else ACTIVE_STATES
     counts: dict[str, int] = {}
     for issue in tracker.list_issues(states):
         for label in issue.labels:
@@ -533,7 +534,7 @@ def cmd_grep(args: argparse.Namespace) -> int:
     if args.all:
         states = STATE_ORDER
     else:
-        states = parse_states(args.state) or ("open",)
+        states = parse_states(args.state) or ACTIVE_STATES
     files: list[str] = []
     for state in states:
         state_path = tracker.state_dir(state)
