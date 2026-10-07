@@ -5,7 +5,8 @@
   "labels": [
     "chore"
   ],
+  "owner": "user",
   "priority": 5,
   "title": "Cosmetic cleanups: init message, cycle-check layering, VERSION write DRY",
-  "updated_at": "2026-06-09T20:03:27+00:00"
+  "updated_at": "2026-10-07T19:00:13+00:00"
 }
