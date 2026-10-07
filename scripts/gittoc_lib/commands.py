@@ -321,12 +321,16 @@ def cmd_claim(args: argparse.Namespace) -> int:
     # ticket is missing or unclaimable, abort before mutating (committing) any.
     for issue_id in issue_ids:
         issue, _ = tracker.load_issue(issue_id)
-        tracker.ensure_claimable(issue)
+        tracker.ensure_claimable(issue, owner=owner, take=args.take)
     issues = []
     for issue_id in issue_ids:
         issues.append(
             tracker.update_issue(
-                issue_id, state="claimed", owner=owner, event_actor=owner
+                issue_id,
+                state="claimed",
+                owner=owner,
+                event_actor=owner,
+                take=args.take,
             )
         )
     print_issues(issues, tracker, args.format)
@@ -501,6 +505,8 @@ def cmd_update(args: argparse.Namespace) -> int:
         # Only a field change is worth a text; a bare --state change records
         # the transition kind alone, exactly like close/reject/claim do.
         event_text="fields updated" if fields_given else "",
+        # update is the explicit path: --state claimed --owner X may transfer.
+        take=True,
     )
     print(issue.issue_id)
     _auto_push(tracker)

@@ -501,15 +501,24 @@ class Tracker:
             self.dependency_closed(issue.issue_id, dep_id) for dep_id in issue.deps
         )
 
-    def ensure_claimable(self, issue: Issue) -> None:
+    def ensure_claimable(
+        self, issue: Issue, *, owner: str | None = None, take: bool = False
+    ) -> None:
         """Raise SystemExit if *issue* cannot transition to the claimed state.
 
-        Re-claiming an already-claimed issue (ownership transfer) is allowed;
-        an open issue must be ready; any other state cannot be claimed. Shared
-        by ``update_issue`` and ``claim`` so a batch claim can pre-validate
-        every id before mutating any of them.
+        A claimed issue may be re-claimed by its owner; taking it from someone
+        else requires *take* (``claim --take``), so two agents racing for one
+        ticket cannot both walk away believing they hold it. An open issue
+        must be ready; any other state cannot be claimed. Shared by
+        ``update_issue`` and ``claim`` so a batch claim can pre-validate every
+        id before mutating any of them.
         """
         if issue.state == "claimed":
+            if owner is not None and issue.owner and owner != issue.owner and not take:
+                raise SystemExit(
+                    f"{issue.issue_id} is already claimed by {issue.owner};"
+                    " use --take to transfer ownership"
+                )
             return
         if issue.state != "open":
             raise SystemExit(
@@ -606,6 +615,7 @@ class Tracker:
         priority: int | None = None,
         event_text: str = "",
         event_actor: str | None = None,
+        take: bool = False,
     ) -> Issue:
         """Apply one or more field changes to an issue and commit the result.
 
@@ -619,7 +629,7 @@ class Tracker:
         issue, path = self.load_issue(issue_id)
         target_state = issue.state if state is None else state
         if target_state == "claimed":
-            self.ensure_claimable(issue)
+            self.ensure_claimable(issue, owner=owner, take=take)
         if (
             target_state == "claimed"
             and issue.state == "claimed"

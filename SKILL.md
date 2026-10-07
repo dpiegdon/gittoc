@@ -126,7 +126,7 @@ Use `--help` on any command for full argument documentation.
 **Working with tickets**
 - `new "Title" -p 2 -b "context" -l feature` — create a ticket
 - `new "Blocked task" -d T-1,T-2` — create with dependencies
-- `claim T-1` — claim a ticket (defaults owner to `$GITTOC_OWNER` / `$USER`)
+- `claim T-1` — claim a ticket (defaults owner to `$GITTOC_OWNER` / `$USER`); refuses a ticket someone else holds unless `--take`
 - `claimed` / `c` — list all currently claimed issues
 - `update` / `up` `T-1 --state blocked -p 4` — update fields
 - `update T-1 -l bug,ux` — add labels

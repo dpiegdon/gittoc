@@ -598,15 +598,26 @@ class TestClaimWorkflow(GittocTestBase):
         claimed_list = run(["c"], self.repo)
         self.assertIn(issue1, claimed_list)
 
-    def test_reclaim_by_different_owner_warns(self) -> None:
+    def test_reclaim_by_different_owner_refused_unless_take(self) -> None:
+        """Someone else's claim is refused; --take transfers with a warning (T-195)."""
         run(["init"], self.repo)
         issue1 = run(["new", "Task"], self.repo)
         run(["claim", issue1, "--owner", "alice"], self.repo)
         proc = run_fail(["claim", issue1, "--owner", "bob"], self.repo)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn(f"{issue1} is already claimed by alice", proc.stderr)
+        shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
+        self.assertEqual(shown["owner"], "alice")
+        proc = run_fail(["claim", issue1, "--owner", "bob", "--take"], self.repo)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertIn("warning", proc.stderr)
         self.assertIn("alice", proc.stderr)
         shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
         self.assertEqual(shown["owner"], "bob")
+        # update --state claimed --owner is the explicit path and may transfer
+        run(["update", issue1, "--state", "claimed", "--owner", "carol"], self.repo)
+        shown = json.loads(run(["show", issue1, "-f", "json"], self.repo))
+        self.assertEqual(shown["owner"], "carol")
 
     def test_reclaim_by_same_owner_no_warning(self) -> None:
         run(["init"], self.repo)

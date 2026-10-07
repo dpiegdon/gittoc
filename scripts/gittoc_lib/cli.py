@@ -94,6 +94,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--owner",
         help="owner name (default: $GITTOC_OWNER or $USER)",
     )
+    claim_parser.add_argument(
+        "--take",
+        action="store_true",
+        help="take over a ticket that someone else has claimed",
+    )
     add_format_argument(claim_parser)
     claim_parser.set_defaults(func=cmd_claim)
 
