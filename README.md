@@ -93,6 +93,7 @@ To stay useful, `gittoc` deliberately resists growing into a full issue tracker:
 - **Multi-writer use is load-bearing.** Concurrent agents and humans are a real
   scenario, so optimistic locking, the `actor` field, and `ref` stamping are
   treated as invariants.
+  Writers serialize through a lock file in `.git`; readers never wait.
 
 ## Current commands
 

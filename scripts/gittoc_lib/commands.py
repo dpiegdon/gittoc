@@ -32,8 +32,14 @@ from .tracker import Tracker
 SHOW_NOTES_LIMIT = 3
 
 
-def _auto_pull(tracker: Tracker) -> None:
-    """Pull before a mutation if autopush is enabled."""
+def _begin_mutation(tracker: Tracker) -> None:
+    """Take the writer lock, then pull if autopush is enabled.
+
+    Every mutating command calls this right after ``Tracker.open`` and before
+    reading any issue, so concurrent writers serialize instead of colliding in
+    git's own index and ref locks.
+    """
+    tracker.lock_for_mutation()
     if tracker.remote.autopush_enabled():
         tracker.remote.auto_pull()
 
@@ -268,7 +274,7 @@ def cmd_new(args: argparse.Namespace) -> int:
     body = resolve_text_input(args.body, args.file, what="body", allow_empty=True)
     deps = parse_issue_ids(args.dep)
     tracker = Tracker.open()
-    _auto_pull(tracker)
+    _begin_mutation(tracker)
     issue = tracker.create_issue(
         title, body or "", parse_labels(args.label), args.priority, deps=deps
     )
@@ -314,7 +320,7 @@ def cmd_unblocked(args: argparse.Namespace) -> int:
 def cmd_claim(args: argparse.Namespace) -> int:
     """Claim one or more issues, assigning them to the given or inferred owner."""
     tracker = Tracker.open()
-    _auto_pull(tracker)
+    _begin_mutation(tracker)
     owner = args.owner or default_owner()
     issue_ids = parse_issue_ids(args.issue_ids)
     # Validate every id up front so a batch claim is all-or-nothing: if any
@@ -461,7 +467,7 @@ def cmd_update(args: argparse.Namespace) -> int:
     """Update one or more fields of an existing issue."""
     body = resolve_text_input(args.body, args.file, what="body", allow_empty=True)
     tracker = Tracker.open()
-    _auto_pull(tracker)
+    _begin_mutation(tracker)
     state = parse_state(args.state)
     add_labels = parse_labels(args.label)
     replace_labels = parse_labels(args.replace_label)
@@ -516,7 +522,7 @@ def cmd_update(args: argparse.Namespace) -> int:
 def cmd_dep(args: argparse.Namespace) -> int:
     """Add or remove blocking dependencies for an issue."""
     tracker = Tracker.open()
-    _auto_pull(tracker)
+    _begin_mutation(tracker)
     dep_ids = parse_issue_ids(args.dep_ids)
     if args.remove:
         issue = tracker.remove_dependencies(args.issue_id, dep_ids)
@@ -561,7 +567,7 @@ def _finish_issues(args: argparse.Namespace, state: str) -> int:
     """Move one or more issues to a terminal state, all-or-nothing like claim."""
     note = resolve_text_input(args.note, args.file, what="note text", allow_empty=False)
     tracker = Tracker.open()
-    _auto_pull(tracker)
+    _begin_mutation(tracker)
     actor = args.actor or default_owner()
     issue_ids = parse_issue_ids(args.issue_ids)
     # Validate every id up front so a missing one aborts before any commit.
@@ -611,7 +617,7 @@ def cmd_note(args: argparse.Namespace) -> int:
     if text is None:
         raise SystemExit("note requires text (positional argument or -F)")
     tracker = Tracker.open()
-    _auto_pull(tracker)
+    _begin_mutation(tracker)
     issue = tracker.add_note(args.issue_id, text, actor=args.actor)
     print(issue.issue_id)
     _auto_push(tracker)

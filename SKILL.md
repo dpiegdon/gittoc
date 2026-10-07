@@ -201,8 +201,10 @@ Notes are searchable via `gittoc grep`.
   delimiter (`<<'EOF'`) or the shell still expands the body. Agents writing
   backtick-heavy prose should prefer `-F` — a single trailing newline is
   stripped from file/stdin input.
-- Mutating commands use optimistic concurrency; they refuse to commit if the
-  tracker changed mid-command. Review the new state and re-run the command if still applicable.
+- Mutating commands serialize through a lock file in `.git` (readers never
+  wait) and additionally refuse to commit if the tracker changed mid-command.
+  On "tracker changed during this command", review the new state and re-run if
+  still applicable. A stale lock from a crashed process is removed automatically.
 - `resume` without an ID prefers claimed tickets owned by the current user,
   then highest-priority ready issue, then highest-priority open issue.
 - `pull` fetches and attempts a normal merge; conflicts are left for manual

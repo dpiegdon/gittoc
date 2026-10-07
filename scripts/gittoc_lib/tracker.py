@@ -32,6 +32,7 @@ from .common import (
     validate_title,
 )
 from .event_log import EventLog
+from .lock import LOCK_FILENAME, MutationLock
 from .models import Issue
 from .remote_sync import RemoteSync
 
@@ -209,6 +210,19 @@ class Tracker:
             raise StaleTrackerError(
                 "tracker changed during this command; re-run your command to retry"
             )
+
+    def lock_for_mutation(self) -> None:
+        """Serialize this command against other writers of the shared worktree.
+
+        Taken once per mutating command, before the auto-pull and before any
+        issue is read, and released when the process exits. The tracker HEAD
+        is re-read afterwards: other writers may have committed while we
+        waited, and nothing has been read yet, so that is not a conflict.
+        """
+        self.mutation_lock = MutationLock(self.checkout.parent / LOCK_FILENAME)
+        self.mutation_lock.acquire()
+        self.base_head = self.head()
+        self._state_cache.clear()
 
     def begin_write(self, *paths: Path) -> None:
         """Gate a worktree write: check staleness first, then record the paths.

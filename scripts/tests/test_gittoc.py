@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -1064,6 +1065,100 @@ class TestWorktreeIntegrity(GittocTestBase):
             check=True,
         ).stdout
         self.assertIn(str(self.repo), worktree_entry)
+
+
+class TestMutationLock(GittocTestBase):
+    """Concurrent writers serialize through the lock file (T-194)."""
+
+    def test_concurrent_writers_never_fail_or_mix_commits(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "shared"], self.repo)
+        gittoc = str(ROOT / "gittoc")
+        procs = []
+        for agent in ("A", "B", "C"):
+            env = dict(os.environ)
+            env["GITTOC_OWNER"] = f"agent-{agent}"
+            script = " && ".join(
+                f'"{gittoc}" note T-1 "note {i} from {agent}"' for i in range(1, 6)
+            )
+            procs.append(
+                subprocess.Popen(
+                    ["sh", "-c", script],
+                    cwd=self.repo,
+                    env=env,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            )
+        results = [(p.wait(), p.communicate()[1]) for p in procs]
+        for returncode, stderr in results:
+            self.assertEqual(returncode, 0, stderr)
+            self.assertNotIn("tracker changed", stderr)
+            self.assertNotIn("git error", stderr)
+        shown = json.loads(run(["show", "T-1", "-a", "-f", "json"], self.repo))
+        notes = [e for e in shown["history"] if e["kind"] == "note"]
+        self.assertEqual(len(notes), 15)
+        self.assertEqual(len({e["text"] for e in notes}), 15)
+        # every commit carries only its own actor's events
+        checkout = self.repo / ".git" / "gittoc"
+        log = subprocess.run(
+            ["git", "-C", str(checkout), "log", "--format=%H %s"],
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.splitlines()
+        for line in log:
+            sha, message = line.split(" ", 1)
+            if not message.startswith("Add note"):
+                continue
+            actor = message[message.rindex("(") + 1 : -1]
+            diff = subprocess.run(
+                ["git", "-C", str(checkout), "show", sha, "--format=", "--", "issues"],
+                text=True,
+                capture_output=True,
+                check=True,
+            ).stdout
+            added = [
+                json.loads(ln[1:]) for ln in diff.splitlines() if ln.startswith("+{")
+            ]
+            self.assertEqual({e["actor"] for e in added}, {actor}, message)
+        self.assertFalse((self.repo / ".git" / "gittoc.lock").exists())
+        run(["fsck"], self.repo)
+
+    def test_stale_lock_is_broken(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "shared"], self.repo)
+        lock = self.repo / ".git" / "gittoc.lock"
+        lock.write_text("999999999 nowhere 0\n", encoding="utf-8")
+        os.utime(lock, (0, 0))
+        proc = run_fail(["note", "T-1", "after stale lock"], self.repo)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("removing stale tracker lock", proc.stderr)
+        self.assertFalse(lock.exists())
+
+    def test_live_lock_times_out_with_clear_message(self) -> None:
+        run(["init"], self.repo)
+        run(["new", "shared"], self.repo)
+        lock = self.repo / ".git" / "gittoc.lock"
+        lock.write_text(f"{os.getpid()} {socket.gethostname()} 0\n", encoding="utf-8")
+        env = dict(os.environ)
+        env["GITTOC_LOCK_TIMEOUT"] = "0.3"
+        proc = subprocess.run(
+            [str(ROOT / "gittoc"), "note", "T-1", "blocked"],
+            cwd=self.repo,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("tracker is locked by pid", proc.stderr)
+        self.assertTrue(lock.exists())
+        lock.unlink()
+        # reads never take the lock
+        lock.write_text(f"{os.getpid()} {socket.gethostname()} 0\n", encoding="utf-8")
+        self.assertIn("T-1", run(["list"], self.repo))
 
 
 class TestStaleTracker(GittocTestBase):
