@@ -1,0 +1,12 @@
+{
+  "body": "'list' hides claimed and blocked tickets by default, which makes a \"not closed or rejected\" filter feel necessary. Change the default of 'list' and 'labels' to open+claimed+blocked, sorted as before, state shown per line. '-s open' keeps the narrow view, '-a' still means everything, 'unblocked' still means ready. Behaviour change: callers that treated 'list' as claimable work now also see claimed/blocked tickets; release-note item. Update README, SKILL.md, tests.",
+  "created_at": "2026-10-07T18:16:38+00:00",
+  "id": "T-193",
+  "labels": [
+    "feature",
+    "ux"
+  ],
+  "priority": 2,
+  "title": "list and labels default to all non-terminal states (open, claimed, blocked)",
+  "updated_at": "2026-10-07T18:16:38+00:00"
+}

@@ -1,0 +1,1 @@
+{"actor": "user", "at": "2026-10-07T18:16:38+00:00", "kind": "created", "ref": "main@a572e79", "text": "list and labels default to all non-terminal states (open, claimed, blocked)"}
