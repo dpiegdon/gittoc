@@ -1,0 +1,12 @@
+{
+  "body": "Reproduced on v0.10.0: 3 agents x 5 notes on one ticket at the same moment -> 6 of 15 writes fail; 3 are the clean 'tracker changed; re-run' refusal, 3 are raw git errors ('nothing to commit, working tree clean', 'cannot lock ref HEAD', 'index.lock: File exists') whose notes nevertheless landed - inside another agent's commit. Commits are mis-attributed: 'Add note to T-1 (agent-A)' contains agent-B's event line. T-174 (stage only own paths) cannot help when two writers append to the same events file, and git's own index/ref locks are not a serialization mechanism, they just fail the loser.\n\nFix: a lock file in the git common dir (e.g. .git/gittoc.lock, O_CREAT|O_EXCL, holder pid+timestamp) taken by every mutating command before auto-pull/read and released after commit, with a bounded wait (e.g. 10 s, 50 ms polling) and stale-lock breaking. Readers do not lock. With this the stale check only trips for non-locking writers (older versions, manual edits), raw git lock errors disappear, attribution is exact, and a retry can never duplicate a note. The natural hook is the _auto_pull call every mutating command already makes right after Tracker.open (rename to _begin_mutation; refresh base_head after acquiring).",
+  "created_at": "2026-10-07T18:48:27+00:00",
+  "id": "T-194",
+  "labels": [
+    "bug",
+    "reliability"
+  ],
+  "priority": 1,
+  "title": "serialize mutations with a gittoc-level lock; shared worktree races survive optimistic locking",
+  "updated_at": "2026-10-07T18:48:27+00:00"
+}
