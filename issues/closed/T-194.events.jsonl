@@ -1,0 +1,3 @@
+{"actor": "user", "at": "2026-10-07T18:48:27+00:00", "kind": "created", "ref": "main@45b93ca", "text": "serialize mutations with a gittoc-level lock; shared worktree races survive optimistic locking"}
+{"actor": "user", "at": "2026-10-07T18:52:25+00:00", "kind": "claimed", "ref": "main@45b93ca", "text": "user"}
+{"actor": "user", "at": "2026-10-07T18:55:43+00:00", "kind": "closed", "ref": "main@96912db", "text": "lock.py MutationLock; wired via _begin_mutation in all 6 mutating commands; 3 tests incl. 3x5 concurrent writers with exact per-commit attribution; stress rerun: 15/15 notes clean, 8/8 claim races one winner"}

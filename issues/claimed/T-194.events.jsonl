@@ -1,2 +1,0 @@
-{"actor": "user", "at": "2026-10-07T18:48:27+00:00", "kind": "created", "ref": "main@45b93ca", "text": "serialize mutations with a gittoc-level lock; shared worktree races survive optimistic locking"}
-{"actor": "user", "at": "2026-10-07T18:52:25+00:00", "kind": "claimed", "ref": "main@45b93ca", "text": "user"}

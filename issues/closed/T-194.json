@@ -9,5 +9,5 @@
   "owner": "user",
   "priority": 1,
   "title": "serialize mutations with a gittoc-level lock; shared worktree races survive optimistic locking",
-  "updated_at": "2026-10-07T18:52:25+00:00"
+  "updated_at": "2026-10-07T18:55:43+00:00"
 }
