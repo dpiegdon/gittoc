@@ -6,7 +6,8 @@
     "bug",
     "human"
   ],
+  "owner": "user",
   "priority": 2,
   "title": "claim must refuse a ticket claimed by someone else unless --take is given",
-  "updated_at": "2026-10-07T18:48:27+00:00"
+  "updated_at": "2026-10-07T18:52:25+00:00"
 }
