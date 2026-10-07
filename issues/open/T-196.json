@@ -1,0 +1,11 @@
+{
+  "body": "Events stamp the HEAD of the checkout they run in. A close from a feature branch points at a commit that disappears after rebase/squash and shows as '(abc1234?)'. That is by design and the '?' marker is the answer, but one sentence in the lifecycle should say: on branches that will be rebased or squashed, close the ticket after the merge, from the branch that keeps the commit. No --commit override (declined under T-186's discussion).",
+  "created_at": "2026-10-07T18:48:27+00:00",
+  "id": "T-196",
+  "labels": [
+    "docs"
+  ],
+  "priority": 4,
+  "title": "SKILL.md: close after merge when working on branches that get rebased",
+  "updated_at": "2026-10-07T18:48:27+00:00"
+}
