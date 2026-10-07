@@ -133,6 +133,27 @@ class TestInitAndRemote(GittocTestBase):
         self.assertFalse(remote_status["remote_branch_exists"])
 
 
+class TestMovedRepository(GittocTestBase):
+    def test_moved_repo_reports_repair_command(self) -> None:
+        """A moved repository breaks the worktree link; say so and name the fix (T-190)."""
+        run(["init"], self.repo)
+        run(["new", "before move"], self.repo)
+        moved = Path(self.tempdir.name) / "moved"
+        shutil.move(str(self.repo), str(moved))
+        proc = run_fail(["summary"], moved)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("was the repository moved?", proc.stderr)
+        self.assertIn("git worktree repair", proc.stderr)
+        subprocess.run(
+            ["git", "worktree", "repair", str(moved / ".git" / "gittoc")],
+            cwd=moved,
+            check=True,
+            capture_output=True,
+        )
+        self.assertIn("open=1", run(["summary"], moved))
+        shutil.move(str(moved), str(self.repo))  # let tearDown find it
+
+
 class TestSetupScript(GittocTestBase):
     """End-to-end tests for the vendored-install script ``scripts/setup``.
 

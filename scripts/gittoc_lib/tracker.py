@@ -76,6 +76,15 @@ class Tracker:
                 f"legacy hidden clone detected at {checkout}; remove it before using worktree mode"
             )
         if is_worktree(checkout):
+            # Worktree links are absolute paths, so a moved or copied repository
+            # leaves the tracker checkout pointing at the old location.
+            probe = run_git(["rev-parse", "--git-dir"], cwd=checkout, check=False)
+            if probe.returncode != 0:
+                raise SystemExit(
+                    f"tracker worktree at {checkout} is detached from this repository "
+                    "(was the repository moved?); repair the link with:\n"
+                    f"  git worktree repair {checkout}"
+                )
             if current_branch(checkout) != TRACKER_BRANCH:
                 run_git(["switch", "-q", TRACKER_BRANCH], cwd=checkout)
             return checkout
