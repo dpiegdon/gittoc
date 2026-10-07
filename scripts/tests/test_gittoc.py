@@ -119,6 +119,10 @@ class GittocTestBase(unittest.TestCase):
 
 
 class TestInitAndRemote(GittocTestBase):
+    def test_init_rerun_says_already_initialized(self) -> None:
+        run(["init"], self.repo)
+        self.assertIn("already initialized", run(["init"], self.repo))
+
     def test_init_creates_tracker(self) -> None:
         init_out = run(["init"], self.repo)
         self.assertIn("initialized tracker branch", init_out)

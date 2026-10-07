@@ -17,10 +17,12 @@ from .common import (
     STATE_SET,
     TRACKER_BRANCH,
     default_owner,
+    is_worktree,
     issue_number,
     missing_objects,
     parse_state,
     ref_short_hash,
+    repo_and_worktree,
     run_git,
     validate_issue_id,
     validate_title,
@@ -144,12 +146,15 @@ def resolve_text_input(
 
 def cmd_init(_args: argparse.Namespace) -> int:
     """Initialize the tracker worktree and auto-configure the remote if possible."""
+    _, checkout = repo_and_worktree()
+    existed = is_worktree(checkout)
     tracker = Tracker.open()
     if not tracker.remote.configured():
         inferred = tracker.remote.effective()
         if inferred:
             tracker.remote.configure(inferred)
-    print(f"initialized tracker branch {TRACKER_BRANCH} at {tracker.checkout}")
+    verb = "already initialized" if existed else "initialized"
+    print(f"{verb} tracker branch {TRACKER_BRANCH} at {tracker.checkout}")
     return 0
 
 

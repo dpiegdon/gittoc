@@ -41,6 +41,21 @@ class StaleTrackerError(Exception):
     """Raised when the tracker has been modified since it was opened."""
 
 
+def write_version_file(
+    checkout: Path, format_version: int, layout_version: int
+) -> None:
+    """Write the tracker's VERSION file (shared by bootstrap and migrations)."""
+    data = {
+        "format_version": format_version,
+        "layout_version": layout_version,
+        "migrated_at": now_utc(),
+        "migrated_by": default_owner(),
+    }
+    with (checkout / VERSION_FILE).open("w", encoding="utf-8") as handle:
+        json.dump(data, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+
+
 class Tracker:
     """Manages the gittoc issue store on the dedicated tracker branch."""
 
@@ -130,16 +145,7 @@ class Tracker:
             (checkout / ISSUES_ROOT / state).mkdir(parents=True, exist_ok=True)
         keep = checkout / ISSUES_ROOT / ".gitkeep"
         keep.write_text("", encoding="utf-8")
-        version_path = checkout / VERSION_FILE
-        version_data = {
-            "format_version": CURRENT_FORMAT_VERSION,
-            "layout_version": CURRENT_LAYOUT_VERSION,
-            "migrated_at": now_utc(),
-            "migrated_by": default_owner(),
-        }
-        with version_path.open("w", encoding="utf-8") as handle:
-            json.dump(version_data, handle, indent=2, sort_keys=True)
-            handle.write("\n")
+        write_version_file(checkout, CURRENT_FORMAT_VERSION, CURRENT_LAYOUT_VERSION)
         run_git(["add", "issues", str(VERSION_FILE)], cwd=checkout)
         run_git(
             ["commit", "-q", "-m", "Initialize gittoc tracker"],
@@ -174,16 +180,7 @@ class Tracker:
         self, format_version: int, layout_version: int, *, commit: bool = True
     ) -> None:
         """Write the VERSION file and optionally commit it."""
-        path = self.checkout / VERSION_FILE
-        data = {
-            "format_version": format_version,
-            "layout_version": layout_version,
-            "migrated_at": now_utc(),
-            "migrated_by": default_owner(),
-        }
-        with path.open("w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=2, sort_keys=True)
-            handle.write("\n")
+        write_version_file(self.checkout, format_version, layout_version)
         if commit:
             run_git(["add", str(VERSION_FILE)], cwd=self.checkout)
             run_git(
@@ -505,18 +502,23 @@ class Tracker:
         """
         state = self._issue_state(dep_id)
         if state is None:
-            key = (issue_id, dep_id)
-            if key not in self._warned_missing_deps:
-                self._warned_missing_deps.add(key)
-                print(
-                    col.warn(
-                        f"warning: {issue_id} depends on {dep_id}, which does "
-                        "not exist; treating as unresolved (run `gittoc fsck`)"
-                    ),
-                    file=sys.stderr,
-                )
+            self._warn_missing_dep(issue_id, dep_id)
             return False
         return state in TERMINAL_STATES
+
+    def _warn_missing_dep(self, issue_id: str, dep_id: str) -> None:
+        """Warn once per (issue, dep) pair about a dependency with no issue file."""
+        key = (issue_id, dep_id)
+        if key in self._warned_missing_deps:
+            return
+        self._warned_missing_deps.add(key)
+        print(
+            col.warn(
+                f"warning: {issue_id} depends on {dep_id}, which does not exist; "
+                "treating as unresolved (run `gittoc fsck`)"
+            ),
+            file=sys.stderr,
+        )
 
     def ready(self, issue: Issue) -> bool:
         """Return True if the issue is open and all its dependencies are closed."""
@@ -558,9 +560,9 @@ class Tracker:
         if dep_id == issue_id:
             return True
         seen: set[str] = set()
-        stack = [dep_id]
+        stack = [(issue_id, dep_id)]
         while stack:
-            current = stack.pop()
+            parent, current = stack.pop()
             if current == issue_id:
                 return True
             if current in seen:
@@ -568,16 +570,10 @@ class Tracker:
             seen.add(current)
             if self._issue_state(current) is None:
                 # Referenced dep does not exist; treat as a leaf node.
-                print(
-                    col.warn(
-                        f"warning: dependency {current} not found, "
-                        "skipping during cycle check"
-                    ),
-                    file=sys.stderr,
-                )
+                self._warn_missing_dep(parent, current)
                 continue
             current_issue, _ = self.load_issue(current)
-            stack.extend(current_issue.deps)
+            stack.extend((current, child) for child in current_issue.deps)
         return False
 
     def ready_issues(self) -> list[Issue]:
