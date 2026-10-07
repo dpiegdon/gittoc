@@ -1,0 +1,12 @@
+{
+  "body": "Reproduced on v0.10.0: 2 agents racing to claim the same ticket, 8 trials -> in 4 trials BOTH exit 0; the second prints 'warning: T-7 was already claimed by agent-A; ownership transferred to agent-B' and takes the ticket, while agent-A proceeds believing it holds it. The old traceback (FileNotFoundError on the moved events file) is gone since T-165, but the replacement behaviour is worse for agents: silent-ish transfer with success exit code. Ownership transfer on claim is currently intentional (test_reclaim_by_different_owner_warns) for humans taking over.\n\nProposal: claim exits 1 with 'T-7 is already claimed by agent-A' when the owner differs; same-owner re-claim stays a no-op success; add --take to transfer explicitly (warning kept). Owner decision: semantics change to an intentional feature.",
+  "created_at": "2026-10-07T18:48:27+00:00",
+  "id": "T-195",
+  "labels": [
+    "bug",
+    "human"
+  ],
+  "priority": 2,
+  "title": "claim must refuse a ticket claimed by someone else unless --take is given",
+  "updated_at": "2026-10-07T18:48:27+00:00"
+}
