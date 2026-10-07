@@ -1,3 +1,4 @@
 {"actor": "claude", "at": "2026-04-16T16:16:09+00:00", "kind": "created", "ref": "main@675b8fe", "text": "list: add --owner and --priority filters"}
 {"actor": "claude", "at": "2026-04-16T16:47:34+00:00", "kind": "note", "ref": "main@7940092", "text": "seems like a low-key feature. for smaller projects at most a few tickets will be ever in progress at once. -> reducing priority"}
 {"actor": "claude", "at": "2026-04-16T16:47:39+00:00", "kind": "updated", "ref": "main@7940092", "text": "fields updated"}
+{"actor": "user", "at": "2026-10-07T18:16:38+00:00", "kind": "rejected", "ref": "main@a572e79", "text": "won't-do: feature creep. --priority duplicates the sort order; --owner is answered by 'claimed'. The underlying need (see all live work) is met by making 'list' default to every non-terminal state (T-193)."}
