@@ -180,6 +180,10 @@ class TestSetupScript(GittocTestBase):
         )
         (target / ".git").mkdir()
         (target / ".git" / "MARKER").write_text("fake clone\n", encoding="utf-8")
+        # setup removes this dev-only file, so the tests use it as the marker
+        # for "setup ran" vs "setup left the tree alone". A vendored install
+        # has no AGENTS.md, so create it here instead of relying on the source.
+        (target / "AGENTS.md").write_text("dev-only marker\n", encoding="utf-8")
         return target
 
     def run_setup(
