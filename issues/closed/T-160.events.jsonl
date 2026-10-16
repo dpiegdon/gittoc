@@ -1,0 +1,3 @@
+{"actor": "claude", "at": "2026-06-09T20:03:27+00:00", "kind": "created", "ref": "main@4ce3f3e", "text": "Avoid full event-log JSON parse per issue in list normal format"}
+{"actor": "user", "at": "2026-10-16T22:17:12+00:00", "kind": "claimed", "ref": "main@15b4abb", "text": "user"}
+{"actor": "user", "at": "2026-10-16T22:21:37+00:00", "kind": "closed", "ref": "main@9585f45", "text": "diagnosis corrected: cost was EventLog.find probing 5 dirs per ticket (73 ms), not JSON parsing (10 ms). Fixed via state cache; list -a 236 -> 178 ms median at 197 tickets (~120 ms saved at 400). The substring-count idea would have saved ~4 ms."}
