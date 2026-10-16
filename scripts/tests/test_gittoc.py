@@ -420,6 +420,27 @@ class TestCreateAndList(GittocTestBase):
         self.assertIn("T-3", found)
         self.assertNotIn("T-4", found)
 
+    def test_event_log_lookup_uses_known_state_and_still_finds_orphans(self) -> None:
+        """find() goes straight to the issue's state dir; orphan logs still resolve (T-160)."""
+        run(["init"], self.repo)
+        run(["new", "a"], self.repo)
+        run(["note", "T-1", "hello"], self.repo)
+        run(["update", "T-1", "--state", "blocked"], self.repo)
+        tracker_mod = import_lib("tracker")
+        checkout = self.repo / ".git" / "gittoc"
+        tracker = tracker_mod.Tracker(self.repo, checkout)
+        tracker.list_issues(("blocked",))  # populates the state cache
+        found = tracker.events.find("T-1")
+        assert found is not None
+        self.assertEqual(found.parent.name, "blocked")
+        self.assertEqual(tracker.events.note_count("T-1"), 1)
+        # an orphaned log (issue file gone) is still located by probing
+        (checkout / "issues" / "blocked" / "T-1.json").unlink()
+        fresh = tracker_mod.Tracker(self.repo, checkout)
+        orphan = fresh.events.find("T-1")
+        assert orphan is not None
+        self.assertEqual(orphan.name, "T-1.events.jsonl")
+
     def test_list_alias_and_compact(self) -> None:
         run(["init"], self.repo)
         run(["new", "High priority task", "-p", "1"], self.repo)
