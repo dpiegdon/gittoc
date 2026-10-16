@@ -1,0 +1,12 @@
+{
+  "body": "Reported against 0.10.1. vendor_tree() copies the tree the tests run from and two refusal tests use AGENTS.md as the \"setup left the checkout intact\" marker, but AGENTS.md is a dev-only file absent from vendored installs, so the tests fail there (193 pass, 2 fail). Fix: vendor_tree() creates the marker file itself; this also makes test_vendored_install's \"AGENTS.md was removed\" assertion meaningful outside the upstream checkout.",
+  "created_at": "2026-10-16T22:09:56+00:00",
+  "id": "T-197",
+  "labels": [
+    "bug",
+    "ops"
+  ],
+  "priority": 2,
+  "title": "TestSetupScript fails in a vendored install: two tests expect AGENTS.md",
+  "updated_at": "2026-10-16T22:09:56+00:00"
+}
